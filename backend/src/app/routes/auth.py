@@ -46,7 +46,7 @@ async def register(data: RegisterUser, db: AsyncSession = Depends(get_db)):
         }
     
 
-@router.get("/login")
+@router.post("/login")
 async def login(data: LoginUser, db: AsyncSession = Depends(get_db)):
     # Check if the user exists in the database
     user_query = await db.execute(
