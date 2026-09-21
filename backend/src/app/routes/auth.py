@@ -52,9 +52,21 @@ async def login(data: LoginUser, db: AsyncSession = Depends(get_db)):
     user_query = await db.execute(
          select(User).where(User.email == data.email)
     )
-    if user_query.scalar_one_or_none() is None:
+    user = user_query.scalar_one_or_none()
+    if user is None:
         raise HTTPException(status_code=404, detail="User not found")
+
+    # Verify the password
+    correct_password = password_hasher.verify(data.password,user.password_hash)
+
+    if not correct_password:
+         raise HTTPException(status_code=401, detail="Invalid email or password")
     
+    return{
+        "message": "User logged in successfully",
+        "username": user.username,
+        "user_id": user.user_id
+    }
 
 @router.post("/forgot-password")
 async def forgot_password():
