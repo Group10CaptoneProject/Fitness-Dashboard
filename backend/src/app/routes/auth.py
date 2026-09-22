@@ -5,6 +5,7 @@ from pwdlib import PasswordHash
 
 from app.schemas.auth import LoginUser, RegisterUser
 from app.db import User, get_db
+from app.security import create_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -61,11 +62,15 @@ async def login(data: LoginUser, db: AsyncSession = Depends(get_db)):
 
     if not correct_password:
          raise HTTPException(status_code=401, detail="Invalid email or password")
-    
+
+    token = create_token(user.user_id)
+
     return{
         "message": "User logged in successfully",
         "username": user.username,
-        "user_id": user.user_id
+        "user_id": user.user_id,
+        "access_token": token,
+        "token_type": "bearer"
     }
 
 @router.post("/forgot-password")
