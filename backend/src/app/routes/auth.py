@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
 
-from app.schemas.auth import LoginUser, RegisterUser
+from app.schemas.auth import LoginUser, RegisterUser, ForgotPassword
 from app.db import User, get_db
 from app.security import create_token
 
@@ -74,5 +74,17 @@ async def login(data: LoginUser, db: AsyncSession = Depends(get_db)):
     }
 
 @router.post("/forgot-password")
-async def forgot_password():
-    pass
+async def forgot_password(data: ForgotPassword, db: AsyncSession = Depends(get_db)):
+    email_verify = await db.execute(
+        select(User).where(User.email == data.email)
+    )
+    user = email_verify.scalar_one_or_none()
+    if user is None:
+         raise HTTPException(status_code=404, detail ="User not found")
+
+    #Task: Need to implement email sending code with resend, verification, etc 
+
+
+
+     
+    
