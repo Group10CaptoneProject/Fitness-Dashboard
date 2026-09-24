@@ -9,7 +9,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
-from app.config import settings
+from app.config.config import settings
 
 database_url = make_url(settings.database_url)
 database_url = database_url.set(drivername="postgresql+asyncpg")
