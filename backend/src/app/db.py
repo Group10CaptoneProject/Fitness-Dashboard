@@ -58,7 +58,11 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
+    #map user's data to the user profile 
     profile: Mapped["UserProfile"] = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    target_plan: Mapped["TargetPlan"] = relationship("TargetPlan", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    daily_entries: Mapped[list["DailyEntry"]] = relationship("DailyEntry", back_populates="user", cascade="all, delete-orphan")
+    daily_scores: Mapped[list["DailyScore"]] = relationship("DailyScore", back_populates="user", cascade="all, delete-orphan")
 
     def set_passwod(self, password: str):
         self.password = password 
@@ -80,10 +84,10 @@ class DailyEntry(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())  
 
+    user: Mapped["User"] = relationship("User", back_populates="daily_entries")
     __table_args__ = (
         UniqueConstraint("user_id", "entry_date", name="unique_user_daily_entry"),
     )
-
 
 #score table (output)
 class DailyScore(Base):
@@ -103,6 +107,9 @@ class DailyScore(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
+    #map the daily score data to the user
+    user: Mapped["User"] = relationship("User", back_populates="daily_scores")
+
     __table_args__ = (
         UniqueConstraint("user_id", "score_date", name="unique_score_date"),
     )   
@@ -120,7 +127,9 @@ class TargetPlan(Base):
     rest_time_goal: Mapped[int] = mapped_column(Integer, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    
+
+    #map target plan to user
+    user: Mapped["User"] = relationship("User", back_populates="target_plans")
     __table_args__ = (
         UniqueConstraint("user_id", name="unique_user_target_plan"),
     )

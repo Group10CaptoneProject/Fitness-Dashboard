@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, date
 import random
 from sqlalchemy.orm import Session
-from db import async_session_maker, engine, User, UserProfile, DailyEntry
+from db import async_session_maker, engine, User, UserProfile, DailyEntry, DailyScore, TargetPlan, UserDashboard
 
 async def seed_database():
     async with async_session_maker() as session:
@@ -51,6 +51,8 @@ async def seed_database():
         session.add_all(entries)
         await session.commit()
         print(f"Successfully seeded 45 chronological entries for user: {new_user.username}")
+
+        
 
 if __name__ == "__main__":
     import asyncio
