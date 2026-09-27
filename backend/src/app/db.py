@@ -1,5 +1,9 @@
 import asyncio
 import uuid
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from datetime import datetime, date 
 from collections.abc import AsyncGenerator
 from sqlalchemy import String, Integer, ForeignKey, Numeric, Date, DateTime, UniqueConstraint, func, text
@@ -9,7 +13,8 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
-from app.config.config import settings
+from .config.config import settings
+import SessionLocal 
 
 database_url = make_url(settings.database_url)
 database_url = database_url.set(drivername="postgresql+asyncpg")
@@ -36,9 +41,7 @@ class Base(DeclarativeBase):
 class UserProfile(Base):
     __tablename__ = "user_profiles"
     
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True
-    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True)
     primary_goal: Mapped[str] = mapped_column(String(100), nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="profile")
@@ -49,13 +52,20 @@ class User(Base):
      
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4) 
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    first_name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    last_name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     first_name: Mapped[str] = mapped_column(String(50), nullable=False)
     last_name: Mapped[str] = mapped_column(String(50), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    daily_scores: Mapped[int] = mapped_column(Integer)
 
     profile: Mapped["UserProfile"] = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+
+    def set_passwod(self, password: str):
+        self.password = password 
 
 class DailyEntry(Base):
     __tablename__ = "daily_entries"
@@ -77,6 +87,7 @@ class DailyEntry(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "entry_date", name="unique_user_daily_entry"),
     )
+
 
 #score table (output)
 class DailyScore(Base):
@@ -135,6 +146,6 @@ async def test_connection():
     finally:
         await engine.dispose()
 
+
 if __name__ == "__main__":
     asyncio.run(test_connection())
-    asyncio.run(init_db())
