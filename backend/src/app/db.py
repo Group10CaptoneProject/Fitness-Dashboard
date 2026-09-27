@@ -7,6 +7,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from datetime import datetime, date 
 from collections.abc import AsyncGenerator
 from sqlalchemy import String, Integer, ForeignKey, Numeric, Date, DateTime, UniqueConstraint, func, text
+from decimal import Decimal
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
@@ -27,6 +28,10 @@ engine = create_async_engine(
 )
 
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+async def get_db(): 
+    async with async_session_maker() as session: 
+        yield session
 
 #set up SQL base 
 class Base(DeclarativeBase):
@@ -51,7 +56,9 @@ class User(Base):
     last_name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(String(255), nullable=False)
+    first_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     daily_scores: Mapped[int] = mapped_column(Integer)
 
@@ -90,13 +97,13 @@ class DailyScore(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     score_date: Mapped[date] = mapped_column(Date, nullable=False)
 
-    recovery: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
-    fatigue: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
-    workload_balance_score: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
-    final_training_score: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)  
+    recovery: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
+    fatigue: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
+    workload_balance_score: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
+    final_training_score: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)  
 
     readiness_level: Mapped[str] = mapped_column(String(50), nullable=False)
-    workout_adjustment: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
+    workout_adjustment: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -113,7 +120,7 @@ class TargetPlan(Base):
     duration_goal: Mapped[int] = mapped_column(Integer, nullable=True)
     sets_goal: Mapped[int] = mapped_column(Integer, nullable=True)
     reps_goal: Mapped[int] = mapped_column(Integer, nullable=True)
-    weights_goal: Mapped[float] = mapped_column(Numeric(6, 2), nullable=True)
+    weights_goal: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=True)
     rest_time_goal: Mapped[int] = mapped_column(Integer, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -142,4 +149,3 @@ async def test_connection():
 
 if __name__ == "__main__":
     asyncio.run(test_connection())
-
