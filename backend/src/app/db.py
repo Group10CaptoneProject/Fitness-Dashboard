@@ -13,8 +13,8 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
-from .config import settings
-import SessionLocal 
+from .config.config import settings
+# import SessionLocal 
 
 database_url = make_url(settings.database_url)
 database_url = database_url.set(drivername="postgresql+asyncpg")
@@ -52,15 +52,11 @@ class User(Base):
      
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4) 
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    first_name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    last_name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     first_name: Mapped[str] = mapped_column(String(50), nullable=False)
     last_name: Mapped[str] = mapped_column(String(50), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    daily_scores: Mapped[int] = mapped_column(Integer)
 
     profile: Mapped["UserProfile"] = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
@@ -129,6 +125,43 @@ class TargetPlan(Base):
         UniqueConstraint("user_id", name="unique_user_target_plan"),
     )
 
+#For forgot/reset password 
+class PasswordResetCode(Base):
+    __tablename__ = "password_reset_codes"
+
+    reset_id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    code_hash: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+
+    used: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
+
 #initialize sql tables 
 async def init_db():
     async with engine.begin() as conn:
@@ -149,3 +182,4 @@ async def test_connection():
 
 if __name__ == "__main__":
     asyncio.run(test_connection())
+    asyncio.run(init_db())
