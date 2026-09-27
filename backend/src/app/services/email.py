@@ -11,7 +11,7 @@ async def send_mail(user_email: str, code: str):
         "subject": "FitnessDashboard Password Reset Code",
         "html": 
         f"""
-            <h1>Password reset</h1>
+            <h2>Password Reset Code</h2>
             <strong>{code}</strong>
             <p>This code will expire in 10 minutes.</p>
         """,

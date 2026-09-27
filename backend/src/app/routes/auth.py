@@ -2,10 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
+import secrets
+from datetime import datetime, timedelta, timezone
 
 from app.schemas.auth import LoginUser, RegisterUser, ForgotPassword
-from app.db import User, get_db
+from app.db import User, PasswordResetCode, get_db
 from app.security import create_token
+from app.services.email import send_mail
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -73,6 +76,9 @@ async def login(data: LoginUser, db: AsyncSession = Depends(get_db)):
         "token_type": "bearer"
     }
 
+# Routes for resetting forgot password 
+# /forgot_password -> /verify-reset-code -> /reset-password
+
 @router.post("/forgot-password")
 async def forgot_password(data: ForgotPassword, db: AsyncSession = Depends(get_db)):
     email_verify = await db.execute(
@@ -81,10 +87,35 @@ async def forgot_password(data: ForgotPassword, db: AsyncSession = Depends(get_d
     user = email_verify.scalar_one_or_none()
     if user is None:
          raise HTTPException(status_code=404, detail ="User not found")
+    
+    code = f"{secrets.randbelow(1000000):06d}"
+    code_hash = password_hasher.hash(code)
+    expiration_time = (
+         datetime.now(timezone.utc) + timedelta(minutes=10)
+    )
+    reset_code = PasswordResetCode(
+         user_id = user.user_id,
+         code_hash = code_hash,
+         expires_at = expiration_time
+    )
 
-    #Task: Need to implement email sending code with resend, verification, etc 
+    db.add(reset_code)
+    await db.commit()
 
+    #Send the code to user email
+    await send_mail(user.email, code)
 
+    return {
+         "message" : "Verification code sent"
+    }
+
+@router.post("/verify-reset-code")
+async def verify_code():
+     pass
+
+@router.post("/reset-password")
+async def reset_password():
+     pass
 
      
     
