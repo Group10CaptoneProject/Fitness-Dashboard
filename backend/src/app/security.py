@@ -7,6 +7,7 @@ from app.config.config import settings
 
 # JWT token generation 
 EXPIRE_MINUTES = 60
+RESET_TOKEN_EXPIRE_MINUTES = 10
 
 def create_token(user_id):
     expiration_time = (datetime.now(timezone.utc)+ timedelta(minutes=EXPIRE_MINUTES))
@@ -30,6 +31,29 @@ def verify_token(token: str):
     except (jwt.InvalidTokenError, ValueError):
         raise HTTPException(status_code = 401, detail= "Invalid token")
 
+def create_reset_token(user_id):
+    expiration_time = (datetime.now(timezone.utc)+ timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES))
+    payload = {"sub": str(user_id), "purpose": "password_reset", "exp": expiration_time}
+    token = jwt.encode(payload,settings.jwt_secret_key, algorithm="HS256")
+    
+    return token
+def verify_reset_token(token: str):
+    try: 
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=["HS256"])
+        if payload.get("purpose") != "password_reset":
+            raise HTTPException(status_code = 401, detail = "Invaild reset token")
+        user_id = payload.get("sub")
+        
+        if user_id is None:
+            raise HTTPException(status_code = 401, detail = "Invaild reset token")
+        return uuid.UUID(user_id)
+    
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code = 401, detail= "Expired reset token")
+    
+    except (jwt.InvalidTokenError, ValueError):
+        raise HTTPException(status_code = 401, detail= "Invalid reset token")
+    
 #Protected route dependency function 
 async def get_current_user():
     pass

@@ -6,6 +6,7 @@ class RegisterUser(BaseModel):
     first_name: str = Field(min_length = 1, max_length=50)
     last_name: str = Field(min_length = 1, max_length=50)
     password: str = Field(min_length=6, max_length=255)
+    confirm_password: str = Field(min_length=6, max_length=255) 
 
 class LoginUser(BaseModel):
     email: EmailStr = Field(max_length=100)
@@ -14,3 +15,11 @@ class LoginUser(BaseModel):
 class ForgotPassword(BaseModel):
     email: EmailStr = Field(max_length=100)
 
+class VerifyResetCode(BaseModel):
+    email: EmailStr
+    code: str
+
+class ResetPassword(BaseModel):
+    reset_token: str
+    new_password: str
+    confirm_password: str
