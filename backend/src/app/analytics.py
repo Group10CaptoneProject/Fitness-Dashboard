@@ -7,12 +7,6 @@ from decimal import Decimal
 from datetime import date
 from db import async_session_maker, DailyEntry, DailyScore, TargetPlan, User
 
-#get paswword resest codes
-
-
-#update reset codes table 
-
-
 # 1. Daily Entries DataFrame
 async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
     async with async_session_maker() as session:

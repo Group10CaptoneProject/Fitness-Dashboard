@@ -170,7 +170,6 @@ class PasswordResetCode(Base):
         server_default=func.now()
     )
 
-
 #initialize sql tables 
 async def init_db():
     async with engine.begin() as conn:
