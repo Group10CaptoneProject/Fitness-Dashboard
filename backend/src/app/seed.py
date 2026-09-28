@@ -2,6 +2,7 @@ import asyncio
 from datetime import datetime, timedelta, date
 import random
 from passlib.context import CryptContext
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from .db import async_session_maker, engine, User, UserProfile, DailyEntry, DailyScore, TargetPlan
 from .analytics import get_entries_by_id, calculate_readiness_data, update_daily_score, update_user_dashboard
@@ -14,6 +15,16 @@ async def seed_database():
     hashed_password = pwd_context.hash(raw_password)
 
     async with async_session_maker() as session:
+        # Check if user already exists
+        stmt = select(User).where(User.username == "alex_warren")
+        existing_user = (await session.execute(stmt)).scalar_one_or_none()
+
+        # If user exists, delete them so CASCADE cleans up old records
+        if existing_user:
+            await session.delete(existing_user)
+            await session.commit()
+            print("Removed existing 'alex_warren' user and associated historical records.")
+        
         new_user = User(
            username="alex_warren",
             email="alex.warren2@gmail.com",
