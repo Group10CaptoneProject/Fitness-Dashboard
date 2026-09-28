@@ -15,13 +15,22 @@ async def seed_database():
 
     async with async_session_maker() as session:
         new_user = User(
-           username="alex warren",
-            email="alex.warren@gmail.com",
+           username="alex_warren",
+            email="alex.warren2@gmail.com",
             first_name="Alex",
             last_name="Warren",
             password_hash= hashed_password
         )
         new_user.profile = UserProfile(primary_goal="strength")
+
+        #target plan
+        new_user.target_plan = TargetPlan(
+            duration_goal=60,       # 60 minutes
+            sets_goal=16,           # 16 total sets
+            reps_goal=10,           # 10 reps per set
+            weights_goal=185.50,    # 185.5 lbs
+            rest_time_goal=90       # 90 seconds rest
+        )
 
         session.add(new_user)
         await session.commit()
@@ -58,7 +67,7 @@ async def seed_database():
         #add entry into the readiness (user dashboard update)
         for current_date in processed_df["entry_date"]:
             await update_user_dashboard(user_id, current_date, processed_df)
-
+        
         print("Seed complete! All tables populated in Neon.")
 
 if __name__ == "__main__":
