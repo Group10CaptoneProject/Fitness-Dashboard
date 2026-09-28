@@ -29,7 +29,7 @@ engine = create_async_engine(
 
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-async def get_db(): 
+async def get_db() -> AsyncGenerator[AsyncSession, None]: 
     async with async_session_maker() as session: 
         yield session
 
@@ -63,9 +63,6 @@ class User(Base):
     target_plan: Mapped["TargetPlan"] = relationship("TargetPlan", back_populates="user", uselist=False, cascade="all, delete-orphan")
     daily_entries: Mapped[list["DailyEntry"]] = relationship("DailyEntry", back_populates="user", cascade="all, delete-orphan")
     daily_scores: Mapped[list["DailyScore"]] = relationship("DailyScore", back_populates="user", cascade="all, delete-orphan")
-
-    def set_passwod(self, password: str):
-        self.password = password 
 
 class DailyEntry(Base):
     __tablename__ = "daily_entries"
@@ -129,7 +126,7 @@ class TargetPlan(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     #map target plan to user
-    user: Mapped["User"] = relationship("User", back_populates="target_plans")
+    user: Mapped["User"] = relationship("User", back_populates="target_plan")
     __table_args__ = (
         UniqueConstraint("user_id", name="unique_user_target_plan"),
     )

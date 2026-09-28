@@ -5,7 +5,7 @@ import uuid
 from sqlalchemy import select
 from decimal import Decimal
 from datetime import date
-from db import async_session_maker, DailyEntry, DailyScore, TargetPlan, User
+from .db import async_session_maker, DailyEntry, DailyScore, TargetPlan, User
 
 # 1. Daily Entries DataFrame
 async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:

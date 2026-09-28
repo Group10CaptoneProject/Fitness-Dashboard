@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 import uvicorn
 
-from app.db import test_connection, init_db
-from app.routes.auth import router as auth_router 
+from .db import test_connection, init_db
+from .routes.auth import router as auth_router 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
