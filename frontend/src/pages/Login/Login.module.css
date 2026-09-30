@@ -226,6 +226,7 @@ Right White Section
 .form-links a:hover {
   text-decoration: underline;
 }
+
 /* For mobile responsiveness */
 /* hides left cover on mobile */
 @media (max-width: 768px) {
