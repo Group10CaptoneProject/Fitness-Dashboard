@@ -226,4 +226,17 @@ Right White Section
 .form-links a:hover {
   text-decoration: underline;
 }
-
+/* For mobile responsiveness */
+/* hides left cover on mobile */
+@media (max-width: 768px) {
+  .login-layout {
+    grid-template-columns: 1fr;
+  }
+  .hero-panel {
+    display: none;
+  }
+  .login-card {
+    max-width: 410px;
+    padding: 32px 24px;
+  }
+}
