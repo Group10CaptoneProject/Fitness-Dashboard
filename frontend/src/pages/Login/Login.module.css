@@ -48,7 +48,16 @@ Left Blue Section
 
   padding: 70px 7.2vw;
 
-  background: #1768dc 100%;
+  background:
+    linear-gradient(
+      rgba(23, 104, 220, 0.8),
+      rgba(23, 104, 220, 0.8)
+    ),
+    url("/images/login-background.jpg");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .hero-content {

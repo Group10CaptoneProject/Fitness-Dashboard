@@ -167,4 +167,3 @@ async def reset_password(data: ResetPassword, db: AsyncSession = Depends(get_db)
     }
 
      
-    
