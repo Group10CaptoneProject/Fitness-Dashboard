@@ -1,80 +1,220 @@
-body {
+:global(*) {
+  box-sizing: border-box;
+}
+
+:global(body) {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f0f1f3;
- }
- 
- 
- .login-page {
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #ffffff;
+}
+
+:global(html) {
+  margin: 0;
+  padding: 0;
+}
+
+/* Main Page */
+.login-page {
+  width: 100%;
   min-height: 100vh;
+  padding: 0;
+  margin: 0;
+  background: #ffffff;
+  position: relative;
+}
+
+/* Main two column layout */
+.login-layout {
+  width: 100%;
+  min-height: 100vh;
+
+  display: grid;
+  grid-template-columns: 58% 42%;
+
+  margin: 0;
+  padding: 0;
+}
+
+/* 
+Left Blue Section
+*/
+
+.hero-panel {
+  min-height: 100vh;
+
   display: flex;
-  justify-content: center;
   align-items: center;
- }
- 
- 
- .login-card {
-  width: 380px;
-  background: white;
-  padding: 40px;
-  border-radius: 16px;
-  /* box-shadow: 0 5px 25px rgba(0,0,0,0.1); */
- }
- 
- 
- h1 {
+
+  padding: 70px 7.2vw;
+
+  background: #1768dc 100%;
+}
+
+.hero-content {
+  width: 100%;
+  max-width: 670px;
+
+  margin-top: -20px;
+}
+
+.hero-content h1 {
+  margin: 0;
+
+  color: #ffffff;
+
+  font-size: clamp(54px, 5vw, 78px);
+  font-weight: 700;
+}
+
+.hero-content p {
+  max-width: 670px;
+
+  color: #d8e7ff;
+  
+  font-size: clamp(18px, 1.6vw, 23px);
+}
+
+/* 
+Right White Section 
+*/
+
+.form-panel {
+  min-height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 70px 5vw;
+
+  background: #ffffff;
+}
+
+/* Login Card */
+.login-card {
+  width: min(100%, 410px);
+
+  padding: 42px 48px 54px;
+
+  background: #ffffff;
+
+  border-radius: 10px;
+
+  box-shadow: 0 2px 22px rgba(0, 0, 0, 0.035);
+}
+
+/* Welcome Back */
+.login-card h2 {
+  margin: 0;
+
   text-align: center;
-  color: #13294b;
- }
- 
- 
- .subtitle {
+
+  color: #080808;
+
+  font-size: 35px;
+  line-height: 1.2;
+
+  font-weight: 700;
+}
+
+/* Subtitle */
+.subtitle {
+  margin: 12px 0 38px;
+
+  color: #969696;
+
   text-align: center;
-  color: gray;
-  margin-bottom: 30px;
- }
- 
- 
- label {
+
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+/* Form */
+.login-card form {
+  width: 100%;
+}
+
+/* Email and Possword Labels */
+.login-card label {
   display: block;
-  margin-top: 15px;
-  margin-bottom: 8px;
- }
- 
- 
- input {
+
+  margin: 0 0 8px;
+
+  color: #151515;
+
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+/* Login Inputs */
+.login-card input {
+  display: block;
+
   width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
- }
- 
- 
- button {
+  height: 38px;
+
+  margin: 0 0 18px;
+  padding: 0 13px;
+
+  border: 1px solid #bdbdbd;
+  border-radius: 5px;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #222222;
+
+  font-size: 15px;
+}
+
+.login-card input::placeholder {
+  color: #a7a7a7;
+}
+
+/* Sign In button */
+.login-card button {
+  display: block;
+
   width: 100%;
-  margin-top: 25px;
-  padding: 14px;
-  background: #1769e0;
-  color: white;
+  height: 38px;
+
+  margin-top: 23px;
+  padding: 0 16px;
+
   border: none;
-  border-radius: 8px;
-  cursor: pointer;
- }
- 
- 
- button:hover {
-  background: #1257ba;
- }
- 
- 
- .signup {
-  text-align: center;
-  margin-top: 20px;
- }
- 
- 
- a {
-  color: #1769e0;
+  border-radius: 5px;
+
+  background: #216cda;
+
+  color: #ffffff;
+
+  font-size: 15px;
+}
+
+.login-card button:hover {
+  background: #185fc7;
+}
+
+/* Forgot password and Create account Button */
+.form-links {
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-top: 16px;
+}
+
+.form-links a {
+  color: #2870d8;
+
+  font-size: 15px;
+
   text-decoration: none;
- }
- 
+}
+
+.form-links a:hover {
+  text-decoration: underline;
+}
+
