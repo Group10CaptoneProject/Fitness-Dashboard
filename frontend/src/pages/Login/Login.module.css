@@ -84,6 +84,27 @@ Left Blue Section
   font-size: clamp(18px, 1.3vw, 23px);
 }
 
+.typed-text {
+  max-width: 670px;
+
+  margin-top: 28px;
+
+  color: #ffffff;
+
+  font-size: clamp(16px, 1.1vw, 20px);
+  font-weight: 500;
+
+  padding-left: 14px;
+
+  border-left: 3px solid #ffffff;
+}
+.typed-label {
+  font-weight: 600;
+
+  margin-right: 4px;
+
+  color: #facc15;
+}
 /* 
 Right White Section 
 */
