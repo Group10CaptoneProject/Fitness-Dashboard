@@ -22,7 +22,6 @@ async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
                 "soreness": entry.soreness,
                 "stress": entry.stress,
                 "heart_rate": entry.heart_rate,
-                "duration": entry.duration,
                 "difficulty": entry.difficulty
             }
             for entry in entries
@@ -37,7 +36,6 @@ async def update_entries_by_id(
     soreness: int, 
     stress: int, 
     heart_rate: int, 
-    duration: int, 
     difficulty: int
 ):
     async with async_session_maker() as session:
@@ -49,7 +47,6 @@ async def update_entries_by_id(
             soreness=soreness,
             stress=stress,
             heart_rate=heart_rate,
-            duration=duration,
             difficulty=difficulty
         )
 
@@ -114,7 +111,6 @@ async def get_target_plan(user_id: uuid.UUID) -> pd.DataFrame:
 
         return pd.DataFrame([
             {
-                "duration_goal": plan.duration_goal,
                 "sets_goal": plan.sets_goal,
                 "reps_goal": plan.reps_goal,
                 "weights_goal": plan.weights_goal,
@@ -126,7 +122,6 @@ async def get_target_plan(user_id: uuid.UUID) -> pd.DataFrame:
 #update target plan
 async def update_target_plan(
     user_id: uuid.UUID, 
-    duration_goal: int, 
     sets_goal: int, 
     reps_goal: int, 
     weights_goal: float, 
@@ -136,7 +131,6 @@ async def update_target_plan(
         # PostgreSQL automatically assigns plan_id (autoincrement int)
         new_plan = TargetPlan(
             user_id=user_id,
-            duration_goal=duration_goal,
             sets_goal=sets_goal,
             reps_goal=reps_goal,
             weights_goal=weights_goal,
@@ -253,7 +247,6 @@ async def main():
         soreness=3,
         stress=4,
         heart_rate=65,
-        duration=90,
         difficulty=7
     )
 

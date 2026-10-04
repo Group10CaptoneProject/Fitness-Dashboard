@@ -1,6 +1,12 @@
 from pydantic import BaseModel, Field, model_validator
+import uuid 
+from typing import List 
 from datetime import date
-from .db import MuscleCategoryEnum, MuscleGroupEnum
+from enum import Enum as PyEnum
+
+from .db import GoalEnum, ExperienceLevelEnum, EquipmentEnum, DayOfWeekEnum, MuscleCategoryEnum, MuscleGroupEnum
+from sqlalchemy import String, Integer, ARRAY, Enum
+from sqlalchemy.orm import Mapped, mapped_column
 
 class DailyEntryCreate(BaseModel):
     entry_date: date
@@ -21,12 +27,16 @@ class DailyEntryCreate(BaseModel):
     def validate_muscle_group_category(self):
         category_map = {
             MuscleCategoryEnum.UPPER_BODY: {
-                MuscleGroupEnum.CHEST, MuscleGroupEnum.BACK, MuscleGroupEnum.BICEPS,
+                MuscleGroupEnum.CHEST, 
+                MuscleGroupEnum.BACK, 
+                MuscleGroupEnum.BICEPS,
                 MuscleGroupEnum.TRICEPS, MuscleGroupEnum.SHOULDERS
             },
             MuscleCategoryEnum.LOWER_BODY: {
-                MuscleGroupEnum.QUADS, MuscleGroupEnum.HAMSTRINGS,
-                MuscleGroupEnum.GLUTES, MuscleGroupEnum.CALVES
+                MuscleGroupEnum.QUADS, 
+                MuscleGroupEnum.HAMSTRINGS,
+                MuscleGroupEnum.GLUTES, 
+                MuscleGroupEnum.CALVES
             },
             MuscleCategoryEnum.CARDIO_CORE: {
                 MuscleGroupEnum.ABS
@@ -39,3 +49,18 @@ class DailyEntryCreate(BaseModel):
                 f"Muscle group '{self.muscle_group.value}' is invalid for category '{self.muscle_category.value}'"
             )
         return self
+
+class UserProfileCreate(BaseModel):
+    primary_goal: GoalEnum
+    experience_level: ExperienceLevelEnum
+    preferred_duration: int = Field(..., ge=15, le=180, description="Preferred duration in minutes")
+    
+    equipment_available: List[EquipmentEnum] = Field(..., min_length=1)
+    preferred_workout_days: List[DayOfWeekEnum] = Field(..., min_length=1)
+
+class UserProfileResponse(UserProfileCreate):
+    user_id: uuid.UUID
+
+    class Config:
+        from_attributes = True 
+        

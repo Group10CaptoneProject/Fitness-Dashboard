@@ -7,14 +7,15 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from datetime import datetime, date 
 from enum import Enum as PyEnum
 from collections.abc import AsyncGenerator
-from sqlalchemy import String, Integer, ForeignKey, Numeric, Date, DateTime, UniqueConstraint, func, text, Enum
+from sqlalchemy import String, Integer, ForeignKey, Numeric, Date, DateTime, UniqueConstraint, func, text, Enum, ARRAY
 from decimal import Decimal
+from typing import List
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
-from app.config.config import settings
+from .config.config import settings
 # import SessionLocal 
 
 database_url = make_url(settings.database_url)
@@ -66,6 +67,28 @@ class MuscleGroupEnum(str, PyEnum):
     # Cardio/Core
     ABS = "abs"
 
+class ExperienceLevelEnum(str, PyEnum):
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+
+class EquipmentEnum(str, PyEnum):
+    BODYWEIGHT = "bodyweight"
+    DUMBBELLS = "dumbbells"
+    BARBELL = "barbell"
+    MACHINES = "machines"
+    CABLE = "cable"
+    KETTLEBELLS = "kettlebells"
+
+class DayOfWeekEnum(str, PyEnum):
+    MONDAY = "monday"
+    TUESDAY = "tuesday"
+    WEDNESDAY = "wednesday"
+    THURSDAY = "thursday"
+    FRIDAY = "friday"
+    SATURDAY = "saturday"
+    SUNDAY = "sunday"
+
 #set up SQL base 
 class Base(DeclarativeBase):
     pass 
@@ -76,6 +99,13 @@ class UserProfile(Base):
     
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True)
     primary_goal: Mapped[GoalEnum] = mapped_column(Enum(GoalEnum, native_enum=False), nullable=False, default=GoalEnum.HEALTHY_LIFESTYLE)
+    
+    experience_level: Mapped[ExperienceLevelEnum] = mapped_column(Enum(ExperienceLevelEnum, native_enum=False), nullable=False, default=ExperienceLevelEnum.INTERMEDIATE)
+    preferred_duration: Mapped[int] = mapped_column(Integer, nullable=False, default=60) # in minutes
+    
+    # Storing multi-select lists as Postgres Arrays
+    equipment_available: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    
     user: Mapped["User"] = relationship("User", back_populates="profile")
 
 #user login info
@@ -164,7 +194,6 @@ class TargetPlan(Base):
     plan_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
 
-    duration_goal: Mapped[int] = mapped_column(Integer, nullable=True)
     sets_goal: Mapped[int] = mapped_column(Integer, nullable=True)
     reps_goal: Mapped[int] = mapped_column(Integer, nullable=True)
     weights_goal: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=True)

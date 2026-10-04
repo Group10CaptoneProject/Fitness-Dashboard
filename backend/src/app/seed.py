@@ -36,7 +36,6 @@ async def seed_database():
 
         #target plan
         new_user.target_plan = TargetPlan(
-            duration_goal=60,       # 60 minutes
             sets_goal=16,           # 16 total sets
             reps_goal=10,           # 10 reps per set
             weights_goal=185.50,    # 185.5 lbs
@@ -63,7 +62,6 @@ async def seed_database():
                 soreness=random.randint(2, 8),
                 stress=random.randint(2, 7),
                 heart_rate=random.randint(110, 175),
-                duration=random.choice([45, 60, 75, 90]),
                 difficulty=random.randint(4, 9),
 
                 muscle_category=MuscleCategoryEnum.UPPER_BODY,
