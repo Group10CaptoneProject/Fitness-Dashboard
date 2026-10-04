@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import styles from "./Login.module.css";
+import { ReactTyped } from "react-typed";
 
 function Login() {
   return (
@@ -17,6 +18,25 @@ function Login() {
             <p>
               Track recovery, fatigue, workload, and a single overall training
               score that helps you decide how hard to train today.
+            </p>
+            <p className="typed-text">
+            <span className={styles["typed-label"]}>
+              Training Tip:
+            </span> 
+            <ReactTyped
+              strings={[
+                "Recovery is just as important as training.",
+                "Sleep can affect your energy and workout performance.",
+                "Training too hard without enough recovery can increase fatigue.",
+                "Consistency matters more than one perfect workout.",
+                "Tracking your workload can help you train smarter.",
+                "Your readiness can change from day to day."
+              ]}
+              typeSpeed={35}
+              backSpeed={20}
+              backDelay={1800}
+              loop
+            />
             </p>
           </div>
         </section>
