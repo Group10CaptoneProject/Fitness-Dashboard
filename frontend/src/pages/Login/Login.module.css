@@ -72,7 +72,7 @@ Left Blue Section
 
   color: #ffffff;
 
-  font-size: clamp(54px, 5vw, 78px);
+    font-size: clamp(54px, 4.5vw, 78px);
   font-weight: 700;
 }
 
@@ -81,7 +81,7 @@ Left Blue Section
 
   color: #d8e7ff;
   
-  font-size: clamp(18px, 1.6vw, 23px);
+  font-size: clamp(18px, 1.3vw, 23px);
 }
 
 /* 
@@ -110,7 +110,7 @@ Right White Section
 
   border-radius: 10px;
 
-  box-shadow: 0 2px 22px rgba(0, 0, 0, 0.035);
+  box-shadow: 0 2px 22px rgba(0, 0, 0, 0.15);
 }
 
 /* Welcome Back */
@@ -121,7 +121,7 @@ Right White Section
 
   color: #080808;
 
-  font-size: 35px;
+  font-size: 2rem;
   line-height: 1.2;
 
   font-weight: 700;
@@ -135,7 +135,7 @@ Right White Section
 
   text-align: center;
 
-  font-size: 17px;
+  font-size: 1rem;
   line-height: 1.4;
 }
 
@@ -152,7 +152,7 @@ Right White Section
 
   color: #151515;
 
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.2;
 }
 
