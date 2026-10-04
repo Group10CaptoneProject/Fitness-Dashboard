@@ -5,15 +5,16 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from datetime import datetime, date 
+from enum import Enum as PyEnum
 from collections.abc import AsyncGenerator
-from sqlalchemy import String, Integer, ForeignKey, Numeric, Date, DateTime, UniqueConstraint, func, text
+from sqlalchemy import String, Integer, ForeignKey, Numeric, Date, DateTime, UniqueConstraint, func, text, Enum
 from decimal import Decimal
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
-from .config.config import settings
+from app.config.config import settings
 # import SessionLocal 
 
 database_url = make_url(settings.database_url)
@@ -33,6 +34,38 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_maker() as session: 
         yield session
 
+class GoalEnum(str, PyEnum):
+    HYPERTROPY = "hypertropy"
+    ENDURANCE = "endurance"
+    HEALTHY_LIFESTYLE = "healthy_lifestyle"
+
+class GenderEnum(str, PyEnum):
+    MALE = "male"
+    FEMALE = "female"
+    PREFER_NOT_TO_SAY = "prefer_not_to_say"
+
+class MuscleCategoryEnum(str, PyEnum):
+    UPPER_BODY = "upper_body"
+    LOWER_BODY = "lower_body"
+    CARDIO_CORE = "cardio_core"
+
+class MuscleGroupEnum(str, PyEnum):
+    # Upper Body
+    CHEST = "chest"
+    BACK = "back"
+    BICEPS = "biceps"
+    TRICEPS = "triceps"
+    SHOULDERS = "shoulders"
+    
+    # Lower Body
+    QUADS = "quads"
+    HAMSTRINGS = "hamstrings"
+    GLUTES = "glutes"
+    CALVES = "calves"
+    
+    # Cardio/Core
+    ABS = "abs"
+
 #set up SQL base 
 class Base(DeclarativeBase):
     pass 
@@ -42,8 +75,7 @@ class UserProfile(Base):
     __tablename__ = "user_profiles"
     
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True)
-    primary_goal: Mapped[str] = mapped_column(String(100), nullable=False)
-
+    primary_goal: Mapped[GoalEnum] = mapped_column(Enum(GoalEnum, native_enum=False), nullable=False, default=GoalEnum.HEALTHY_LIFESTYLE)
     user: Mapped["User"] = relationship("User", back_populates="profile")
 
 #user login info
@@ -64,6 +96,10 @@ class User(Base):
     daily_entries: Mapped[list["DailyEntry"]] = relationship("DailyEntry", back_populates="user", cascade="all, delete-orphan")
     daily_scores: Mapped[list["DailyScore"]] = relationship("DailyScore", back_populates="user", cascade="all, delete-orphan")
 
+    #onbaording page 1
+    fitness_profile: Mapped["UserFitnessProfile"] = relationship("UserFitnessProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+
+
 class DailyEntry(Base):
     __tablename__ = "daily_entries"
 
@@ -77,7 +113,18 @@ class DailyEntry(Base):
     stress: Mapped[int] = mapped_column(Integer) 
     heart_rate: Mapped[int] = mapped_column(Integer)
     duration: Mapped[int] = mapped_column(Integer)
+
     difficulty: Mapped[int] = mapped_column(Integer)
+
+    # Workout / Exercise Fields
+   # Mandatory Exercise Fields
+    muscle_category: Mapped[MuscleCategoryEnum] = mapped_column(
+        Enum(MuscleCategoryEnum, native_enum=False), nullable=False
+    )
+    muscle_group: Mapped[MuscleGroupEnum] = mapped_column(
+        Enum(MuscleGroupEnum, native_enum=False), nullable=False
+    )
+    exercise_name: Mapped[str] = mapped_column(String(100), nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())  
 
@@ -166,6 +213,21 @@ class PasswordResetCode(Base):
         DateTime(timezone=True),
         server_default=func.now()
     )
+
+#user fitness data
+class UserFitnessProfile(Base):
+    __tablename__ = "fitness_profile"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True)
+    gender: Mapped[GenderEnum] = mapped_column(Enum(GenderEnum, native_enum=False), nullable=False, default=GenderEnum.PREFER_NOT_TO_SAY)    
+    
+    age: Mapped[int] = mapped_column(Integer, nullable=False)
+    height: Mapped[int] = mapped_column(Integer, nullable=False)
+    weight: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    
+    user: Mapped["User"] = relationship("User", back_populates="fitness_profile")
 
 #initialize sql tables 
 async def init_db():

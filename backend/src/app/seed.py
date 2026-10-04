@@ -4,7 +4,7 @@ import random
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from .db import async_session_maker, engine, User, UserProfile, DailyEntry, DailyScore, TargetPlan
+from .db import async_session_maker, engine, User, MuscleGroupEnum, MuscleCategoryEnum, UserProfile, DailyEntry, DailyScore, TargetPlan
 from .analytics import get_entries_by_id, calculate_readiness_data, update_daily_score, update_user_dashboard
 
 #password hash
@@ -64,7 +64,11 @@ async def seed_database():
                 stress=random.randint(2, 7),
                 heart_rate=random.randint(110, 175),
                 duration=random.choice([45, 60, 75, 90]),
-                difficulty=random.randint(4, 9)
+                difficulty=random.randint(4, 9),
+
+                muscle_category=MuscleCategoryEnum.UPPER_BODY,
+                muscle_group=MuscleGroupEnum.CHEST,
+                exercise_name="Inclined Bench Press"
             )
             entries.append(entry) 
         
