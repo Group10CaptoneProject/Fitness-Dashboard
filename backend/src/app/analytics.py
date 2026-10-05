@@ -250,6 +250,9 @@ async def main():
         difficulty=7
     )
 
+    #validate the user entry 
+
+    
     # STEP 2: Fetch all raw entries into Pandas & run readiness analytics
     raw_df = await get_entries_by_id(test_user_id)
     processed_df = await calculate_readiness_data(raw_df)
@@ -260,3 +263,5 @@ async def main():
     # STEP 4: Fetch merged view for dashboard display
     dashboard_df = await get_user_dashboard(test_user_id)
     print(dashboard_df)
+
+    

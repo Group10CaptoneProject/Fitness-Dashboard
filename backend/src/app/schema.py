@@ -4,20 +4,58 @@ from typing import List
 from datetime import date, datetime
 from enum import Enum as PyEnum
 
-from .db import GoalEnum, ExperienceLevelEnum, EquipmentEnum, DayOfWeekEnum, MuscleCategoryEnum, MuscleGroupEnum
+from .db import GoalEnum, ExperienceLevelEnum, EquipmentEnum, DayOfWeekEnum, MuscleCategoryEnum, MuscleGroupEnum, GenderEnum
 from sqlalchemy import String, Integer, ARRAY, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 
+#profile created
+class UserProfileCreate(BaseModel):
+    primary_goal: GoalEnum
+    experience_level: ExperienceLevelEnum
+    
+    equipment_available: List[EquipmentEnum] = Field(..., min_length=1)
+    preferred_workout_days: List[DayOfWeekEnum] = Field(..., min_length=1, max_length=7)
+
+#profile response 
+class UserProfileResponse(UserProfileCreate):
+    user_id: uuid.UUID
+
+    class Config:
+        from_attributes = True 
+
+#fitness profile
+class UserFitnessProfileCreate(BaseModel):
+    #table fields entered
+    gender: GenderEnum
+    age: int = Field(..., ge=12, le=120)
+    height: int = Field(..., ge=50, le=250, description="Height in cm")
+    weight:int = Field(..., ge=20, le=300, description="Weight in lbs")
+
+class UserFitnessProfileResponse(UserFitnessProfileCreate):
+    #ids saved in response
+    user_id: uuid.UUID
+    created_at = datetime
+
+    class Config:
+        from_attributes = True 
+
 #new entry requirements
 class DailyEntryCreate(BaseModel):
-    used_id = uuid.UUID()
+    user_id = uuid.UUID()
     entry_date: date
     sleep: int = Field(..., ge=0, le=24)
     energy_level: int = Field(..., ge=1, le=10)
     soreness: int = Field(..., ge=1, le=10)
     stress: int = Field(..., ge=1, le=10)
     heart_rate: int = Field(..., ge=30, le=220)
+    duration: int = Field(..., ge=0)
     difficulty: int = Field(..., ge=1, le=10)
+
+    # Replaced duration with mechanical load metrics (for next week?)
+    #sets: int = Field(..., ge=1, le=100)
+    #reps: int = Field(..., ge=1, le=200)
+    #weight: float = Field(..., ge=0, le=2000, description="Weight in lbs or kg")
+
 
     # Mandatory exercise fields
     muscle_category: MuscleCategoryEnum
@@ -59,22 +97,6 @@ class DailyEntryResponse(BaseModel):
 
     class Config:
         from_attribute = True 
-
-#profile created
-class UserProfileCreate(BaseModel):
-    primary_goal: GoalEnum
-    experience_level: ExperienceLevelEnum
-    
-    equipment_available: List[EquipmentEnum] = Field(..., min_length=1)
-    preferred_workout_days: List[DayOfWeekEnum] = Field(..., min_length=1)
-
-#profile response 
-class UserProfileResponse(UserProfileCreate):
-    user_id: uuid.UUID
-
-    class Config:
-        from_attributes = True 
-
 
 def main():
    pass  

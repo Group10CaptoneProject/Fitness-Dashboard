@@ -101,7 +101,6 @@ class UserProfile(Base):
     primary_goal: Mapped[GoalEnum] = mapped_column(Enum(GoalEnum, native_enum=False), nullable=False, default=GoalEnum.HEALTHY_LIFESTYLE)
     
     experience_level: Mapped[ExperienceLevelEnum] = mapped_column(Enum(ExperienceLevelEnum, native_enum=False), nullable=False, default=ExperienceLevelEnum.INTERMEDIATE)
-    preferred_duration: Mapped[int] = mapped_column(Integer, nullable=False, default=60) # in minutes
     
     # Storing multi-select lists as Postgres Arrays
     equipment_available: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
@@ -144,6 +143,11 @@ class DailyEntry(Base):
     heart_rate: Mapped[int] = mapped_column(Integer)
     duration: Mapped[int] = mapped_column(Integer)
 
+    # Added sets, reps, weight (for next week)?
+    #sets: Mapped[int] = mapped_column(Integer, nullable=False)
+    #reps: Mapped[int] = mapped_column(Integer, nullable=False)
+    #weight: Mapped[float] = mapped_column(Integer, nullable=True)
+    
     difficulty: Mapped[int] = mapped_column(Integer)
 
     # Workout / Exercise Fields
