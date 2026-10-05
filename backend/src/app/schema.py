@@ -1,21 +1,22 @@
 from pydantic import BaseModel, Field, model_validator
 import uuid 
 from typing import List 
-from datetime import date
+from datetime import date, datetime
 from enum import Enum as PyEnum
 
 from .db import GoalEnum, ExperienceLevelEnum, EquipmentEnum, DayOfWeekEnum, MuscleCategoryEnum, MuscleGroupEnum
 from sqlalchemy import String, Integer, ARRAY, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 
+#new entry requirements
 class DailyEntryCreate(BaseModel):
+    used_id = uuid.UUID()
     entry_date: date
     sleep: int = Field(..., ge=0, le=24)
     energy_level: int = Field(..., ge=1, le=10)
     soreness: int = Field(..., ge=1, le=10)
     stress: int = Field(..., ge=1, le=10)
     heart_rate: int = Field(..., ge=30, le=220)
-    duration: int = Field(..., ge=0)
     difficulty: int = Field(..., ge=1, le=10)
 
     # Mandatory exercise fields
@@ -50,17 +51,31 @@ class DailyEntryCreate(BaseModel):
             )
         return self
 
+#entry esponse 
+class DailyEntryResponse(BaseModel):
+    entry_id: int
+    user_id: uuid.UUID
+    created_at: datetime 
+
+    class Config:
+        from_attribute = True 
+
+#profile created
 class UserProfileCreate(BaseModel):
     primary_goal: GoalEnum
     experience_level: ExperienceLevelEnum
-    preferred_duration: int = Field(..., ge=15, le=180, description="Preferred duration in minutes")
     
     equipment_available: List[EquipmentEnum] = Field(..., min_length=1)
     preferred_workout_days: List[DayOfWeekEnum] = Field(..., min_length=1)
 
+#profile response 
 class UserProfileResponse(UserProfileCreate):
     user_id: uuid.UUID
 
     class Config:
         from_attributes = True 
+
+
+def main():
+   pass  
         
