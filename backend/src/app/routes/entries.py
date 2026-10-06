@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from .db import get_db, DailyEntry, User
-from .schema import DailyEntryCreate
-from .analytics import calculate_readiness_data, update_user_dashboard  # or your scoring function
+from ..db import get_db, DailyEntry, User
+from ..schema import DailyEntryCreate
+from ..analytics import calculate_readiness_data, update_user_dashboard  # or your scoring function
 
 router = APIRouter(prefix="/entries", tags=["Daily Entries"])
 

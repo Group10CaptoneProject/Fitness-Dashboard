@@ -16,7 +16,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
 from .config.config import settings
-# import SessionLocal 
+#import SessionLocal 
 
 database_url = make_url(settings.database_url)
 database_url = database_url.set(drivername="postgresql+asyncpg")
@@ -30,6 +30,13 @@ engine = create_async_engine(
 )
 
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False
+)
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]: 
     async with async_session_maker() as session: 
@@ -141,7 +148,7 @@ class DailyEntry(Base):
     soreness: Mapped[int] = mapped_column(Integer) 
     stress: Mapped[int] = mapped_column(Integer) 
     heart_rate: Mapped[int] = mapped_column(Integer)
-    duration: Mapped[int] = mapped_column(Integer)
+    duration: Mapped[int] = mapped_column(Integer, nullable=False)
 
     # Added sets, reps, weight (for next week)?
     #sets: Mapped[int] = mapped_column(Integer, nullable=False)

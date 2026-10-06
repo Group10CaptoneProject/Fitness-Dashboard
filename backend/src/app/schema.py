@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, model_validator
 import uuid 
-from typing import List 
+from typing import List, Optional 
 from datetime import date, datetime
 from enum import Enum as PyEnum
 
@@ -34,14 +34,14 @@ class UserFitnessProfileCreate(BaseModel):
 class UserFitnessProfileResponse(UserFitnessProfileCreate):
     #ids saved in response
     user_id: uuid.UUID
-    created_at = datetime
+    created_at: datetime
 
     class Config:
         from_attributes = True 
 
 #new entry requirements
 class DailyEntryCreate(BaseModel):
-    user_id = uuid.UUID()
+    user_id: uuid.UUID
     entry_date: date
     sleep: int = Field(..., ge=0, le=24)
     energy_level: int = Field(..., ge=1, le=10)
@@ -97,6 +97,19 @@ class DailyEntryResponse(BaseModel):
 
     class Config:
         from_attribute = True 
+
+#daily score
+class DailyScoreResponse(BaseModel):
+    score_date: date
+    recovery: float
+    fatigue: float
+    workload_balance_score: float
+    final_training_score: float
+    readiness_level: str
+    workout_adjustment: str
+
+    class Config:
+        from_attributes = True
 
 def main():
    pass  

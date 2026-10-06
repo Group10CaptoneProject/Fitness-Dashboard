@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from .db import get_db, UserFitnessProfile, UserProfile
-from .schema import UserProfileCreate, UserProfileResponse, UserFitnessProfileCreate, UserFitnessProfileResponse
+from ..db import get_db, UserFitnessProfile, UserProfile
+from ..schema import UserProfileCreate, UserProfileResponse, UserFitnessProfileCreate, UserFitnessProfileResponse
 
 router = APIRouter(prefix="/profile", tags=["fitness-profile", "user-profile"])
 
