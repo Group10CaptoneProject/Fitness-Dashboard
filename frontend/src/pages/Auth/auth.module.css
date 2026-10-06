@@ -223,7 +223,12 @@
   .form-links a:hover {
     text-decoration: underline;
   }
-  
+  /* for error messages */
+  .error{
+    color: #ff4d4f;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
   /* For mobile responsiveness */
   /* hides left cover on mobile */
   @media (max-width: 768px) {
