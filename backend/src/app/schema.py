@@ -106,7 +106,7 @@ class DailyScoreResponse(BaseModel):
     workload_balance_score: float
     final_training_score: float
     readiness_level: str
-    workout_adjustment: str
+    workout_adjustment: float
 
     class Config:
         from_attributes = True

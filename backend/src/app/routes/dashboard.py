@@ -67,7 +67,7 @@ async def get_daily_entry_data(user_id: uuid.UUID, db: AsyncSession = Depends(ge
     }
 
 @router.get("/{user_id}/scores", response_model=List[DailyScoreResponse])
-async def read_user_daily_scores(user_id: uuid.UUID):
+async def read_user_daily_scores(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     #fetch df
     scores_df = await get_daily_score(user_id)
 

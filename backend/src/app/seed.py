@@ -5,6 +5,8 @@ from passlib.context import CryptContext
 from sqlalchemy import select
 import uuid 
 from sqlalchemy.orm import Session
+from app.config.config import settings
+
 from app.db import (
     Base, 
     AsyncSessionLocal,
@@ -31,10 +33,14 @@ from app.analytics import (
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 async def seed_database():
+    print(f"CONNECTING TO DATABASE: {settings.database_url}")
     #recreate tables in Neon 
     async with engine.begin() as conn:
         print("Dropping and recreating database tables...")
-        await conn.run_sync(Base.metadata.drop_all)
+
+        #uncommit the line below if changes are made to db file 
+        #await conn.run_sync(Base.metadata.drop_all)    
+        
         await conn.run_sync(Base.metadata.create_all)
     print("Database schema successfully synchronized!")
 
