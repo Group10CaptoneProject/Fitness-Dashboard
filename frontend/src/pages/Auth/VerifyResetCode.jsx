@@ -1,7 +1,43 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import styles from "./auth.module.css";
+import { useState } from "react";
+
 
 function VerifyResetCode() {
+  const [code, setCode] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  const navigate = useNavigate()
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const email = sessionStorage.getItem("resetEmail");
+    try {
+      const response = await fetch("http://localhost:8888/auth/verify-reset-code",{
+          method: "POST",
+          headers: {"Content-Type": "application/json",},
+          body: JSON.stringify({ email, code, }),
+        }
+      );
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        setError(data.detail || "Unable to verify");
+        return;
+      }
+      sessionStorage.setItem("resetToken", data.reset_token);
+      navigate("/reset-password");
+  
+    } catch (error) {
+      setError("Unable to connect to the server.");
+    } finally {
+      setLoading(false);
+    }
+  };
     return (
       <div className={styles["login-page"]}>
         <div className={styles["login-layout"]}>
@@ -32,7 +68,7 @@ function VerifyResetCode() {
                 We've sent a six-digit verification code to your inbox
               </p>
   
-              <form onSubmit={(event) => event.preventDefault()}>
+              <form onSubmit={handleSubmit}>
                 <label htmlFor="code">Verification Code</label>
                 <input
                   id="code"
@@ -40,7 +76,10 @@ function VerifyResetCode() {
                   inputMode="numeric"
                   maxLength="6"
                   placeholder="Enter 6-digit code"
+                  value = {code}
+                  onChange={(e) => setCode(e.target.value)}
                 />
+                <div className={styles["error"]}>{error}</div>
                 <button type="submit">Verify Code</button>
               </form>
   
