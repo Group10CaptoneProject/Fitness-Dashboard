@@ -42,7 +42,7 @@ def start():
         "app.main:app",
         host="localhost",
         port=8888,
-        reload=True
+        reload=True,
     )
 
 @app.get("/")
