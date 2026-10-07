@@ -289,4 +289,4 @@ async def test_connection():
 
 if __name__ == "__main__":
     asyncio.run(test_connection())
-    asyncio.run(init_db())
+    # asyncio.run(init_db())
