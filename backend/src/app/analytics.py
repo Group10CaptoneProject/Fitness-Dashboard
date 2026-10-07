@@ -5,7 +5,7 @@ import uuid
 from sqlalchemy import select
 from decimal import Decimal
 from datetime import date
-from .db import async_session_maker, MuscleCategoryEnum, MuscleGroupEnum, DailyEntry, DailyScore, TargetPlan, User
+from app.db import async_session_maker, MuscleCategoryEnum, MuscleGroupEnum, DailyEntry, DailyScore, TargetPlan, User
 
 # 1. Daily Entries DataFrame
 async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
@@ -22,6 +22,7 @@ async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
                 "soreness": entry.soreness,
                 "stress": entry.stress,
                 "heart_rate": entry.heart_rate,
+                "duration": entry.duration,
                 "difficulty": entry.difficulty
             }
             for entry in entries
@@ -35,7 +36,8 @@ async def update_entries_by_id(
     energy_level: int, 
     soreness: int, 
     stress: int, 
-    heart_rate: int, 
+    heart_rate: int,
+    duration: int, 
     difficulty: int
 ):
     async with async_session_maker() as session:
@@ -47,6 +49,7 @@ async def update_entries_by_id(
             soreness=soreness,
             stress=stress,
             heart_rate=heart_rate,
+            duration = duration,
             difficulty=difficulty
         )
 
@@ -247,6 +250,7 @@ async def main():
         soreness=3,
         stress=4,
         heart_rate=65,
+        duration = 90,
         difficulty=7
     )
 
@@ -260,3 +264,5 @@ async def main():
     # STEP 4: Fetch merged view for dashboard display
     dashboard_df = await get_user_dashboard(test_user_id)
     print(dashboard_df)
+
+    

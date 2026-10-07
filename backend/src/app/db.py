@@ -2,7 +2,7 @@ import asyncio
 import uuid
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 from datetime import datetime, date 
 from enum import Enum as PyEnum
@@ -16,7 +16,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
 from .config.config import settings
-# import SessionLocal 
+#import SessionLocal 
 
 database_url = make_url(settings.database_url)
 database_url = database_url.set(drivername="postgresql+asyncpg")
@@ -30,6 +30,13 @@ engine = create_async_engine(
 )
 
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False
+)
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]: 
     async with async_session_maker() as session: 
@@ -101,7 +108,6 @@ class UserProfile(Base):
     primary_goal: Mapped[GoalEnum] = mapped_column(Enum(GoalEnum, native_enum=False), nullable=False, default=GoalEnum.HEALTHY_LIFESTYLE)
     
     experience_level: Mapped[ExperienceLevelEnum] = mapped_column(Enum(ExperienceLevelEnum, native_enum=False), nullable=False, default=ExperienceLevelEnum.INTERMEDIATE)
-    preferred_duration: Mapped[int] = mapped_column(Integer, nullable=False, default=60) # in minutes
     
     # Storing multi-select lists as Postgres Arrays
     equipment_available: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
@@ -142,8 +148,13 @@ class DailyEntry(Base):
     soreness: Mapped[int] = mapped_column(Integer) 
     stress: Mapped[int] = mapped_column(Integer) 
     heart_rate: Mapped[int] = mapped_column(Integer)
-    duration: Mapped[int] = mapped_column(Integer)
+    duration: Mapped[int] = mapped_column(Integer, nullable=False)
 
+    # Added sets, reps, weight (for next week)?
+    #sets: Mapped[int] = mapped_column(Integer, nullable=False)
+    #reps: Mapped[int] = mapped_column(Integer, nullable=False)
+    #weight: Mapped[float] = mapped_column(Integer, nullable=True)
+    
     difficulty: Mapped[int] = mapped_column(Integer)
 
     # Workout / Exercise Fields
@@ -278,4 +289,4 @@ async def test_connection():
 
 if __name__ == "__main__":
     asyncio.run(test_connection())
-    asyncio.run(init_db())
+    # asyncio.run(init_db())
