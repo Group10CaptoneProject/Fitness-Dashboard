@@ -72,7 +72,7 @@ Left Blue Section
 
   color: #ffffff;
 
-    font-size: clamp(54px, 4.5vw, 78px);
+  font-size: clamp(54px, 4.5vw, 78px);
   font-weight: 700;
 }
 
@@ -98,6 +98,7 @@ Left Blue Section
 
   border-left: 3px solid #ffffff;
 }
+
 .typed-label {
   font-weight: 600;
 
@@ -105,6 +106,7 @@ Left Blue Section
 
   color: #facc15;
 }
+
 /* 
 Right White Section 
 */
@@ -148,7 +150,6 @@ Right White Section
   font-weight: 700;
 }
 
-/* Subtitle */
 .subtitle {
   margin: 12px 0 38px;
 
