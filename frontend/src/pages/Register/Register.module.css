@@ -201,3 +201,17 @@ Right White Section
 .login-text a:hover {
     text-decoration: underline;
 }
+
+@media (max-width: 768px) {
+    .register-layout {
+      grid-template-columns: 1fr;
+    }
+    .hero-panel {
+      display: none;
+    }
+    .register-card {
+      max-width: 410px;
+      padding: 32px 24px;
+    }
+  }
+  
