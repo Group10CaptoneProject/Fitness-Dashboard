@@ -1,0 +1,143 @@
+.landing-page {
+  width: 100%;
+  min-height: 100vh;
+
+  font-family: "Poppins", sans-serif;
+
+  background-color: #ffffff;
+  color: #172033;
+}
+.hero {
+  position: relative;
+
+  width: 100%;
+  height: calc(100vh - 80px);
+
+  display: flex;
+  align-items: flex-end;
+}
+
+.hero-video {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  z-index: 0;
+}
+
+.hero-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  background: linear-gradient(
+    to right,
+    rgba(5, 12, 25, 0.72),
+    rgba(5, 12, 25, 0.3),
+    rgba(5, 12, 25, 0.08)
+  );
+
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+
+  z-index: 2;
+
+  width: 100%;
+  max-width: 670px;
+
+  margin-left: 6.5vw;
+  margin-bottom: 5rem;
+
+  color: white;
+}
+.hero-label {
+  margin-bottom: 1rem;
+
+  color: #facc15;
+
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  letter-spacing: 0.15rem;
+}
+
+.hero-content h1 {
+  margin: 0;
+
+  color: #ffffff;
+
+  font-size: clamp(4rem, 7vw, 7rem);
+
+  line-height: 0.98;
+
+  letter-spacing: -0.2rem;
+}
+
+.hero-content h1 span {
+  color: #facc15;
+}
+
+.hero-description {
+  max-width: 620px;
+
+  margin-top: 1.8rem;
+
+  color: #d7dee8;
+
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+
+.hero-buttons {
+  display: flex;
+
+  gap: 1rem;
+
+  margin-top: 2rem;
+}
+
+.primary-button,
+.secondary-button {
+  padding: 0.9rem 1.6rem;
+
+  border-radius: 0.5rem;
+
+  text-decoration: none;
+
+  font-weight: 600;
+
+  transition: 0.2s ease;
+}
+
+.primary-button {
+  background-color: #facc15;
+
+  color: #172033;
+}
+
+.primary-button:hover {
+  background-color: #eab308;
+
+  transform: translateY(-2px);
+}
+
+.secondary-button {
+  border: 1px solid rgba(255, 255, 255, 0.65);
+
+  color: white;
+
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.secondary-button:hover {
+  background-color: rgba(255, 255, 255, 0.18);
+}

@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router";
+import Landing from "../pages/Landing/Landing";
 import Login from "../pages/Login/Login";
 import Register from "../pages/Register/Register";
 import ForgotPassword from "../pages/Auth/ForgotPassword";
@@ -9,7 +10,7 @@ import NotFound from "../pages/NotFound/NotFound";
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<Landing />} />
 
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
