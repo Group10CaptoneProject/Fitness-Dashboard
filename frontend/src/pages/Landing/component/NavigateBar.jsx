@@ -10,7 +10,11 @@ function NavBar() {
           <span>Fitness Dashboard</span>
         </Link>
       </div>
-
+      <div className={styles["home-logo"]}>
+        <Link to ="/">
+            <Dumbbell size={30} color="black" strokeWidth={2} />
+        </Link>
+      </div>
       <div className={styles["nav-links"]}>
         <Link to="/about">
           <span>About</span>

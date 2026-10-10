@@ -28,3 +28,23 @@
     background-color: #facc15;
     color: #172033;
 }
+.login-button, .register-button{
+    padding: 0.5rem;
+}
+.home-logo{
+    display: none;
+}
+@media (max-width: 768px) {
+    .home-logo{
+        display: block;
+    }
+    .logo{
+        display: none;
+    }
+    .nav-bar .nav-links {
+        display: none;
+    }
+    .nav-bar{
+        padding: 1.2rem 2rem;
+    }
+}
