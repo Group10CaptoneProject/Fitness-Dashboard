@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import styles from "./Register.module.css";
+import { Dumbbell } from "lucide-react";
 
 function Register() {
   return (
@@ -8,6 +9,12 @@ function Register() {
 
         {/* Left side */}
         <div className={styles["hero-panel"]}>
+          <div className={styles["home-logo"]}>
+            <Link to ="/">
+                <Dumbbell size={45} color="white" strokeWidth={2} />
+                <span>Fitness Dashboard</span>
+            </Link>
+          </div>
           <div className={styles["hero-content"]}>
             <h1>
               Start tracking.

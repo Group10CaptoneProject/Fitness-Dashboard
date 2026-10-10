@@ -1,6 +1,7 @@
 import { Link ,useNavigate } from "react-router";
 import { useState } from "react";
 import styles from "./auth.module.css";
+import { Dumbbell } from "lucide-react";
 
 
 function ResetPassword() {
@@ -55,6 +56,12 @@ function ResetPassword() {
       <div className={styles["login-layout"]}>
         {/* Left section */}
         <section className={styles["hero-panel"]}>
+          <div className={styles["home-logo"]}>
+            <Link to ="/">
+                <Dumbbell size={45} color="white" strokeWidth={2} />
+                <span>Fitness Dashboard</span>
+            </Link>
+          </div>
           <div className={styles["hero-content"]}>
             <p>STEP 3 OF 3</p>
             <h1>RESET YOUR PASSWORD.</h1>

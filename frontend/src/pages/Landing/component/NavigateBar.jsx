@@ -1,5 +1,6 @@
 import styles from "./NavigateBar.module.css";
 import { Link } from "react-router";
+import { Dumbbell } from "lucide-react";
 
 function NavBar() {
   return (

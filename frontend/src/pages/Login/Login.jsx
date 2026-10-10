@@ -1,6 +1,8 @@
 import { Link } from "react-router";
 import styles from "./Login.module.css";
 import { ReactTyped } from "react-typed";
+import { Dumbbell } from "lucide-react";
+
 
 function Login() {
   return (
@@ -9,6 +11,12 @@ function Login() {
         
         {/* Left blue section */}
         <section className={styles["hero-panel"]}>
+          <div className={styles["home-logo"]}>
+            <Link to ="/">
+                <Dumbbell size={45} color="white" strokeWidth={2} />
+                <span>Fitness Dashboard</span>
+            </Link>
+          </div>
           <div className={styles["hero-content"]}>
             <h1>
               See fatigue
