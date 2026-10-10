@@ -13,7 +13,7 @@
     color: #087cf0;
 }
 .nav-bar .logo{
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     color: black;
 }
 .nav-bar .nav-links{
@@ -34,6 +34,55 @@
 .home-logo{
     display: none;
 }
+/* FD */
+.animated-word {
+    display: inline-flex;
+
+    color: #087cf0;
+}
+/* Individual FD letters */
+
+.animated-word > span {
+    position: relative;
+    opacity: 0;
+    transform: translateY(35px);
+    animation: fd-appear 0.8s ease-out forwards;
+}
+
+
+/* F */
+.animated-word > span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+/* D */
+.animated-word > span:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+/* FD bounce animation */
+@keyframes fd-appear {
+
+    0% {
+        opacity: 0;
+        transform: translateY(35px);
+    }
+
+    65% {
+        opacity: 1;
+        transform: translateY(-7px);
+    }
+
+    82% {
+        transform: translateY(4px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @media (max-width: 768px) {
     .home-logo{
         display: block;

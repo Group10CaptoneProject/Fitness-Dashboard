@@ -7,7 +7,12 @@ function NavBar() {
     <nav className={styles["nav-bar"]}>
       <div className ={styles["logo"]}>
         <Link to="/">
-          <span>Fitness Dashboard</span>
+        <span className={styles["animated-word"]}>
+            <span>F</span>
+            <span>D</span>
+        </span>
+        <span> : </span>
+        <span>Fitness Dashboard</span>
         </Link>
       </div>
       <div className={styles["home-logo"]}>
