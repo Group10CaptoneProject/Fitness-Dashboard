@@ -49,6 +49,40 @@ function Landing() {
           </div>
         </div>
       </section>
+      {/* About */}
+      <section className = {styles["about-section"]}>
+        <div className = {styles["section-wrapper"]}>
+          <div class = {styles["section-heading"]}>
+            ABOUT US
+          </div>
+          <div className = "about-body">
+            <div>
+              <h2>
+                Many adults today train without proper guidance, 
+                and some may not know how to interpret the signals their bodies are giving them.
+                Our Fitness Dashboard team is on a mission to use computation
+                and data to make training easier to understand.
+              </h2>
+            </div>
+
+            <div>
+              Our project is a fitness dashboard that brings workout and recovery information
+              together in one place.
+              Users create an account, enter basic information about themselves,
+              and select their fitness goals, experience level,
+              available equipment, and preferred workout days. 
+              They can then complete daily check-ins by entering information such as sleep, energy, soreness,
+              stress, heart rate, workout duration, and workout difficulty.
+              The system uses this data to calculate recovery, fatigue, workload,
+              and overall training scores, which are displayed on the dashboard
+              to help users better understand their training and recovery.
+            </div>
+          </div>
+          <div>
+        </div>
+        </div>
+      </section>
+      
     </div>
   );
 }

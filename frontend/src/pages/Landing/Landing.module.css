@@ -141,3 +141,27 @@
 .secondary-button:hover {
   background-color: rgba(255, 255, 255, 0.18);
 }
+.about-section {
+  width: 100%;
+  padding: 7rem 7vw;
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.section-heading{
+  color: #087cf0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  white-space: nowrap;
+}
+.section-wrapper{
+  display: flex;
+  gap: 7rem;
+
+}
+.about-body{
+  display: flex;
+  padding: 1rem;
+}
