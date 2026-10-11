@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict 
 
 # Point to .env relative to this config file
-ENV_PATH = Path(__file__).resolve().parent.parent.parent / ".env"
+ENV_PATH = Path(__file__).resolve().parents[3] / ".env"
 
 class Settings(BaseSettings):
     database_url: str
