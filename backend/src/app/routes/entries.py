@@ -43,6 +43,9 @@ async def create_daily_entry(entry_data: DailyEntryCreate, current_user_id: uuid
         "heart_rate": entry.heart_rate,
         "duration": entry.duration,
         "difficulty": entry.difficulty,
+        "sets": entry.sets,
+        "reps": entry.reps,
+        "weight": entry.weight,
 
         "muscle_category": entry.muscle_category.value if hasattr(entry.muscle_category, "value") else entry.muscle_category,
         "muscle_group": entry.muscle_group.value if hasattr(entry.muscle_group, "value") else entry.muscle_group,

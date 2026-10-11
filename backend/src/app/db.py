@@ -150,10 +150,10 @@ class DailyEntry(Base):
     heart_rate: Mapped[int] = mapped_column(Integer)
     duration: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    # Added sets, reps, weight (for next week)?
-    #sets: Mapped[int] = mapped_column(Integer, nullable=False)
-    #reps: Mapped[int] = mapped_column(Integer, nullable=False)
-    #weight: Mapped[float] = mapped_column(Integer, nullable=True)
+    #Added sets, reps, weight (for next week)?
+    sets: Mapped[int] = mapped_column(Integer, nullable=False)
+    reps: Mapped[int] = mapped_column(Integer, nullable=False)
+    weight: Mapped[float] = mapped_column(Integer, nullable=True)
     
     difficulty: Mapped[int] = mapped_column(Integer)
 

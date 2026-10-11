@@ -2,9 +2,13 @@ import pandas as pd
 import numpy as np 
 import asyncio
 import uuid 
+import seaborn as sns 
+import matplotlib.pyplot as plt 
+import matplotlib.dates as mdates 
+
 from sqlalchemy import select
 from decimal import Decimal
-from datetime import date
+from datetime import date, timedelta
 from app.db import async_session_maker, MuscleCategoryEnum, MuscleGroupEnum, DailyEntry, DailyScore, TargetPlan, User
 
 # 1. Daily Entries DataFrame
@@ -23,7 +27,10 @@ async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
                 "stress": entry.stress,
                 "heart_rate": entry.heart_rate,
                 "duration": entry.duration,
-                "difficulty": entry.difficulty
+                "difficulty": entry.difficulty,
+                "sets": entry.sets,
+                "reps": entry.reps,
+                "weight": entry.weight
             }
             for entry in entries
         ])
@@ -38,7 +45,10 @@ async def update_entries_by_id(
     stress: int, 
     heart_rate: int,
     duration: int, 
-    difficulty: int
+    difficulty: int,
+    sets: int, 
+    reps: int,
+    weight: float
 ):
     async with async_session_maker() as session:
         new_entry = DailyEntry(
@@ -50,13 +60,160 @@ async def update_entries_by_id(
             stress=stress,
             heart_rate=heart_rate,
             duration = duration,
-            difficulty=difficulty
+            difficulty=difficulty,
+            sets = sets,
+            reps = reps,
+            weight = weight
         )
 
         await session.merge(new_entry)
         await session.commit()
         print(f"Successfully saved raw daily entry for {entry_date} to Neon!")
 
+async def show_weight_trends(user_id: uuid.UUID):
+    #get user id first
+    current_user = user_id
+    user_entries = await get_entries_by_id(current_user)
+
+    #locate entry date from the daily entry table
+    #filter for past 7 days
+    today = date.today()
+    week_ago = today - timedelta(days = 7)
+    filtered_entries = user_entries.loc[user_entries['entry_date'] > week_ago]
+
+    #create plot 
+    fig, axes = plt.subplot(figsize = (10, 7))
+    axes.plot(filtered_entries['entry_date'], filtered_entries['weight'], marker='o', linestyle='-', color='green')
+
+    axes.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
+
+    #add labels
+    axes.set_title("Weight progress in Past 7 days", fontsize=14, fontweight='bold')
+    axes.set_xlabel("Date", fontsize=14)
+    axes.set_ylabel("Weight (lbs)", fontsize = 14)
+
+    fig.autofmt_xdate()
+
+    #return plot 
+    return fig 
+
+async def show_heart_rate_trends(user_id: uuid.UUID):
+    #get user id first
+    current_user = user_id
+    user_entries = await get_entries_by_id(current_user)
+
+    #locate entry date from the daily entry table
+    #filter for past 7 days
+    today = date.today()
+    week_ago = today - timedelta(days = 7)
+    filtered_entries = user_entries.loc[user_entries['entry_date'] > week_ago]
+
+    #create plot 
+    fig, axes = plt.subplot(figsize = (10, 7))
+    axes.plot(filtered_entries['entry_date'], filtered_entries['heart_rate'], marker='o', linestyle='-', color='green')
+
+    axes.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
+
+    #add labels
+    axes.set_title("Heart rate progress in Past 7 days", fontsize=14, fontweight='bold')
+    axes.set_xlabel("Date", fontsize=14)
+    axes.set_ylabel("Heart rate", fontsize = 14)
+
+    fig.autofmt_xdate()
+
+    #return plot 
+    return fig 
+
+async def show_energy_trends(user_id: uuid.UUID):
+    #get user id first
+    current_user = user_id
+    user_entries = await get_entries_by_id(current_user)
+
+    #convert to date
+    user_entries['entry_date'] = pd.to_datetime(user_entries['entry_date'])
+    user_entries = user_entries.sort_values('entry_date')
+
+    #locate entry date from the daily entry table
+    #filter for past 7 days
+    today = date.today()
+    week_ago = today - timedelta(days = 7)
+    filtered_entries = user_entries.loc[user_entries['entry_date'] > week_ago]
+
+    #create plot 
+    fig, axes = plt.subplots(figsize = (10, 7))
+    axes.plot(filtered_entries['entry_date'], filtered_entries['energy_level'], marker='o', linestyle='-', color='green')
+
+    axes.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
+
+    #add labels
+    axes.set_title("Energy progress in Past 7 days", fontsize=14, fontweight='bold')
+    axes.set_xlabel("Date", fontsize=14)
+    axes.set_ylabel("Energy (scale from 1 - 10)", fontsize = 14)
+
+    fig.autofmt_xdate()
+
+    #return plot 
+    return fig 
+
+async def show_stress_trends(user_id: uuid.UUID):
+    #get user id first
+    current_user = user_id
+    user_entries = await get_entries_by_id(current_user)
+
+    user_entries['entry_date'] = pd.to_datetime(user_entries['entry_date'])
+    user_entries = user_entries.sort_values('entry_date')
+
+    #locate entry date from the daily entry table
+    #filter for past 7 days
+    today = date.today()
+    week_ago = today - timedelta(days = 7)
+    filtered_entries = user_entries.loc[user_entries['entry_date'] > week_ago]
+
+    #create plot 
+    fig, axes = plt.subplots(figsize = (10, 7))
+    axes.plot(filtered_entries['entry_date'], filtered_entries['stress'], marker='o', linestyle='-', color='green')
+
+    axes.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
+
+    #add labels
+    axes.set_title("Stress progress in Past 7 days", fontsize=14, fontweight='bold')
+    axes.set_xlabel("Date", fontsize=14)
+    axes.set_ylabel("Stress (scale from 1-10)", fontsize = 14)
+
+    fig.autofmt_xdate()
+
+    #return plot 
+    return fig
+
+async def show_difficulty_trends(user_id: uuid.UUID):
+    #get user id first
+    current_user = user_id
+    user_entries = await get_entries_by_id(current_user)
+
+    user_entries['entry_date'] = pd.to_datetime(user_entries['entry_date'])
+    user_entries = user_entries.sort_values('entry_date')
+    
+    #locate entry date from the daily entry table
+    #filter for past 7 days
+    today = date.today()
+    week_ago = today - timedelta(days = 7)
+    filtered_entries = user_entries.loc[user_entries['entry_date'] > week_ago]
+
+    #create plot 
+    fig, axes = plt.subplots(figsize = (10, 7))
+    axes.plot(filtered_entries['entry_date'], filtered_entries['difficulty'], marker='o', linestyle='-', color='green')
+
+    axes.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
+
+    #add labels
+    axes.set_title("Difficulty progress in Past 7 days", fontsize=14, fontweight='bold')
+    axes.set_xlabel("Date", fontsize=14)
+    axes.set_ylabel("Difficulty (scale 1-10)", fontsize = 12)
+
+    fig.autofmt_xdate()
+
+    #return plot 
+    return fig  
 
 # 2. Daily Score DataFrame
 async def get_daily_score(user_id: uuid.UUID) -> pd.DataFrame:
@@ -236,6 +393,44 @@ async def get_user_dashboard(user_id: uuid.UUID) -> pd.DataFrame:
 
     return user_dashboard
 
+#chart for daily score
+async def show_score_trends(user_id: uuid.UUID):
+    #get the current user id
+    current_user = user_id 
+    #get the daily score
+    score_entries = await get_user_dashboard(current_user)
+
+    score_entries['score_date'] = pd.to_datetime(score_entries['score_date'])
+    user_entries = score_entries.sort_values('score_date')
+
+    today = pd.Timestamp(date.today())
+    week_ago = today - timedelta(days=7)
+    filtered_entries = score_entries.loc[score_entries['score_date'] > week_ago]
+
+    #plot
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(
+        filtered_entries['score_date'],
+        filtered_entries['final_training_score'],
+        marker='o', 
+        linestyle='-', 
+        linewidth=2, 
+        color='green'
+    )
+
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
+
+    # Add labels, grid, and title for a polished dashboard look
+    ax.set_title("Score Progression — Past 7 Days", fontsize=14, fontweight='bold')
+    ax.set_xlabel("Date", fontsize=14)
+    ax.set_ylabel("Score", fontsize=14)
+    ax.grid(True, linestyle='--', alpha=0.6)
+
+    # Automatically rotate date labels so they never crowd each other
+    fig.autofmt_xdate()
+
+    return fig 
+
 #run data here
 async def main():
     test_user_id = uuid.UUID("your-user-uuid-here")
@@ -251,7 +446,10 @@ async def main():
         stress=4,
         heart_rate=65,
         duration = 90,
-        difficulty=7
+        difficulty=7,
+        sets = 3,
+        reps = 8, 
+        weight = 80
     )
 
     # STEP 2: Fetch all raw entries into Pandas & run readiness analytics
@@ -263,6 +461,14 @@ async def main():
 
     # STEP 4: Fetch merged view for dashboard display
     dashboard_df = await get_user_dashboard(test_user_id)
-    print(dashboard_df)
+
+    weight_chart = show_weight_trends(test_user_id)
+    energy_chart = show_energy_trends(test_user_id)
+    stress_chart = show_stress_trends(test_user_id)
+    difficulty_chart = show_difficulty_trends(test_user_id)
+    score_chart = show_score_trends(test_user_id)
+
+    #show the graphs 
+    plt.show()
 
     
