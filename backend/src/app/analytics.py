@@ -9,7 +9,7 @@ import matplotlib.dates as mdates
 from sqlalchemy import select
 from decimal import Decimal
 from datetime import date, timedelta
-from app.db import async_session_maker, MuscleCategoryEnum, MuscleGroupEnum, DailyEntry, DailyScore, TargetPlan, User
+from app.db import async_session_maker, MuscleCategoryEnum, MuscleGroupEnum, DailyEntry, DailyScore, TargetPlan, User, UserProfile, UserFitnessProfile
 
 # 1. Daily Entries DataFrame
 async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
@@ -430,6 +430,21 @@ async def show_score_trends(user_id: uuid.UUID):
     fig.autofmt_xdate()
 
     return fig 
+
+#for weight adjustment formula
+async def get_user_profile(user_id: uuid.UUID):
+    async with async_session_maker() as session:
+        stmt = select(UserProfile).where(UserProfile.user_id == user_id)
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
+
+#for weight adjustment formula
+async def get_user_fitness_profile(user_id: uuid.UUID):
+    #query pass table
+    async with async_session_maker() as session:
+            stmt = select(UserFitnessProfile).where(UserFitnessProfile.user_id == user_id)
+            result = await session.execute(stmt)
+            return result.scalar_one_or_none()
 
 #run data here
 async def main():
