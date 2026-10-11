@@ -6,14 +6,14 @@ function NavBar() {
   return (
     <nav className={styles["nav-bar"]}>
       <div className ={styles["logo"]}>
-        <Link to="/">
-        <span className={styles["animated-word"]}>
-            <span>F</span>
-            <span>D</span>
-        </span>
-        <span> : </span>
-        <span>Fitness Dashboard</span>
-        </Link>
+        <a href="#">
+          <span className={styles["animated-word"]}>
+              <span>F</span>
+              <span>D</span>
+          </span>
+          <span> : </span>
+          <span>Fitness Dashboard</span>
+        </a>
       </div>
       <div className={styles["home-logo"]}>
         <Link to ="/">
@@ -21,21 +21,21 @@ function NavBar() {
         </Link>
       </div>
       <div className={styles["nav-links"]}>
-        <Link to="/about">
+        <a href="#about">
           <span>About</span>
-        </Link>
+        </a>
 
-        <Link to="/features">
+        <a href="#features">
           <span>Features</span>
-        </Link>
+        </a>
 
-        <Link to="/functionality">
-          <span>Functionality</span>
-        </Link>
+        <a href="#snippet">
+          <span>Snippet</span>
+        </a>
 
-        <Link to="/contact">
+        <a href="/#contact">
           <span>Contact</span>
-        </Link>
+        </a>
 
       </div>
 
