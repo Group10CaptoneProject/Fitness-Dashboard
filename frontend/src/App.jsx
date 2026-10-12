@@ -6,12 +6,13 @@ import Onboarding from "./pages/Onboarding/Onboarding";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import VerifyResetCode from "./pages/Auth/VerifyResetCode";
 import ResetPassword from "./pages/Auth/ResetPassword";
+import Landing from "./pages/Landing/Landing";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Landing/>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/onboarding" element={<Onboarding />} />
