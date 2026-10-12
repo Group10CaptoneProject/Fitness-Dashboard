@@ -136,9 +136,7 @@ async def exercise_recommendation(user_id: uuid.UUID):
     
     user_entries = await get_entries_by_id(current_user_id)
     today = date.today()
-
     targeted_muscles_worked_out = set()
-    muscle_groups_worked_out = set()
 
     if not user_entries.empty:
         user_entries['entry_date'] = pd.to_datetime(user_entries['entry_date']).dt.date
@@ -151,19 +149,26 @@ async def exercise_recommendation(user_id: uuid.UUID):
 
     #loop through exericses and get up to 3 
     recommended_exercises = []
-    current_count = 0
+    muscle_group_counts = {}  # Tracks how many exercises we've picked per muscle group
+    max_per_muscle_group = 3  # Prevents spamming the same muscle group
+    total_target_exercises = 9  # Total size of the workout
 
     for _, row in available_exercises.iterrows():
         muscle_group = row['muscle_group']
         target_muscles = row['targeted_muscles']
         exercise_name = row['exercise_name']        
 
+        if muscle_group not in muscle_group_counts:
+            muscle_group_counts[muscle_group] = 0
+        
         if target_muscles not in targeted_muscles_worked_out:
             targeted_muscles_worked_out.add(target_muscles)
+            muscle_group_counts[muscle_group] += 1 
             recommended_exercises.append(exercise_name)
-            current_count += 1
 
-            if current_count > 3:
+            if len(recommended_exercises) >= total_target_exercises:
                 break 
 
-    return recommended_exercises     
+    return recommended_exercises 
+
+#
