@@ -9,7 +9,7 @@ import matplotlib.dates as mdates
 from sqlalchemy import select
 from decimal import Decimal
 from datetime import date, timedelta
-from app.db import async_session_maker, MuscleCategoryEnum, MuscleGroupEnum, DailyEntry, DailyScore, TargetPlan, User
+from app.db import async_session_maker, MuscleCategoryEnum, MuscleGroupEnum, DailyEntry, DailyScore, TargetPlan, User, UserProfile, UserFitnessProfile
 
 # 1. Daily Entries DataFrame
 async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
@@ -30,7 +30,8 @@ async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
                 "difficulty": entry.difficulty,
                 "sets": entry.sets,
                 "reps": entry.reps,
-                "weight": entry.weight
+                "weight": entry.weight,
+                "exercise_name": entry.exercise_name
             }
             for entry in entries
         ])
@@ -48,7 +49,8 @@ async def update_entries_by_id(
     difficulty: int,
     sets: int, 
     reps: int,
-    weight: float
+    weight: float,
+    exercise_name: str
 ):
     async with async_session_maker() as session:
         new_entry = DailyEntry(
@@ -63,7 +65,8 @@ async def update_entries_by_id(
             difficulty=difficulty,
             sets = sets,
             reps = reps,
-            weight = weight
+            weight = weight,
+            exercise_name = exercise_name
         )
 
         await session.merge(new_entry)
@@ -431,6 +434,21 @@ async def show_score_trends(user_id: uuid.UUID):
 
     return fig 
 
+#for weight adjustment formula
+async def get_user_profile(user_id: uuid.UUID):
+    async with async_session_maker() as session:
+        stmt = select(UserProfile).where(UserProfile.user_id == user_id)
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
+
+#for weight adjustment formula
+async def get_user_fitness_profile(user_id: uuid.UUID):
+    #query pass table
+    async with async_session_maker() as session:
+            stmt = select(UserFitnessProfile).where(UserFitnessProfile.user_id == user_id)
+            result = await session.execute(stmt)
+            return result.scalar_one_or_none()
+
 #run data here
 async def main():
     test_user_id = uuid.UUID("your-user-uuid-here")
@@ -449,7 +467,8 @@ async def main():
         difficulty=7,
         sets = 3,
         reps = 8, 
-        weight = 80
+        weight = 80,
+        exercise_name= "Lever Pec Deck Fly"
     )
 
     # STEP 2: Fetch all raw entries into Pandas & run readiness analytics

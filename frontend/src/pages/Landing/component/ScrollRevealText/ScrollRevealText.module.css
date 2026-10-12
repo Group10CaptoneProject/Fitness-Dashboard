@@ -1,0 +1,24 @@
+.scroll-reveal-section {
+    width: 100%;
+    min-height: 70vh;
+  
+    display: flex;
+    align-items: center;
+  }
+  
+  .scroll-reveal-text {
+    max-width: 1000px;
+  
+    font-size: clamp(2rem, 3vw, 3.2rem);
+    font-weight: 700;
+  
+    line-height: 1.3;
+  
+    margin: 0;
+  }
+  
+  .word {
+    display: inline-block;
+  
+    will-change: color;
+  }
