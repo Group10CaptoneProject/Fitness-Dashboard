@@ -54,7 +54,7 @@ function Login() {
       localStorage.setItem("user_id", data.user_id);
       localStorage.setItem("username", data.username || "");
 
-      navigate("/dashboard");
+      navigate("/onboarding");
     } catch (error) {
       console.error("Login error:", error);
 

@@ -1,0 +1,736 @@
+/* Page and navigation */
+.page {
+    min-height: 100vh;
+    background: #f1f2f4;
+    color: #080808;
+    font-family: Arial, Helvetica, sans-serif;
+}
+  
+.navbar {
+    height: 56px;
+    padding: 0 32px;
+    background: #1d4fc5;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+  
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  
+  .logo svg {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+  }
+  
+.userMenu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-size: 18px;
+}
+  
+/* Main content and title */ 
+.main {
+    width: 100%;
+    max-width: 1320px;
+    min-height: calc(100vh - 56px);
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 28px 36px 32px;
+    display: flex;
+    flex-direction: column;
+}
+  
+.heading {
+    width: 100%;
+    max-width: 1120px;
+    box-sizing: border-box;
+    align-self: center;
+    margin: 0 auto 24px;
+    flex-shrink: 0;
+}
+  
+.heading h1 {
+    margin: 0 0 8px;
+    color: #172033;
+    font-size: 34px;
+    font-weight: 750;
+    letter-spacing: -1px;
+    line-height: 1.2;
+}
+
+  .heading p {
+    margin: 0;
+    color: #788397;
+    font-size: 18px;
+    line-height: 1.6;
+}
+  
+/* White onboarding card */
+.card {
+    width: 100%;
+    max-width: 1120px;
+    align-self: center;
+    min-height: 0;
+    box-sizing: border-box;
+    padding: 32px 36px 30px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid #e1e8f5;
+    border-radius: 18px;
+    box-shadow: 0 12px 36px rgba(31, 57, 100, 0.07);
+    display: flex;
+    flex-direction: column;
+}
+  
+/* Progress indicator at the top of the white card */
+.progressSection {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-bottom: 36px;
+    flex-shrink: 0;
+}
+  
+.stepLabel {
+    flex-shrink: 0;
+    color: #26344d;
+    font-size: 19px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+  
+.progressTrack {
+    flex: 1;
+    height: 9px;
+    border-radius: 20px;
+    background: #edf1f8;
+    overflow: hidden;
+}
+  
+.progressFill {
+    height: 100%;
+    border-radius: 20px;
+    background: linear-gradient(90deg, #2789ed, #38b1f3);
+    transition: width 250ms ease;
+}
+  
+/* Form layout and fields */
+  .fieldsGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 36px;
+    row-gap: 30px;
+    padding: 0 12px;
+}
+  
+.field {
+    min-width: 0;
+}
+  
+/* Icon, field title, and helper description */
+.fieldHeading {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    margin-bottom: 16px;
+}
+  
+.iconCircle {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 13px;
+    background: #eaf2ff;
+    color: #2168d9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+  
+.fieldHeading h2 {
+    margin: 3px 0 6px;
+    color: #1b2638;
+    font-size: 21px;
+    line-height: 1.25;
+    font-weight: 650;
+}
+  
+.fieldHeading p {
+    max-width: 370px;
+    margin: 0;
+    color: #69758a;
+    font-size: 15px;
+    line-height: 1.5;
+}
+  
+/* Optional row of inputs, such as height and weight */
+.inputRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-left: 55px;
+}
+  
+.inputRow input {
+    width: 205px;
+    max-width: 100%;
+}
+  
+/* Shared input and select styling */
+.field input, .field select {
+    height: 46px;
+    box-sizing: border-box;
+    border: 1px solid #d9dfeb;
+    border-radius: 9px;
+    background: #fbfcff;
+    color: #26344d;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 16px;
+}
+  
+.field input::placeholder {
+    color: #8b95a5;
+}
+  
+.field input:focus, .field select:focus {
+    outline: none;
+    border-color: #3988ee;
+    box-shadow: 0 0 0 3px rgba(57, 136, 238, 0.12);
+}
+  
+.field select {
+    display: block;
+    width: calc(100% - 55px);
+    margin-left: 55px;
+    padding-right: 40px;
+}
+  
+.unit {
+    color: #69758a;
+    font-size: 15px;
+    white-space: nowrap;
+}
+  
+/* Custom dropdown arrows */
+/* Wrapper aligns the dropdown and its custom arrow */
+.selectWrapper {
+    position: relative;
+    width: calc(100% - 55px);
+    margin-left: 55px;
+}
+  
+.selectWrapper select {
+    display: block;
+    width: 100%;
+    height: 46px;
+    margin-left: 0;
+    padding: 0 44px 0 14px;
+    appearance: none;
+    -webkit-appearance: none;
+}
+  
+/* Keep the arrow inside the right edge of the dropdown */
+.selectIcon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #69758a;
+    pointer-events: none;
+}
+  
+/* Equipment selection button */
+.equipmentButton {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: calc(100% - 55px);
+    min-height: 46px;
+    margin-left: 55px;
+    padding: 0 14px;
+    border: 1px solid #d9e0ea;
+    border-radius: 9px;
+    background: #fbfcff;
+    color: #26344d;
+    font: inherit;
+    font-size: 16px;
+    text-align: left;
+}
+  
+.equipmentButton:hover {
+    border-color: #3563e9;
+}
+  
+.equipmentButton:focus-visible {
+    outline: none;
+    border-color: #3988ee;
+    box-shadow: 0 0 0 3px rgba(57, 136, 238, 0.12);
+}
+  
+/* Equipment popup window */
+/* Dim the page behind the popup */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgb(15 23 42 / 45%);
+}
+  
+/* Popup surface grows as needed but stays within the viewport */
+.equipmentModal {
+    width: 100%;
+    max-width: 520px;
+    max-height: min(680px, 88vh);
+    box-sizing: border-box;
+    overflow-y: auto;
+    padding: 28px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 20px 60px rgb(0 0 0 / 20%);
+}
+  
+.modalHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+  
+.modalHeader h2 {
+    margin: 0 0 7px;
+    color: #172033;
+    font-size: 23px;
+    line-height: 1.3;
+}
+  
+.modalHeader p {
+    margin: 0;
+    color: #69758a;
+    font-size: 16px;
+    line-height: 1.5;
+}
+  
+.modalClose {
+    display: flex;
+    flex: 0 0 36px;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: #f1f4f9;
+    color: #344054;
+    font-size: 26px;
+}
+  
+.modalClose:hover {
+    background: #e7edf7;
+}
+  
+/* Two column list of equipment choices */
+.modalOptions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+  
+.modalOption {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 12px;
+    border: 1px solid #d9e0ea;
+    border-radius: 9px;
+    background: #fff;
+    color: #344054;
+    font-size: 16px;
+    line-height: 1.35;
+}
+  
+.modalOption:has(input:checked) {
+    border-color: #3563e9;
+    background: #eef3ff;
+}
+  
+.modalOption input {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: #3563e9;
+}
+  
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+  
+.modalDone {
+    min-height: 46px;
+    padding: 0 26px;
+    border: none;
+    border-radius: 9px;
+    background: #3563e9;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+}
+  
+.modalDone:hover {
+    background: #254dcc;
+}
+
+/* Checkbox groups */
+.checkboxGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+  
+/* Each checkbox option is presented as a selectable chip */
+.checkboxOption {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 13px;
+    border: 1px solid #d9e0ea;
+    border-radius: 8px;
+    background: #fff;
+    color: #344054;
+    font-size: 15px;
+    line-height: 1.35;
+}
+  
+.checkboxOption:has(input:checked) {
+    border-color: #3563e9;
+    background-color: #eef3ff;
+}
+  
+.checkboxOption input {
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    accent-color: #3563e9;
+}
+  
+/* Action buttons */  
+.actions {
+    margin-top: auto;
+    padding-top: 32px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+  
+.continueButton, .backButton {
+    min-height: 46px;
+    padding: 0 24px;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+  
+.continueButton {
+    min-width: 160px;
+    background: #267fe5;
+    color: #fff;
+    border: 1px solid #267fe5;
+    box-shadow: 0 4px 10px rgba(38, 127, 229, 0.18);
+}
+  
+.continueButton:hover {
+    background: #1769cc;
+}
+  
+.backButton {
+    background: #fff;
+    color: #44516a;
+    border: 1px solid #d9dfeb;
+}
+  
+.backButton:hover {
+    background: #f5f8fd;
+}
+  
+/* Validation and error messages */
+.error {
+    color: #c62828;
+    margin: 18px 0 0 55px;
+    font-size: 15px;
+    line-height: 1.45;
+}
+  
+/* Responsive layout */
+@media (max-width: 900px) {
+    .main {
+        padding: 24px 22px 30px;
+    }
+  
+    .card {
+        padding: 26px 24px;
+    }
+  
+    .fieldsGrid {
+        column-gap: 24px;
+        row-gap: 28px;
+        padding: 0 4px;
+    }
+  
+    .fieldHeading h2 {
+        font-size: 19px;
+    }
+  
+    .selectWrapper, .equipmentButton {
+        width: calc(100% - 50px);
+        margin-left: 50px;
+    }
+  
+    .field select {
+        width: calc(100% - 50px);
+        margin-left: 50px;
+    }
+}
+  
+@media (max-width: 700px) {
+    .navbar {
+        padding: 0 18px;
+    }
+  
+    .main {
+        min-height: calc(100vh - 56px);
+        padding: 22px 14px 28px;
+    }
+  
+    .heading {
+        margin-bottom: 18px;
+    }
+  
+    .heading h1 {
+        font-size: 29px;
+        letter-spacing: -0.5px;
+    }
+  
+    .heading p {
+        font-size: 16px;
+    }
+  
+    .card {
+        padding: 22px 18px;
+    }
+  
+    .progressSection {
+        gap: 12px;
+        margin-bottom: 28px;
+    }
+  
+    .stepLabel {
+        font-size: 16px;
+    }
+  
+    .fieldsGrid {
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: 26px;
+        padding: 0;
+    }
+  
+    .fieldHeading {
+        gap: 11px;
+        margin-bottom: 12px;
+    }
+  
+    .fieldHeading h2 {
+        font-size: 19px;
+    }
+  
+    .fieldHeading p {
+        font-size: 14px;
+    }
+  
+    .iconCircle {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+    }
+  
+    .inputRow {
+        padding-left: 0;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .inputRow input {
+        width: auto;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .inputRow .unit {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+  
+    .selectWrapper, .equipmentButton {
+        width: 100%;
+        margin-left: 0;
+    }
+  
+    .field select {
+        width: 100%;
+        margin-left: 0;
+    }
+  
+    .selectIcon {
+        right: 14px;
+    }
+  
+    .checkboxGroup {
+        gap: 8px;
+    }
+  
+    .checkboxOption {
+        padding: 9px 11px;
+        font-size: 14px;
+    }
+  
+    .actions {
+        padding-top: 28px;
+    }
+  
+    .continueButton, .backButton {
+        padding: 0 18px;
+        font-size: 15px;
+    }
+  
+    .error {
+        margin-left: 0;
+    }
+  
+    .modalOverlay {
+        padding: 14px;
+    }
+  
+    .equipmentModal {
+        padding: 22px 18px;
+        max-height: 90vh;
+    }
+  
+    .modalHeader h2 {
+        font-size: 21px;
+    }
+  
+    .modalHeader p {
+        font-size: 15px;
+    }
+  
+    .modalOptions {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 9px;
+    }
+  
+    .modalOption {
+        font-size: 15px;
+    }
+}
+  
+/* Let the page grow instead of clipping content */
+@media (max-height: 760px) and (min-width: 701px) {
+    .main {
+        min-height: calc(100vh - 56px);
+        padding-top: 22px;
+        padding-bottom: 28px;
+    }
+  
+    .heading {
+        margin-bottom: 18px;
+    }
+  
+    .card {
+        padding-top: 26px;
+        padding-bottom: 26px;
+    }
+  
+    .progressSection {
+        margin-bottom: 28px;
+    }
+  
+    .fieldsGrid {
+        row-gap: 24px;
+    }
+  
+    .actions {
+        padding-top: 28px;
+    }
+}
+
+
+/* Alow the Preferred Workout Days checkbox to extend across the middle divider */
+@media (min-width: 701px) {
+    .field:has(.checkboxGroup) {
+        grid-column: auto;
+        width: calc(100% + 140px);
+        position: relative;
+        z-index: 1;
+    }
+  
+    .field:has(.checkboxGroup) .checkboxGroup {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+    }
+  
+    .field:has(.checkboxGroup) .checkboxOption {
+        flex: 1 1 0;
+        min-width: 0;
+        justify-content: center;
+        gap: 5px;
+        padding: 8px 4px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+  
+    .field:has(.checkboxGroup) .checkboxOption input {
+        width: 15px;
+        height: 15px;
+        flex-shrink: 0;
+    }
+}
