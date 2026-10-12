@@ -81,11 +81,3 @@ async def get_current_user(
 
     return user
 
-@router.get("/user-profile")
-    async def get_user_profile(
-    current_user = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-stmt = select(UserProfile).where(
-    UserProfile.user_id == current_user.user_id
-)
