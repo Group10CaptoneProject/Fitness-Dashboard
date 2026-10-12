@@ -30,7 +30,8 @@ async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
                 "difficulty": entry.difficulty,
                 "sets": entry.sets,
                 "reps": entry.reps,
-                "weight": entry.weight
+                "weight": entry.weight,
+                "exercise_name": entry.exercise_name
             }
             for entry in entries
         ])
@@ -48,7 +49,8 @@ async def update_entries_by_id(
     difficulty: int,
     sets: int, 
     reps: int,
-    weight: float
+    weight: float,
+    exercise_name: str
 ):
     async with async_session_maker() as session:
         new_entry = DailyEntry(
@@ -63,7 +65,8 @@ async def update_entries_by_id(
             difficulty=difficulty,
             sets = sets,
             reps = reps,
-            weight = weight
+            weight = weight,
+            exercise_name = exercise_name
         )
 
         await session.merge(new_entry)
@@ -464,7 +467,8 @@ async def main():
         difficulty=7,
         sets = 3,
         reps = 8, 
-        weight = 80
+        weight = 80,
+        exercise_name= "Lever Pec Deck Fly"
     )
 
     # STEP 2: Fetch all raw entries into Pandas & run readiness analytics

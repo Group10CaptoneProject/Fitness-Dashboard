@@ -46,23 +46,23 @@ async def get_fitness_profile(current_user_id: uuid.UUID, db: AsyncSession = Dep
     return fitness_profile 
 
 #update fitness profile 
-@router.put("/fitness-profile", response_model=UserProfileResponse)
+@router.put("/fitness-profile", response_model=UserFitnessProfileResponse)
 async def update_fitess_profile(fitness_profile, current_user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     stmt = select(UserFitnessProfile).where(UserFitnessProfile.user_id == current_user_id)
     result = await db.execute(stmt)
-    fitness_profile = result.scalar_one_or_none()
+    db_fitness_profile = result.scalar_one_or_none()
 
     if not fitness_profile:
         raise HTTPException(status_code=404, detail="Fitness Profile not found")
 
     #update the fitness data
     fitness_profile_dict = fitness_profile.model_dump(exclude_unset=True)
-    for key, value in fitness_profile_dict:
-        setattr(fitness_profile, key, value)
+    for key, value in fitness_profile_dict.items():
+        setattr(db_fitness_profile, key, value)
 
     await db.commit()
-    await db.refresh(fitness_profile)
-    return fitness_profile
+    await db.refresh(db_fitness_profile)
+    return db_fitness_profile
     
 #use prpofile table
 @router.post("/user-profile")
