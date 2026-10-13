@@ -120,7 +120,7 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
     else:
         return recommended_weight
 
-#exercise routine  
+#next exercise 
 @router.get("/exercise-recommendation")
 async def exercise_recommendation(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db) ):
     current_user_id = current_user.user_id
@@ -156,6 +156,19 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
             matched_exercise = exercise_data[exercise_data['exercise_name'] == entry.get('exercise_name')]
             if not matched_exercise.empty:
                 targeted_muscles_worked_out.add(matched_exercise.iloc[0]['targeted_muscles'])
+
+        # 2. 48-HOUR RECOVERY BUFFER: Check the latest entry to enforce recovery rules
+        latest_entry = user_entries.sort_values('entry_date').iloc[-1]
+        latest_date = latest_entry['entry_date']
+        
+        # If the last workout was less than 2 days ago, block that muscle group
+        if (today - latest_date).days < 2:
+            recent_muscle_group = str(latest_entry.get('muscle_group')).lower()
+            
+            # Find any exercises matching this recent group and add their targets to the exclusion set
+            recent_matches = exercise_data[exercise_data['muscle_group'].str.lower() == recent_muscle_group]
+            for _, row in recent_matches.iterrows():
+                targeted_muscles_worked_out.add(row['targeted_muscles'])
 
     #loop through exericses and get up to 3 
     recommended_exercises = []

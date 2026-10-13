@@ -18,6 +18,8 @@ async def create_daily_entry(entry_data: DailyEntryCreate, current_user: User = 
     current_user_id = current_user.user_id
     new_entry = DailyEntry(user_id = current_user_id, **entry_data.model_dump())
 
+    day_name = new_entry.entry_date.strftime('%A').lower()
+
     #save object. add entry
     db.add(new_entry)
     await db.commit()

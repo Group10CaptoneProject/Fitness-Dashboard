@@ -265,7 +265,7 @@ class UserFitnessProfile(Base):
     height: Mapped[int] = mapped_column(Integer, nullable=False)
     weight: Mapped[int] = mapped_column(Integer, nullable=False)
     preferred_workout_days: Mapped[DayOfWeekEnum] = mapped_column(
-        Enum(MuscleGroupEnum, native_enum=False), nullable=False
+        Enum(DayOfWeekEnum, native_enum=False), nullable=False
     )
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
