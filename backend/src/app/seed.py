@@ -78,6 +78,7 @@ async def seed_database():
                 age=22,
                 height=170,
                 weight=125,
+                preferred_workout_days = ["Monday", "Tuesday", "Thursday", "Friday"]
             )
             
             #target plan
