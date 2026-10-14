@@ -1,7 +1,7 @@
 import jwt
 from datetime import datetime, timedelta, timezone
 import uuid
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException
 from app.db import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -58,13 +58,11 @@ def verify_reset_token(token: str):
         raise HTTPException(status_code = 401, detail= "Invalid reset token")
     
 #Protected route dependency function 
-security = HTTPBearer()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db)
 ):
-    token = credentials.credentials
-
     user_id = verify_token(token)
 
     result = await db.execute(
@@ -80,4 +78,3 @@ async def get_current_user(
         )
 
     return user
-
