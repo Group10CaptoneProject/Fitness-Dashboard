@@ -13,7 +13,7 @@ from typing import Optional
 from db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db
 from analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile
 from security import get_current_user
-from routes.profile import get_fitness_profile, 
+from routes.profile import get_fitness_profile
 
 router = APIRouter(prefix="/analytics", tags=["Analytics & Recommendations"])
 
@@ -96,9 +96,9 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
     if equipment_available:
         if current_stress > 7:
             if experience_level == "beginner":
-                recommended_weight = current_weight - 10
+                recommended_weight = current_weight * 0.9
             elif experience_level == "intermediate" or experience_level == "advanced":
-                recommended_weight = current_weight - 5
+                recommended_weight = current_weight * 0.95
             else:
                 print("Enter 'beginner', 'intermediate' or 'advanced'")
         
@@ -157,7 +157,7 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     today_muscle_groups = []
     if fitness_profile and fitness_profile.weekly_split:
         #get the muscle groups for user
-        today_muscle_groups = [mg.lower() for mg in fitness_profile.weekly_split.get(today_day_name, [])]
+        today_muscle_groups = [mg.lower() for mg in fitness_profile.weekly_split.get(target_day_name, [])]
 
     #only recommend exercises that fit w/ today's muscle groups
     if today_muscle_groups:
