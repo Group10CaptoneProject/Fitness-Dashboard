@@ -7,7 +7,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from datetime import datetime, date 
 from enum import Enum as PyEnum
 from collections.abc import AsyncGenerator
-from sqlalchemy import String, Integer, ForeignKey, Numeric, Date, DateTime, UniqueConstraint, func, text, Enum, ARRAY
+from sqlalchemy import String, Integer, ForeignKey, Numeric, Date, DateTime, UniqueConstraint, func, text, Enum, ARRAY, JSON
 from decimal import Decimal
 from typing import List
 
