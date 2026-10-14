@@ -77,7 +77,9 @@ async def seed_database():
                 gender=GenderEnum.MALE,
                 age=22,
                 height=170,
-                weight=125,
+                weight=145,
+                preferred_workout_days = ["Monday", "Tuesday", "Thursday", "Friday"],
+                weekly_split = {"Monday": "Back, Triceps, Shoulders", "Tuesday": "Chest, Biceps, Glutes", "Thursday": "Back, Triceps, Shoulders", "Friday": "Chest, Biceps, Glutes"}
             )
             
             #target plan

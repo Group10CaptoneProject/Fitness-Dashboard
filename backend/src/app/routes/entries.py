@@ -8,14 +8,17 @@ from sqlalchemy import select
 from ..db import get_db, DailyEntry, User
 from ..schema import DailyEntryCreate
 from ..analytics import calculate_readiness_data, update_user_dashboard  # or your scoring function
-
+from ..security import get_current_user
 router = APIRouter(prefix="/entries", tags=["Daily Entries"])
 
 #new daily entry
 @router.post("/")
-async def create_daily_entry(entry_data: DailyEntryCreate, current_user_id: uuid.UUID, db: AsyncSession = Depends(get_db)): 
+async def create_daily_entry(entry_data: DailyEntryCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)): 
     #convert to data to SQL table object
+    current_user_id = current_user.user_id
     new_entry = DailyEntry(user_id = current_user_id, **entry_data.model_dump())
+
+    day_name = new_entry.entry_date.strftime('%A').lower()
 
     #save object. add entry
     db.add(new_entry)
@@ -34,23 +37,23 @@ async def create_daily_entry(entry_data: DailyEntryCreate, current_user_id: uuid
 
     #convert SQL table entry object -> df
     entries_table = [
-    {
-        "entry_date": entry.entry_date,
-        "sleep": entry.sleep,
-        "energy_level": entry.energy_level,
-        "soreness": entry.soreness,
-        "stress": entry.stress,
-        "heart_rate": entry.heart_rate,
-        "duration": entry.duration,
-        "difficulty": entry.difficulty,
-        "sets": entry.sets,
-        "reps": entry.reps,
-        "weight": entry.weight,
+        {
+            "entry_date": entry.entry_date,
+            "sleep": entry.sleep,
+            "energy_level": entry.energy_level,
+            "soreness": entry.soreness,
+            "stress": entry.stress,
+            "heart_rate": entry.heart_rate,
+            "duration": entry.duration,
+            "difficulty": entry.difficulty,
+            "sets": entry.sets,
+            "reps": entry.reps,
+            "weight": entry.weight,
 
-        "muscle_category": entry.muscle_category.value if hasattr(entry.muscle_category, "value") else entry.muscle_category,
-        "muscle_group": entry.muscle_group.value if hasattr(entry.muscle_group, "value") else entry.muscle_group,
-        "exercise_name": entry.exercise_name,
-    }
+            "muscle_category": entry.muscle_category.value if hasattr(entry.muscle_category, "value") else entry.muscle_category,
+            "muscle_group": entry.muscle_group.value if hasattr(entry.muscle_group, "value") else entry.muscle_group,
+            "exercise_name": entry.exercise_name,
+        }
         for entry in user_entries
     ]
 

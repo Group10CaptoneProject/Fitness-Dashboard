@@ -4,16 +4,18 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from ..db import get_db, UserFitnessProfile, UserProfile, GoalEnum, GenderEnum, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, DayOfWeekEnum
+from ..db import get_db, User, UserFitnessProfile, UserProfile, GoalEnum, GenderEnum, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, DayOfWeekEnum
 from ..schema import UserProfileCreate, UserProfileResponse, UserFitnessProfileCreate, UserFitnessProfileResponse
 from ..analytics import main
+from ..security import get_current_user
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
 #fitness profile table 
 @router.post("/fitness-profile")
-async def create_fitness_profile(profile_data: UserFitnessProfileCreate, current_user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def create_fitness_profile(profile_data: UserFitnessProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     #convert data to SQL object
+    current_user_id = current_user.user_id
     fitness_profile = UserFitnessProfile(user_id = current_user_id, **profile_data.model_dump())
 
     db.add(fitness_profile)
@@ -23,8 +25,10 @@ async def create_fitness_profile(profile_data: UserFitnessProfileCreate, current
 
 #default fitness profile
 @router.get("/fitness-profile", response_model=UserProfileResponse)
-async def get_fitness_profile(current_user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def get_fitness_profile(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     #check if exist
+    current_user_id = current_user.user_id
+
     stmt = select(UserFitnessProfile).where(UserFitnessProfile.user_id == current_user_id)
     result = await db.execute(stmt)
     fitness_profile = result.scalar_one_or_none()
@@ -36,7 +40,9 @@ async def get_fitness_profile(current_user_id: uuid.UUID, db: AsyncSession = Dep
             gender = "male",
             age = 22,
             height = 170,
-            weight = 140
+            weight = 140,
+            preferd_workout_days = ["Monday", "Tuesday", "Thursday", "Friday"],
+            weekly_split = {"Monday": "Back, Triceps, Shoulders", "Tuesday": "Chest, Biceps, Glutes", "Thursday": "Back, Triceps, Shoulders", "Friday": "Chest, Biceps, Glutes"}
         )
 
     db.add(fitness_profile)
@@ -47,7 +53,9 @@ async def get_fitness_profile(current_user_id: uuid.UUID, db: AsyncSession = Dep
 
 #update fitness profile 
 @router.put("/fitness-profile", response_model=UserFitnessProfileResponse)
-async def update_fitess_profile(fitness_profile, current_user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def update_fitess_profile(fitness_profile, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    
+    current_user_id = current_user.user_id
     stmt = select(UserFitnessProfile).where(UserFitnessProfile.user_id == current_user_id)
     result = await db.execute(stmt)
     db_fitness_profile = result.scalar_one_or_none()
@@ -66,7 +74,9 @@ async def update_fitess_profile(fitness_profile, current_user_id: uuid.UUID, db:
     
 #use prpofile table
 @router.post("/user-profile")
-async def create_user_profile(profile_data: UserProfileCreate, current_user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def create_user_profile(profile_data: UserProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    current_user_id = current_user.user_id
+    
     user_profile_data = profile_data.model_dump()
     user_profile_data.pop("preferred_workout_days", None)
 
@@ -80,8 +90,9 @@ async def create_user_profile(profile_data: UserProfileCreate, current_user_id: 
 
 #default values for user profile 
 @router.get("/user-profile", response_model=UserProfileResponse)
-async def get_or_create_user_profile(current_user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def get_or_create_user_profile(current_user: User  =Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     # Check if profile already exists
+    current_user_id = current_user.user_id
     stmt = select(UserProfile).where(UserProfile.user_id == current_user_id)
     result = await db.execute(stmt)
     profile = result.scalar_one_or_none()
@@ -102,11 +113,8 @@ async def get_or_create_user_profile(current_user_id: uuid.UUID, db: AsyncSessio
 
 #allow user to edit default
 @router.put("/user-profile", response_model=UserProfileResponse)
-async def update_user_profile(
-    profile_data: UserProfileCreate, 
-    current_user_id: uuid.UUID, 
-    db: AsyncSession = Depends(get_db)
-):
+async def update_user_profile(profile_data: UserProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    current_user_id = current_user.user_id
     stmt = select(UserProfile).where(UserProfile.user_id == current_user_id)
     result = await db.execute(stmt)
     profile = result.scalar_one_or_none()

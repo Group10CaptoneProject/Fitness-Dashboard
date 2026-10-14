@@ -1,4 +1,6 @@
 from sklearn.ensemble import RandomForestClassifier
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 import pandas as pd
 import httpx
@@ -6,9 +8,14 @@ import json
 import os
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import date, timedelta
+from typing import Optional
 
-from db import UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum
-from analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_dashboard, get_user_profile, get_user_fitness_profile
+from db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db
+from analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile
+from security import get_current_user
+from routes.profile import get_fitness_profile
+
+router = APIRouter(prefix="/analytics", tags=["Analytics & Recommendations"])
 
 #save api data locally
 async def fetch_and_cache_exercises():
@@ -47,9 +54,10 @@ def get_exercise_stats() -> pd.DataFrame:
     return pd.DataFrame(exercise_stats)
 
 #for exercise w/ weights
-async def calculate_weight_adjustment(user_id: uuid.UUID):
+@router.post("/weight-adjustment")
+async def calculate_weight_adjustment(current_user: User = Depends(get_current_user), db:AsyncSession = Depends(get_db)):
     #get the daily entry for user
-    current_user_id = user_id
+    current_user_id = current_user.user_id
     user_entries = await get_entries_by_id(current_user_id)
 
     #user data metrics 
@@ -68,24 +76,29 @@ async def calculate_weight_adjustment(user_id: uuid.UUID):
 
     #get target plan for user 
     current_plan = await get_target_plan(current_user_id)
-    goal_weight = current_plan['weights_goal'].iloc[-1]
-    goal_reps = current_plan['reps_goal'].iloc[-1]
-    goal_sets = current_plan['sets_goal'].iloc[-1]
+    goal_weight = current_plan['weights_goal'].iloc[-1] if not current_plan.empty else 0
+    goal_reps = current_plan['reps_goal'].iloc[-1] if not current_plan.empty else 0
+    goal_sets = current_plan['sets_goal'].iloc[-1] if not current_plan.empty else 0
 
     #get user profile info (experience, primary goal, equipment avaliable)
     user_profile_data = await get_user_profile(current_user_id)
-    experience_level = user_profile_data.experience_level
-    goal = user_profile_data.primary_goal
-    equipment_avaliable = user_profile_data.equipment_avaliable
+    if user_profile_data:
+        experience_level = str(user_profile_data.experience_level).lower()
+        goal = str(user_profile_data.primary_goal).lower()
+        equipment_available = user_profile_data.equipment_available
+    else:
+        experience_level = "beginnger"
+        goal = "healthy_lifestyle"
+        equipment_available = ["bodyweight", "dumbbells", "kettlebells", "Resistance Bands", "Barbell"]
 
     #tree logic here: stress -> experience -> reps -> difficulty 
-    recommended_weight = 0
-    if equipment_avaliable is not None:
+    recommended_weight = current_weight
+    if equipment_available:
         if current_stress > 7:
             if experience_level == "beginner":
-                recommended_weight = current_weight - 10
+                recommended_weight = current_weight * 0.9
             elif experience_level == "intermediate" or experience_level == "advanced":
-                recommended_weight = current_weight - 5
+                recommended_weight = current_weight * 0.95
             else:
                 print("Enter 'beginner', 'intermediate' or 'advanced'")
         
@@ -110,10 +123,13 @@ async def calculate_weight_adjustment(user_id: uuid.UUID):
     else:
         return recommended_weight
 
-
 #next exercise 
-async def exercise_recommendation(user_id: uuid.UUID):
-    current_user_id = user_id
+@router.get("/exercise-recommendation")
+async def exercise_recommendation(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None):
+    if target_date is None:
+        target_date = date.today()
+    
+    current_user_id = current_user.user_id
     
     #get the prefered muscle groups 
     await fetch_and_cache_exercises()
@@ -121,31 +137,57 @@ async def exercise_recommendation(user_id: uuid.UUID):
 
     #get user equipment
     user_profile = await get_user_profile(current_user_id)
-    if not user_profile:
-        return []
+    if not user_profile or not user_profile.equipment_available:
+        return {"day": target_date.strftime('%A').lower(), "recommendations": []}
     
     equipment_avaliable = [eq.lower() for eq in user_profile.equipment_available]
     user_equipment = [eq.lower() for eq in user_profile.equipment_available]
-
+    
     #only filter through exercises user can do based on equipment they have
     available_exercises = exercise_data[
         exercise_data['required_equipment'].apply(
             lambda eq: any(e.lower() in user_equipment for e in (eq if isinstance(eq, list) else [eq]))
         )
     ]
+
+    #user can choose what they want to work out each day. 
+    fitness_profile = await get_fitness_profile(current_user, Depends())
+    target_day_name = target_date.strftime('%A').lower()
+
+    today_muscle_groups = []
+    if fitness_profile and fitness_profile.weekly_split:
+        #get the muscle groups for user
+        today_muscle_groups = [mg.lower() for mg in fitness_profile.weekly_split.get(target_day_name, [])]
+
+    #only recommend exercises that fit w/ today's muscle groups
+    if today_muscle_groups:
+        available_exercises = available_exercises[available_exercises['muscle_group'].str.lower().isin(today_muscle_groups)]
     
     user_entries = await get_entries_by_id(current_user_id)
-    today = date.today()
-    targeted_muscles_worked_out = set()
 
+    #keep track of sub-muscles worked out. AVOID REPITION
+    targeted_muscles_worked_out = set()
     if not user_entries.empty:
         user_entries['entry_date'] = pd.to_datetime(user_entries['entry_date']).dt.date
-        today_entries = user_entries[user_entries['entry_date'] == today]
+        today_entries = user_entries[user_entries['entry_date'] == target_date]
 
         for i, entry in today_entries.iterrows():
             matched_exercise = exercise_data[exercise_data['exercise_name'] == entry.get('exercise_name')]
             if not matched_exercise.empty:
                 targeted_muscles_worked_out.add(matched_exercise.iloc[0]['targeted_muscles'])
+
+        # 2. 48-HOUR RECOVERY BUFFER: Check the latest entry to enforce recovery rules
+        latest_entry = user_entries.sort_values('entry_date').iloc[-1]
+        latest_date = latest_entry['entry_date']
+        
+        # If the last workout was less than 2 days ago, block that muscle group
+        if (target_date - latest_date).days < 2 and (target_date - latest_date).days >= 0:
+            recent_muscle_group = str(latest_entry.get('muscle_group')).lower()
+            
+            # Find any exercises matching this recent group and add their targets to the exclusion set
+            recent_matches = exercise_data[exercise_data['muscle_group'].str.lower() == recent_muscle_group]
+            for _, row in recent_matches.iterrows():
+                targeted_muscles_worked_out.add(row['targeted_muscles'])
 
     #loop through exericses and get up to 3 
     recommended_exercises = []
@@ -161,7 +203,8 @@ async def exercise_recommendation(user_id: uuid.UUID):
         if muscle_group not in muscle_group_counts:
             muscle_group_counts[muscle_group] = 0
         
-        if target_muscles not in targeted_muscles_worked_out:
+        #hard cap at 2 exercises per muscle
+        if target_muscles not in targeted_muscles_worked_out and muscle_group_counts[muscle_group] < max_per_muscle_group:
             targeted_muscles_worked_out.add(target_muscles)
             muscle_group_counts[muscle_group] += 1 
             recommended_exercises.append(exercise_name)
@@ -169,6 +212,7 @@ async def exercise_recommendation(user_id: uuid.UUID):
             if len(recommended_exercises) >= total_target_exercises:
                 break 
 
-    return recommended_exercises 
-
-#
+    return {
+        "day": target_day_name,
+        "recommendations": recommended_exercises
+    }
