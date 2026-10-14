@@ -41,7 +41,8 @@ async def get_fitness_profile(current_user: User = Depends(get_current_user), db
             age = 22,
             height = 170,
             weight = 140,
-            preferd_workout_days = ["Monday", "Tuesday", "Thursday", "Friday"]
+            preferd_workout_days = ["Monday", "Tuesday", "Thursday", "Friday"],
+            weekly_split = {"Monday": "Back, Triceps, Shoulders", "Tuesday": "Chest, Biceps, Glutes", "Thursday": "Back, Triceps, Shoulders", "Friday": "Chest, Biceps, Glutes"}
         )
 
     db.add(fitness_profile)

@@ -268,6 +268,9 @@ class UserFitnessProfile(Base):
         Enum(DayOfWeekEnum, native_enum=False), nullable=False
     )
 
+    #user cans tore their own muscle groups. kept in JSON dict. 
+    weekly_split: Mapped[dict] = mapped_column(JSON, nullable = True, default = dict)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     user: Mapped["User"] = relationship("User", back_populates="fitness_profile")

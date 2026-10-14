@@ -8,10 +8,13 @@ import json
 import os
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import date, timedelta
+from typing import Optional
 
 from db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db
 from analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile
 from security import get_current_user
+from routes.profile import get_fitness_profile, 
+
 router = APIRouter(prefix="/analytics", tags=["Analytics & Recommendations"])
 
 #save api data locally
@@ -122,7 +125,10 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
 
 #next exercise 
 @router.get("/exercise-recommendation")
-async def exercise_recommendation(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db) ):
+async def exercise_recommendation(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None):
+    if target_date is None:
+        target_date = date.today()
+    
     current_user_id = current_user.user_id
     
     #get the prefered muscle groups 
@@ -132,7 +138,7 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     #get user equipment
     user_profile = await get_user_profile(current_user_id)
     if not user_profile or not user_profile.equipment_available:
-        return {"recommendations": []}
+        return {"day": target_date.strftime('%A').lower(), "recommendations": []}
     
     equipment_avaliable = [eq.lower() for eq in user_profile.equipment_available]
     user_equipment = [eq.lower() for eq in user_profile.equipment_available]
@@ -143,14 +149,27 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
             lambda eq: any(e.lower() in user_equipment for e in (eq if isinstance(eq, list) else [eq]))
         )
     ]
+
+    #user can choose what they want to work out each day. 
+    fitness_profile = await get_fitness_profile(current_user, Depends())
+    target_day_name = target_date.strftime('%A').lower()
+
+    today_muscle_groups = []
+    if fitness_profile and fitness_profile.weekly_split:
+        #get the muscle groups for user
+        today_muscle_groups = [mg.lower() for mg in fitness_profile.weekly_split.get(today_day_name, [])]
+
+    #only recommend exercises that fit w/ today's muscle groups
+    if today_muscle_groups:
+        available_exercises = available_exercises[available_exercises['muscle_group'].str.lower().isin(today_muscle_groups)]
     
     user_entries = await get_entries_by_id(current_user_id)
-    today = date.today()
-    targeted_muscles_worked_out = set()
 
+    #keep track of sub-muscles worked out. AVOID REPITION
+    targeted_muscles_worked_out = set()
     if not user_entries.empty:
         user_entries['entry_date'] = pd.to_datetime(user_entries['entry_date']).dt.date
-        today_entries = user_entries[user_entries['entry_date'] == today]
+        today_entries = user_entries[user_entries['entry_date'] == target_date]
 
         for i, entry in today_entries.iterrows():
             matched_exercise = exercise_data[exercise_data['exercise_name'] == entry.get('exercise_name')]
@@ -162,7 +181,7 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
         latest_date = latest_entry['entry_date']
         
         # If the last workout was less than 2 days ago, block that muscle group
-        if (today - latest_date).days < 2:
+        if (target_date - latest_date).days < 2 and (target_date - latest_date).days >= 0:
             recent_muscle_group = str(latest_entry.get('muscle_group')).lower()
             
             # Find any exercises matching this recent group and add their targets to the exclusion set
@@ -193,4 +212,7 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
             if len(recommended_exercises) >= total_target_exercises:
                 break 
 
-    return {"recommendadtions": recommended_exercises} 
+    return {
+        "day": target_day_name,
+        "recommendations": recommended_exercises
+    }
