@@ -7,6 +7,7 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 import VerifyResetCode from "./pages/Auth/VerifyResetCode";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import Landing from "./pages/Landing/Landing";
+import Dashboard from "./pages/Dashboard/Dashboard";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-reset-code" element={<VerifyResetCode />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path ="/dashboard" element = {<Dashboard />} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
