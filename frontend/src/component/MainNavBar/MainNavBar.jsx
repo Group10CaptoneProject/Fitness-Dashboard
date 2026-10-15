@@ -1,9 +1,19 @@
-import { Link } from "react-router";
-import { ChevronDown, Dumbbell, Menu, X } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { useState } from "react";
+import { ChevronDown, Dumbbell, Menu, X, LogOut } from "lucide-react";
 import styles from "./MainNavBar.module.css";
 
 function MainNavBar({ username }) {
+  const navigate = useNavigate();
+  const [openAccountMenu, setOpenAccountMenu] = useState(false);
 
+  function handleLogout() {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("username");
+
+    navigate("/login", { replace: true });
+  }
   
   return (
     <nav className={styles.navbar}>
@@ -20,15 +30,25 @@ function MainNavBar({ username }) {
         </div>
       </div>
       
-
-      <button
-        type="button"
-        className={styles.userMenu}
-        aria-label="User account"
-      >
-        {username}
-        <ChevronDown size={21} />
-      </button>
+      <div className = {styles.account}>
+        <button
+          type="button"
+          className={styles.userMenu}
+          aria-label="User account"
+          onClick={() => setOpenAccountMenu((open) => !open)}
+        >
+          {username}
+          <ChevronDown size={21} />
+        </button>
+        {openAccountMenu && (
+          <div className={styles.accountDropdown}>
+            <button type="button" onClick={handleLogout}> 
+              <span className={styles["logout-text"]}>Log out</span>
+              <LogOut size={18} />
+            </button>
+          </div>
+        )}
+      </div>
     </nav>
   );
 }
