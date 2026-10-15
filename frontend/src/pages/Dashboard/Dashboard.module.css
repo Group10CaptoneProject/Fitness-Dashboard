@@ -46,3 +46,14 @@
     padding: 0.5rem;
     border-radius: 50%;
 }
+@media (max-width: 768px) {
+    .card-wrapper{
+        grid-template-columns: 1fr;
+        grid-template-rows: auto ;
+    }
+    .welcome-description{
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+  }
