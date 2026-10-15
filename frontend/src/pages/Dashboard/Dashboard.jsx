@@ -4,6 +4,7 @@ import MainNavBar from "../../component/MainNavBar/MainNavBar";
 
 
 function Dashboard(){
+    const username = localStorage.getItem("username" ) || "Username";
     // Formatted current date: Weekday, Month Day, Year
     const today = new Date();
 
@@ -17,11 +18,11 @@ function Dashboard(){
 
     return(
         <>
-            <MainNavBar username = "Username" />
+            <MainNavBar username = {username} />
             <div className = {styles["dashboard-wrapper"]}>
                 <div className = {styles["dashboard-header"]}>
                     <div className = {styles["welcome-message"]}>
-                        <h2>Hello, Username</h2>
+                        <h2>Hello, {username}</h2>
                     </div>
                     <div className = {styles["welcome-description"]}> 
                         Here is your training status for today!

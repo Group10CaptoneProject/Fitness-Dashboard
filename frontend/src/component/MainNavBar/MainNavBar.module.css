@@ -53,7 +53,39 @@
   align-items: center;
   justify-content: center;
 }
+.account {
+  position: relative;
+}
 
+.accountDropdown {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 140px;
+  padding: 6px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.accountDropdown button {
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 5px;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.accountDropdown button:hover {
+  background: #f1f3f5;
+}
 
 @media (max-width: 768px) {
   .logoText{
