@@ -7,7 +7,11 @@ import ReadinessScaleCard from "./component/ReadinessScaleCard/ReadinessScaleCar
 import SummaryCard from "./component/SummaryCard/SummaryCard";
 
 function Dashboard(){
-    const [trainingScore, setTrainingScore] = useState(0)
+    const [trainingScore, setTrainingScore] = useState(0);
+    const [recoveryScore, setRecoveryScore] = useState(0);
+    const [fatigueScore, setfatigueScore] = useState(0);
+    const [workloadScore, setworkloadScore] = useState(0);
+
     const username = localStorage.getItem("username" ) || "Username";
     // Formatted current date: Weekday, Month Day, Year
     const today = new Date();
@@ -89,7 +93,12 @@ function Dashboard(){
                                     <h2>Today's Summary</h2>
                                 </div>
                             </div>
-                            <SummaryCard />
+                            <SummaryCard 
+                                finalScore = {trainingScore} 
+                                recoveryScore = {recoveryScore} 
+                                fatigueScore = {fatigueScore} 
+                                workloadBalanceScore = {workloadScore}
+                            />
                         </div>
                     </div>
                 </div>
