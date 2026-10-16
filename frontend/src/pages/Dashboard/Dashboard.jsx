@@ -2,8 +2,7 @@ import styles from "./Dashboard.module.css";
 import { useState } from "react";
 import { CalendarDays , ChartSpline, NotebookText , Gauge as GaugeIcon , Activity} from "lucide-react";
 import MainNavBar from "../../component/MainNavBar/MainNavBar";
-import { Gauge } from "@mui/x-charts/Gauge";
-
+import TrainingScoreCard from "./component/TrainingScoreCard/TrainingScoreCard";
 
 function Dashboard(){
     const [trainingScore, setTrainingScore] = useState(0)
@@ -47,22 +46,7 @@ function Dashboard(){
                                 <h2>Final Training Score</h2>
                             </div>
                         </div>
-                        <div>
-                            <Gauge 
-                                width={125} 
-                                height={125} 
-                                value={trainingScore}
-                                valueMax={100}
-                                text={({ value, valueMax }) => `${value}/${valueMax}`}
-                                sx={{
-                                    "& .MuiGauge-valueText": {
-                                    fill: "#333",
-                                    },
-                                }}
-                            />
-                            <span className = {styles["readiness-tag"]}></span>
-                        </div>
-
+                        <TrainingScoreCard score = {trainingScore}/>
                     </div>
                     {/* Readiness scale */}
                     <div className =  {styles["card"]}>

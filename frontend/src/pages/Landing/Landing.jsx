@@ -1,8 +1,7 @@
-import NavBar from "./component/NavigateBar";
+import NavBar from "./component/NavigateBar/NavigateBar";
 import styles from "./Landing.module.css";
 import heroVideo from "../../assets/videos/hero-video.mp4";
 import ScrollRevealText from "./component/ScrollRevealText/ScrollRevealText";
-import FeatureCard from "./component/FeatureCard/FeatureCard";
 
 function Landing() {
   return (
