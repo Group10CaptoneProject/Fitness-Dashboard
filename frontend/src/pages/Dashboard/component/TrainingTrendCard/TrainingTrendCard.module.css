@@ -1,0 +1,15 @@
+.trend-wrapper {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.no-data {
+    width: 100%;
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5f6b7a;
+    font-size: 0.95rem;
+}

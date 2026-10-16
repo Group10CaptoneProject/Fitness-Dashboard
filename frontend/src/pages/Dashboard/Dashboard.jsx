@@ -5,12 +5,53 @@ import MainNavBar from "../../component/MainNavBar/MainNavBar";
 import TrainingScoreCard from "./component/TrainingScoreCard/TrainingScoreCard";
 import ReadinessScaleCard from "./component/ReadinessScaleCard/ReadinessScaleCard";
 import SummaryCard from "./component/SummaryCard/SummaryCard";
+import TrainingTrendCard from "./component/TrainingTrendCard/TrainingTrendCard";
 
 function Dashboard(){
     const [trainingScore, setTrainingScore] = useState(0);
     const [recoveryScore, setRecoveryScore] = useState(0);
     const [fatigueScore, setfatigueScore] = useState(0);
     const [workloadScore, setworkloadScore] = useState(0);
+    const [weeklyScores, setWeeklyScores] = useState([]);
+
+    // Mock data for testing purposes
+    // const [weeklyScores, setWeeklyScores] = useState([
+    //     {
+    //         score_date: "2026-10-10",
+    //         recovery: 65,
+    //         workload_balance_score: 55
+    //     },
+    //     {
+    //         score_date: "2026-10-11",
+    //         recovery: 72,
+    //         workload_balance_score: 60
+    //     },
+    //     {
+    //         score_date: "2026-10-12",
+    //         recovery: 68,
+    //         workload_balance_score: 70
+    //     },
+    //     {
+    //         score_date: "2026-10-13",
+    //         recovery: 80,
+    //         workload_balance_score: 74
+    //     },
+    //     {
+    //         score_date: "2026-10-14",
+    //         recovery: 76,
+    //         workload_balance_score: 68
+    //     },
+    //     {
+    //         score_date: "2026-10-15",
+    //         recovery: 85,
+    //         workload_balance_score: 78
+    //     },
+    //     {
+    //         score_date: "2026-10-16",
+    //         recovery: 82,
+    //         workload_balance_score: 84
+    //     }
+    // ]);
 
     const username = localStorage.getItem("username" ) || "Username";
     // Formatted current date: Weekday, Month Day, Year
@@ -81,6 +122,7 @@ function Dashboard(){
                                 </div>
                             </div>
                         </div>
+                        <TrainingTrendCard scores={weeklyScores} />
                     </div >
                     {/* Today's summary */}
                     <div className =  {styles["card"]}>
