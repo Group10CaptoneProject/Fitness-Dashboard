@@ -1,0 +1,61 @@
+.wrapper{
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 0.5rem;
+}
+.guage .guage-info{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.guage-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 1rem;
+  }
+.readiness-tag{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    background-color: lightgray;
+}
+.desc{
+    font-weight: bold;
+}
+/* tag colors */
+.no-score {
+    color: gray;
+    background: lightgray;
+  }
+  
+  .very-low {
+    color: #991b1b;
+    background: #fee2e2;
+  }
+  
+  .low {
+    color: #9a3412;
+    background: #ffedd5;
+  }
+  
+  .reduced {
+    color: #854d0e;
+    background: #fef3c7;
+  }
+  
+  .good {
+    color: #166534;
+    background: #dcfce7;
+  }
+  
+  .high {
+    color: #075985;
+    background: #e0f2fe;
+  }
+@media (max-width: 768px){
+    .guage-info{
+        font-size: 0.8rem;
+    }
+}

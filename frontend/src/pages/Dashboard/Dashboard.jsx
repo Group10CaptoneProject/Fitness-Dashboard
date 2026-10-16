@@ -1,9 +1,11 @@
 import styles from "./Dashboard.module.css";
-import { CalendarDays , ClipboardPen , ChartSpline, NotebookText , Gauge  } from "lucide-react";
+import { useState } from "react";
+import { CalendarDays , ChartSpline, NotebookText , Gauge as GaugeIcon , Activity} from "lucide-react";
 import MainNavBar from "../../component/MainNavBar/MainNavBar";
-
+import TrainingScoreCard from "./component/TrainingScoreCard/TrainingScoreCard";
 
 function Dashboard(){
+    const [trainingScore, setTrainingScore] = useState(0)
     const username = localStorage.getItem("username" ) || "Username";
     // Formatted current date: Weekday, Month Day, Year
     const today = new Date();
@@ -38,20 +40,20 @@ function Dashboard(){
                     <div className =  {styles["card"]}>
                         <div className = {styles["card-header"]}> 
                             <span className = {styles["tag"]}>
-                                <ClipboardPen size={24} color="white" />
+                                <GaugeIcon size={24} color="white"/>
                             </span>
                             <div ClassName = {styles["card-title"]}>
                                 <h2>Final Training Score</h2>
                             </div>
                         </div>
-
+                        <TrainingScoreCard score = {trainingScore}/>
                     </div>
                     {/* Readiness scale */}
                     <div className =  {styles["card"]}>
                         <div ClassName = {styles["card-title"]}>
                         <div className = {styles["card-header"]}> 
                             <span className = {styles["tag"]}>
-                                <Gauge size={24} color="white"/>
+                                <Activity size={24} color="white"/>
                             </span>
                             <div ClassName = {styles["card-title"]}>
                                 <h2>Readiness scale</h2>

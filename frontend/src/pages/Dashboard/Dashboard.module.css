@@ -20,7 +20,7 @@
 .card-wrapper{
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 207px 538px;
+    grid-template-rows: 260px 538px;
     gap: 20px 16px; 
     margin-top: 1rem;
 }
