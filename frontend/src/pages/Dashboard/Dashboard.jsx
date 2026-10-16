@@ -1,9 +1,12 @@
 import styles from "./Dashboard.module.css";
-import { CalendarDays , ClipboardPen , ChartSpline, NotebookText , Gauge  } from "lucide-react";
+import { useState } from "react";
+import { CalendarDays , ChartSpline, NotebookText , Gauge as GaugeIcon , Activity} from "lucide-react";
 import MainNavBar from "../../component/MainNavBar/MainNavBar";
+import { Gauge } from "@mui/x-charts/Gauge";
 
 
 function Dashboard(){
+    const [trainingScore, setTrainingScore] = useState(0)
     const username = localStorage.getItem("username" ) || "Username";
     // Formatted current date: Weekday, Month Day, Year
     const today = new Date();
@@ -38,11 +41,26 @@ function Dashboard(){
                     <div className =  {styles["card"]}>
                         <div className = {styles["card-header"]}> 
                             <span className = {styles["tag"]}>
-                                <ClipboardPen size={24} color="white" />
+                                <GaugeIcon size={24} color="white"/>
                             </span>
                             <div ClassName = {styles["card-title"]}>
                                 <h2>Final Training Score</h2>
                             </div>
+                        </div>
+                        <div>
+                            <Gauge 
+                                width={125} 
+                                height={125} 
+                                value={trainingScore}
+                                valueMax={100}
+                                text={({ value, valueMax }) => `${value}/${valueMax}`}
+                                sx={{
+                                    "& .MuiGauge-valueText": {
+                                    fill: "#333",
+                                    },
+                                }}
+                            />
+                            <span className = {styles["readiness-tag"]}></span>
                         </div>
 
                     </div>
@@ -51,7 +69,7 @@ function Dashboard(){
                         <div ClassName = {styles["card-title"]}>
                         <div className = {styles["card-header"]}> 
                             <span className = {styles["tag"]}>
-                                <Gauge size={24} color="white"/>
+                                <Activity size={24} color="white"/>
                             </span>
                             <div ClassName = {styles["card-title"]}>
                                 <h2>Readiness scale</h2>
