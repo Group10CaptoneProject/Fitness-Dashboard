@@ -4,6 +4,7 @@ import { CalendarDays , ChartSpline, NotebookText , Gauge as GaugeIcon , Activit
 import MainNavBar from "../../component/MainNavBar/MainNavBar";
 import TrainingScoreCard from "./component/TrainingScoreCard/TrainingScoreCard";
 import ReadinessScaleCard from "./component/ReadinessScaleCard/ReadinessScaleCard";
+import SummaryCard from "./component/SummaryCard/SummaryCard";
 
 function Dashboard(){
     const [trainingScore, setTrainingScore] = useState(0)
@@ -57,7 +58,7 @@ function Dashboard(){
                                 <Activity size={24} color="white"/>
                             </span>
                             <div ClassName = {styles["card-title"]}>
-                                <h2>Readiness scale</h2>
+                                <h2>Readiness Scale</h2>
                             </div>
                         </div>
                         <ReadinessScaleCard score = {trainingScore} />
@@ -72,7 +73,7 @@ function Dashboard(){
                                     <ChartSpline size={24} color="white"/>
                                 </span>
                                 <div ClassName = {styles["card-title"]}>
-                                    <h2>Past 7 Day training trend</h2>
+                                    <h2>Past 7 Day Training Trend</h2>
                                 </div>
                             </div>
                         </div>
@@ -85,9 +86,10 @@ function Dashboard(){
                                     <NotebookText size={24} color="white"/>
                                 </span>
                                 <div ClassName = {styles["card-title"]}>
-                                    <h2>Today's summary</h2>
+                                    <h2>Today's Summary</h2>
                                 </div>
                             </div>
+                            <SummaryCard />
                         </div>
                     </div>
                 </div>
