@@ -3,6 +3,7 @@ import { useState } from "react";
 import { CalendarDays , ChartSpline, NotebookText , Gauge as GaugeIcon , Activity} from "lucide-react";
 import MainNavBar from "../../component/MainNavBar/MainNavBar";
 import TrainingScoreCard from "./component/TrainingScoreCard/TrainingScoreCard";
+import ReadinessScaleCard from "./component/ReadinessScaleCard/ReadinessScaleCard";
 
 function Dashboard(){
     const [trainingScore, setTrainingScore] = useState(0)
@@ -59,7 +60,8 @@ function Dashboard(){
                                 <h2>Readiness scale</h2>
                             </div>
                         </div>
-                        </div>
+                        <ReadinessScaleCard score = {trainingScore} />
+                    </div>
 
                     </div>
                     {/* Training trend (7 days) */}

@@ -1,0 +1,70 @@
+.wrapper {
+    width: 100%;
+}
+
+.scaleContainer {
+    position: relative;
+    padding-top: 38px;
+}
+
+.scale {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    height: 14px;
+    overflow: hidden;
+    border-radius: 999px;
+    }
+
+.segment {
+    min-width: 0;
+}
+
+.veryLow { background-color: #F55F5F; }
+.low { background-color: #FEA14F; }
+.reduced { background-color: #F3D352; }
+.good { background-color: #8AE164; }
+.high { background-color: #0284c7; }
+
+.scoreMarker {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.scoreTag {
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #333;
+    color: white;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.markerArrow {
+    color: #333;
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.labels {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.labels > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.labels span:last-child {
+    color: #666;
+}
