@@ -89,7 +89,7 @@ function Dashboard(){
                             <span className = {styles["tag"]}>
                                 <GaugeIcon size={24} color="white"/>
                             </span>
-                            <div ClassName = {styles["card-title"]}>
+                            <div className = {styles["card-title"]}>
                                 <h2>Final Training Score</h2>
                             </div>
                         </div>
@@ -97,12 +97,12 @@ function Dashboard(){
                     </div>
                     {/* Readiness scale */}
                     <div className =  {styles["card"]}>
-                        <div ClassName = {styles["card-title"]}>
+                        <div className = {styles["card-title"]}>
                         <div className = {styles["card-header"]}> 
                             <span className = {styles["tag"]}>
                                 <Activity size={24} color="white"/>
                             </span>
-                            <div ClassName = {styles["card-title"]}>
+                            <div className = {styles["card-title"]}>
                                 <h2>Readiness Scale</h2>
                             </div>
                         </div>
@@ -112,12 +112,12 @@ function Dashboard(){
                     </div>
                     {/* Training trend (7 days) */}
                     <div className =  {styles["card"]}>
-                        <div ClassName = {styles["card-title"]}>
+                        <div className = {styles["card-title"]}>
                             <div className = {styles["card-header"]}> 
                                 <span className = {styles["tag"]}>
                                     <ChartSpline size={24} color="white"/>
                                 </span>
-                                <div ClassName = {styles["card-title"]}>
+                                <div className = {styles["card-title"]}>
                                     <h2>Past 7 Day Training Trend</h2>
                                 </div>
                             </div>
@@ -126,12 +126,12 @@ function Dashboard(){
                     </div >
                     {/* Today's summary */}
                     <div className =  {styles["card"]}>
-                        <div ClassName = {styles["card-title"]}>
+                        <div className = {styles["card-title"]}>
                             <div className = {styles["card-header"]}> 
                                 <span className = {styles["tag"]}>
                                     <NotebookText size={24} color="white"/>
                                 </span>
-                                <div ClassName = {styles["card-title"]}>
+                                <div className = {styles["card-title"]}>
                                     <h2>Today's Summary</h2>
                                 </div>
                             </div>
