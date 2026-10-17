@@ -1,5 +1,4 @@
 import { Gauge, HeartPulse, BatteryLow, Scale } from "lucide-react";
-import Box from '@mui/material/Box';
 import LinearProgress from "@mui/material/LinearProgress";
 import styles from "./SummaryCard.module.css"
 

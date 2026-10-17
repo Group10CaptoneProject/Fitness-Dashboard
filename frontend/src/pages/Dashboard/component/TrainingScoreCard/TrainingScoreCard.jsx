@@ -4,7 +4,7 @@ import styles from "./TrainingScoreCard.module.css"
 function TrainingScoreCard({score}){
     // For css purpose
     const readinessClass =
-        score == null || score == 0 ? "no-score"
+        score == null || score === 0 ? "no-score"
         : score < 20 ? "very-low"
         : score < 40 ? "low"
         : score < 60 ? "reduced"
@@ -12,7 +12,7 @@ function TrainingScoreCard({score}){
         : "high";
     // Readiness level
     function getScoreInfo(score) {
-        if (score == null || score == 0) {
+        if (score == null || score === 0) {
             return {
             readiness: "No score yet",
             adjustment: "Complete today's check-in",
