@@ -22,16 +22,20 @@ async def predict_workout(current_user: User = Depends(get_current_user), db: As
     recommendation_list = await exercise_recommendation(current_user, db)
 
     #find next day
-    exercise_list = recommendation_list.get("reconnedations", [])
+    exercise_list = recommendation_list.get("recommendations", []) 
     target_day = recommendation_list.get("day", "")
 
     prediction_record = {}
     for exercise in exercise_list:
-        prediction_record[exercise] = recommended_weight 
+        name = exercise.get("name")
+        prediction_record[name] = {
+            "tagret_muscle": name["targeted_muscle"],
+            "equipment": name["required_equipment"],
+            "recommended_weight": recommended_weight
+            "gif_url": name["gif_url"]
+        }
 
     return {
         "day": target_day,
-        "weight_recommendation": recommended_weight,
         "workout_plan": prediction_record
     }
-

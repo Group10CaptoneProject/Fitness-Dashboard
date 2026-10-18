@@ -47,7 +47,8 @@ def get_exercise_stats() -> pd.DataFrame:
             "exercise_name": item.get("name"),
             "required_equipment": item.get("equipments"),
             "muscle_group": item.get("bodyParts"),
-            "targeted_muscles": item.get("targetMuscles")
+            "targeted_muscles": item.get("targetMuscles"),
+            "gif_url": item.get("gifUrl")
         })
 
     #convert key properties to df
@@ -207,7 +208,13 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
         if target_muscles not in targeted_muscles_worked_out and muscle_group_counts[muscle_group] < max_per_muscle_group:
             targeted_muscles_worked_out.add(target_muscles)
             muscle_group_counts[muscle_group] += 1 
-            recommended_exercises.append(exercise_name)
+            recommended_exercise = {
+                "name": exercise_name,
+                "target_muscle": target_muscles,
+                "equipment": row["required_equipment"],
+                "gif_url": row.get("gif_url")
+            }
+            recommended_exercises.append(recommended_exercise)
 
             if len(recommended_exercises) >= total_target_exercises:
                 break 
