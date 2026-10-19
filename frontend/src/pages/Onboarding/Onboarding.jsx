@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import {
   Dumbbell,
@@ -41,6 +42,44 @@ function Onboarding() {
     workout_days: [],
   });
 
+  // Restore previously saved onboarding answers when the page opens.
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem("onboarding_data");
+
+      if (!savedData) {
+        return;
+      }
+
+      const parsedData = JSON.parse(savedData);
+
+      setFormData((previous) => ({
+        ...previous,
+        age:
+          parsedData.age == null ? "" : String(parsedData.age),
+        gender: parsedData.gender || "",
+        height:
+          parsedData.height == null ? "" : String(parsedData.height),
+        weight:
+          parsedData.weight == null ? "" : String(parsedData.weight),
+        goal: parsedData.goal || "",
+        experience: parsedData.experience || "",
+        session_duration:
+          parsedData.session_duration == null
+            ? ""
+            : String(parsedData.session_duration),
+        equipment: Array.isArray(parsedData.equipment)
+          ? parsedData.equipment
+          : [],
+        workout_days: Array.isArray(parsedData.workout_days)
+          ? parsedData.workout_days
+          : [],
+      }));
+    } catch (err) {
+      console.error("Failed to load saved onboarding data:", err);
+    }
+  }, []);
+
   // Update text inputs and dropdowns.
   function handleChange(event) {
     const { name, value } = event.target;
@@ -53,7 +92,7 @@ function Onboarding() {
     setError("");
   }
 
-  // Update equipment and workout-day checkboxes
+  // Update equipment and workout-day checkboxes.
   function handleCheckboxChange(event) {
     const { name, value, checked } = event.target;
 
@@ -63,7 +102,9 @@ function Onboarding() {
       return {
         ...previous,
         [name]: checked
-          ? [...currentValues, value]
+          ? currentValues.includes(value)
+            ? currentValues
+            : [...currentValues, value]
           : currentValues.filter((item) => item !== value),
       };
     });
@@ -71,7 +112,7 @@ function Onboarding() {
     setError("");
   }
 
-  // Reusable dropdown with a custom arrow
+  // Reusable dropdown with a custom arrow.
   function Dropdown({
     name,
     value,
@@ -100,7 +141,7 @@ function Onboarding() {
     );
   }
 
-  // Reusable checkbox group
+  // Reusable checkbox group.
   function CheckboxGroup({ name, options }) {
     return (
       <div className={styles.checkboxGroup}>
@@ -120,7 +161,7 @@ function Onboarding() {
     );
   }
 
-  // Send a request that cannot wait indefinitely
+  // Send a request that cannot wait indefinitely.
   async function fetchWithTimeout(url, options) {
     const controller = new AbortController();
 
@@ -155,7 +196,7 @@ function Onboarding() {
     }
   }
 
-  // Parse the response and turn backend errors into readable messages
+  // Parse the response and turn backend errors into readable messages.
   async function readResponse(response, fallbackMessage) {
     const responseText = await response.text();
 
@@ -192,28 +233,29 @@ function Onboarding() {
     return result;
   }
 
-  // Save onboarding information to the backend
+  // Save onboarding information to the backend.
+
   async function saveOnboarding() {
     const token = localStorage.getItem("access_token");
-
+  
     if (!token) {
       throw new Error(
-        "Your session has expired or no access token was found. Please log in again."
+        "Your session has expired. Please log in again."
       );
     }
-
+  
     const headers = {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     };
-
+  
     const fitnessProfile = {
       age: Number(formData.age),
       gender: formData.gender,
       height: Number(formData.height),
       weight: Number(formData.weight),
     };
-
+  
     const userProfile = {
       primary_goal: formData.goal,
       experience_level: formData.experience,
@@ -223,39 +265,35 @@ function Onboarding() {
       ),
       session_duration: Number(formData.session_duration),
     };
-
-    // Save age, gender, height, and weight first
-    const fitnessResponse = await fetchWithTimeout(
-      `${API_URL}/profile/fitness-profile`,
-      {
+  
+    // Start both requests together instead of waiting for each in turn.
+    const [fitnessResponse, preferencesResponse] = await Promise.all([
+      fetchWithTimeout(`${API_URL}/profile/fitness-profile`, {
         method: "POST",
         headers,
         body: JSON.stringify(fitnessProfile),
-      }
-    );
-
+      }),
+      fetchWithTimeout(`${API_URL}/profile/user-profile`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(userProfile),
+      }),
+    ]);
+  
+    // Check both responses.
     await readResponse(
       fitnessResponse,
       "Could not save your fitness information."
     );
-
-    // Save workout preferences
-    const preferencesResponse = await fetchWithTimeout(
-      `${API_URL}/profile/user-profile`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify(userProfile),
-      }
-    );
-
+  
     await readResponse(
       preferencesResponse,
       "Could not save your workout preferences."
     );
   }
+  
 
-  // Validate each step and save after the user finishes step 2
+  // Validate each step and save after the user finishes step 2.
   async function handleContinue(event) {
     event.preventDefault();
 
@@ -310,27 +348,27 @@ function Onboarding() {
       return;
     }
 
+
     setLoading(true);
 
     try {
       await saveOnboarding();
-
-      // Mark onboarding complete only after both requests succeed
+    
+      // Store answers locally only after both backend saves succeed.
       localStorage.setItem("onboarding_data", JSON.stringify(formData));
       localStorage.setItem("onboarding_completed", "true");
-
-      // Go to the next page after saving successfully
+    
       navigate("/entry");
     } catch (err) {
       console.error("Onboarding save error:", err);
-
+    
       setError(
         err.message || "Unable to save your onboarding information."
       );
     } finally {
-      // Always re-enable the button, even when a request fails
       setLoading(false);
     }
+    
   }
 
   const equipmentOptions = [
@@ -556,9 +594,13 @@ function Onboarding() {
                     <option value="" disabled>
                       Select Your Goal
                     </option>
-                    <option value="hypertrophy">Hypertrophy (Muscle Growth)</option>
+                    <option value="hypertrophy">
+                      Hypertrophy (Muscle Growth)
+                    </option>
                     <option value="endurance">Endurance</option>
-                    <option value="healthy_lifestyle">Healthy Lifestyle</option>
+                    <option value="healthy_lifestyle">
+                      Healthy Lifestyle
+                    </option>
                   </Dropdown>
                 </div>
 
