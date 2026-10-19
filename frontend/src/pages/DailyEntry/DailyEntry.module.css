@@ -1,0 +1,82 @@
+/* Page and navigation */
+.page {
+  min-height: 100vh;
+  background: #f1f2f4;
+  color: #080808;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.navbar {
+  height: 56px;
+  padding: 0 32px;
+  background: #1d4fc5;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.logo svg {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.userMenu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 18px;
+}
+
+/* Main content and title */ 
+.main {
+  width: 100%;
+  max-width: 1320px;
+  min-height: calc(100vh - 56px);
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 28px 36px 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.heading {
+  width: 100%;
+  max-width: 1120px;
+  box-sizing: border-box;
+  align-self: center;
+  margin: 0 auto 24px;
+  flex-shrink: 0;
+}
+
+.heading h1 {
+  margin: 0 0 8px;
+  color: #172033;
+  font-size: 34px;
+  font-weight: 750;
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+
+.heading p {
+  margin: 0;
+  color: #788397;
+  font-size: 18px;
+  line-height: 1.6;
+}

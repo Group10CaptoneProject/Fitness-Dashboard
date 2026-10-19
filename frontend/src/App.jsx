@@ -8,6 +8,7 @@ import VerifyResetCode from "./pages/Auth/VerifyResetCode";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import Landing from "./pages/Landing/Landing";
 import Dashboard from "./pages/Dashboard/Dashboard";
+import DailyEntry from "./pages/DailyEntry/DailyEntry";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/entry" element={<DailyEntry />} />
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-reset-code" element={<VerifyResetCode />} />

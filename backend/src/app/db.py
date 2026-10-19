@@ -43,13 +43,14 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 class GoalEnum(str, PyEnum):
-    HYPERTROPY = "hypertropy"
+    HYPERTROPHY = "hypertrophy"
     ENDURANCE = "endurance"
     HEALTHY_LIFESTYLE = "healthy_lifestyle"
 
 class GenderEnum(str, PyEnum):
     MALE = "male"
     FEMALE = "female"
+    NON_BINARY = "non_binary"
     PREFER_NOT_TO_SAY = "prefer_not_to_say"
 
 class MuscleCategoryEnum(str, PyEnum):
@@ -82,10 +83,11 @@ class ExperienceLevelEnum(str, PyEnum):
 class EquipmentEnum(str, PyEnum):
     BODYWEIGHT = "bodyweight"
     DUMBBELLS = "dumbbells"
+    KETTLEBELLS = "kettlebells"
+    RESISTANCE_BANDS = "resistance_bands"
     BARBELL = "barbell"
     MACHINES = "machines"
     CABLE = "cable"
-    KETTLEBELLS = "kettlebells"
 
 class DayOfWeekEnum(str, PyEnum):
     MONDAY = "monday"
@@ -103,16 +105,33 @@ class Base(DeclarativeBase):
 #create the user profile class
 class UserProfile(Base):
     __tablename__ = "user_profiles"
-    
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True)
-    primary_goal: Mapped[GoalEnum] = mapped_column(Enum(GoalEnum, native_enum=False), nullable=False, default=GoalEnum.HEALTHY_LIFESTYLE)
-    
-    experience_level: Mapped[ExperienceLevelEnum] = mapped_column(Enum(ExperienceLevelEnum, native_enum=False), nullable=False, default=ExperienceLevelEnum.INTERMEDIATE)
-    
-    # Storing multi-select lists as Postgres Arrays
-    equipment_available: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
-    
-    # Preferred training days selected during onboarding
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+    primary_goal: Mapped[GoalEnum] = mapped_column(
+        Enum(GoalEnum, native_enum=False),
+        nullable=False,
+        default=GoalEnum.HYPERTROPHY,
+    )
+
+    experience_level: Mapped[ExperienceLevelEnum] = mapped_column(
+        Enum(ExperienceLevelEnum, native_enum=False),
+        nullable=False,
+        default=ExperienceLevelEnum.INTERMEDIATE,
+    )
+
+    # Multiple equipment selections
+    equipment_available: Mapped[List[str]] = mapped_column(
+        ARRAY(String),
+        nullable=False,
+        default=list,
+    )
+
+    # Multiple preferred workout days
     preferred_workout_days: Mapped[List[str]] = mapped_column(
         ARRAY(String),
         nullable=False,
@@ -126,7 +145,7 @@ class UserProfile(Base):
         default=60,
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="profile")
+    user: Mapped["User"] = relationship("User", back_populates="profile",)
 
 #user login info
 class User(Base):
@@ -268,26 +287,50 @@ class PasswordResetCode(Base):
         server_default=func.now()
     )
 
-#user fitness data
+# User fitness data
 class UserFitnessProfile(Base):
     __tablename__ = "fitness_profile"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True)
-    gender: Mapped[GenderEnum] = mapped_column(Enum(GenderEnum, native_enum=False), nullable=False, default=GenderEnum.PREFER_NOT_TO_SAY)    
-    
-    age: Mapped[int] = mapped_column(Integer, nullable=False)
-    height: Mapped[int] = mapped_column(Integer, nullable=False)
-    weight: Mapped[int] = mapped_column(Integer, nullable=False)
-    preferred_workout_days: Mapped[DayOfWeekEnum] = mapped_column(
-        Enum(DayOfWeekEnum, native_enum=False), nullable=False
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
+        primary_key=True,
     )
 
-    #user cans tore their own muscle groups. kept in JSON dict. 
-    weekly_split: Mapped[dict] = mapped_column(JSON, nullable = True, default = dict)
+    gender: Mapped[GenderEnum] = mapped_column(
+        Enum(GenderEnum, native_enum=False),
+        nullable=False,
+        default=GenderEnum.PREFER_NOT_TO_SAY,
+    )
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    
-    user: Mapped["User"] = relationship("User", back_populates="fitness_profile")
+    age: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    height: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    weight: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    # Optional weekly workout split
+    weekly_split: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=True,
+        default=dict,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    user: Mapped["User"] = relationship("User", back_populates="fitness_profile",)
 
 #initialize sql tables 
 async def init_db():
