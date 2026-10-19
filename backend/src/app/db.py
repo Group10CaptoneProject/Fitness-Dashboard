@@ -264,10 +264,7 @@ class UserFitnessProfile(Base):
     age: Mapped[int] = mapped_column(Integer, nullable=False)
     height: Mapped[int] = mapped_column(Integer, nullable=False)
     weight: Mapped[int] = mapped_column(Integer, nullable=False)
-    preferred_workout_days: Mapped[DayOfWeekEnum] = mapped_column(
-        Enum(DayOfWeekEnum, native_enum=False), nullable=False
-    )
-
+    preferred_workout_days: Mapped[dict] = mapped_column(JSON, nullable=True, default=dict)
     #user cans tore their own muscle groups. kept in JSON dict. 
     weekly_split: Mapped[dict] = mapped_column(JSON, nullable = True, default = dict)
 
