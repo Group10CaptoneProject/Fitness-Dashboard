@@ -296,3 +296,48 @@ async def test_connection():
 if __name__ == "__main__":
     asyncio.run(test_connection())
     # asyncio.run(init_db())
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+    primary_goal: Mapped[GoalEnum] = mapped_column(
+        Enum(GoalEnum, native_enum=False),
+        nullable=False,
+        default=GoalEnum.HEALTHY_LIFESTYLE,
+    )
+
+    experience_level: Mapped[ExperienceLevelEnum] = mapped_column(
+        Enum(ExperienceLevelEnum, native_enum=False),
+        nullable=False,
+        default=ExperienceLevelEnum.BEGINNER,
+    )
+
+    equipment_available: Mapped[List[str]] = mapped_column(
+        ARRAY(String),
+        nullable=False,
+        default=list,
+    )
+
+    # New fields for onboarding
+    preferred_workout_days: Mapped[List[str]] = mapped_column(
+        ARRAY(String),
+        nullable=False,
+        default=list,
+    )
+
+    session_duration: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=60,
+    )
+
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="profile",
+    )

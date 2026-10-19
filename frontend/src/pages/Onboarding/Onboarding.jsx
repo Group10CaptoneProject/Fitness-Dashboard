@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -15,36 +14,30 @@ import {
 } from "lucide-react";
 import styles from "./Onboarding.module.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8888";
+
 function Onboarding() {
   const navigate = useNavigate();
-  const username = localStorage.getItem("username");
+  const username = localStorage.getItem("username") || "Username";
 
-  // Track the current onboarding step and validation error
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [equipmentOpen, setEquipmentOpen] = useState(false);
 
-  // Store all onboarding answers in one state object
   const [formData, setFormData] = useState({
-    // Step 1
     age: "",
     gender: "",
     height: "",
     weight: "",
-
-    // Step 2
     goal: "",
     experience: "",
     session_duration: "",
-
-    // Checkboxes store multiple selections as arrays
     equipment: [],
     workout_days: [],
   });
 
-    // Controls whether the equipment selection popup is visible
-    const [equipmentOpen, setEquipmentOpen] = useState(false);
-
-  // Handle changes to standard inputs and dropdowns.
+  // Update text inputs and dropdowns.
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -56,7 +49,7 @@ function Onboarding() {
     setError("");
   }
 
-  // Handle checkbox selections for equipment and workout days.
+  // Update equipment and workout-day checkboxes.
   function handleCheckboxChange(event) {
     const { name, value, checked } = event.target;
 
@@ -74,9 +67,14 @@ function Onboarding() {
     setError("");
   }
 
-  // Reusable dropdown component with a custom ChevronDown icon.
-  // The shared CSS class lets every dropdown use the same arrow position.
-  function Dropdown({ name, value, onChange, children, required = false }) {
+  // Reusable dropdown with a custom arrow.
+  function Dropdown({
+    name,
+    value,
+    onChange,
+    children,
+    required = false,
+  }) {
     return (
       <div className={styles.selectWrapper}>
         <select
@@ -98,15 +96,12 @@ function Onboarding() {
     );
   }
 
-  // Render a checkbox group for equipment or workout days
+  // Reusable checkbox group.
   function CheckboxGroup({ name, options }) {
     return (
       <div className={styles.checkboxGroup}>
         {options.map((option) => (
-          <label
-            key={option.value}
-            className={styles.checkboxOption}
-          >
+          <label key={option.value} className={styles.checkboxOption}>
             <input
               type="checkbox"
               name={name}
@@ -114,7 +109,6 @@ function Onboarding() {
               checked={formData[name].includes(option.value)}
               onChange={handleCheckboxChange}
             />
-
             <span>{option.label}</span>
           </label>
         ))}
@@ -122,39 +116,127 @@ function Onboarding() {
     );
   }
 
-  // Validate the current step, then save the answers on completion
-  function handleContinue(event) {
+  // Send onboarding information to the backend.
+  async function saveOnboarding() {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      throw new Error("Your session has expired. Please log in again.");
+    }
+
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+
+    const fitnessProfile = {
+      age: Number(formData.age),
+      gender: formData.gender,
+      height: Number(formData.height),
+      weight: Number(formData.weight),
+    };
+
+    const userProfile = {
+      primary_goal: formData.goal,
+      experience_level: formData.experience,
+      equipment_available: formData.equipment,
+      preferred_workout_days: formData.workout_days.map((day) =>
+        day.toLowerCase()
+      ),
+      session_duration: Number(formData.session_duration),
+    };
+
+    // Save age, gender, height, and weight.
+    const fitnessResponse = await fetch(
+      `${API_URL}/profile/fitness-profile`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(fitnessProfile),
+      }
+    );
+
+    const fitnessResult = await fitnessResponse.json().catch(() => ({}));
+
+    if (!fitnessResponse.ok) {
+      const detail = fitnessResult.detail;
+
+      const message = Array.isArray(detail)
+        ? detail.map((item) => item.msg).join(" ")
+        : typeof detail === "string"
+          ? detail
+          : "Could not save your fitness information.";
+
+      throw new Error(message);
+    }
+
+    // Save workout preferences.
+    const preferencesResponse = await fetch(
+      `${API_URL}/profile/user-profile`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(userProfile),
+      }
+    );
+
+    const preferencesResult = await preferencesResponse
+      .json()
+      .catch(() => ({}));
+
+    if (!preferencesResponse.ok) {
+      const detail = preferencesResult.detail;
+
+      const message = Array.isArray(detail)
+        ? detail.map((item) => item.msg).join(" ")
+        : typeof detail === "string"
+          ? detail
+          : "Could not save your workout preferences.";
+
+      throw new Error(message);
+    }
+  }
+
+  // Validate each step, then save when the user finishes step 2.
+  async function handleContinue(event) {
     event.preventDefault();
     setError("");
 
     if (step === 1) {
-      // Require all four profile fields
       if (
-        !formData.age || !formData.gender || !formData.height || !formData.weight
+        !formData.age ||
+        !formData.gender ||
+        !formData.height ||
+        !formData.weight
       ) {
         setError("Please complete all fields before continuing.");
         return;
       }
 
-      // Check that numeric values are within valid ranges.
       if (
-        Number(formData.age) < 10 ||
+        Number(formData.age) < 12 ||
         Number(formData.age) > 120 ||
-        Number(formData.height) <= 0 ||
-        Number(formData.weight) <= 0
+        Number(formData.height) < 50 ||
+        Number(formData.height) > 250 ||
+        Number(formData.weight) < 20 ||
+        Number(formData.weight) > 300
       ) {
-        setError("Please enter valid age, height, and weight values.");
+        setError(
+          "Please enter a valid age, height (50–250 cm), and weight (20–300 lb)."
+        );
         return;
       }
 
-      // Advance to the workout preferences step.
       setStep(2);
       return;
     }
 
-    // Validate the required workout preferences.
     if (
-      !formData.goal || !formData.experience || !formData.session_duration || formData.equipment.length === 0 || formData.workout_days.length === 0
+      !formData.goal ||
+      !formData.experience ||
+      !formData.session_duration ||
+      formData.equipment.length === 0 ||
+      formData.workout_days.length === 0
     ) {
       setError(
         "Please select your goal, experience, duration, equipment, and workout days."
@@ -162,53 +244,74 @@ function Onboarding() {
       return;
     }
 
-    // Save the completed onboarding data locally for now.
-    localStorage.setItem(
-      "onboarding_data",
-      JSON.stringify(formData)
-    );
+    setLoading(true);
 
-    localStorage.setItem("onboarding_completed", "true");
+    try {
+      await saveOnboarding();
 
-    // Navigate to the entry after onboarding.
-    navigate("/entry");
+      // Keep a local copy for convenience after backend saving succeeds.
+      localStorage.setItem("onboarding_data", JSON.stringify(formData));
+      localStorage.setItem("onboarding_completed", "true");
+
+      navigate("/entry");
+    } catch (saveError) {
+      console.error("Onboarding save error:", saveError);
+      setError(
+        saveError.message || "Unable to save onboarding information."
+      );
+    } finally {
+      setLoading(false);
+    }
   }
+
+  const equipmentOptions = [
+    { label: "Bodyweight", value: "bodyweight" },
+    { label: "Dumbbells", value: "dumbbells" },
+    { label: "Kettlebells", value: "kettlebells" },
+    { label: "Resistance Bands", value: "resistance_bands" },
+    { label: "Barbell", value: "barbell" },
+  ];
+
+  const workoutDayOptions = [
+    { label: "Mon", value: "Monday" },
+    { label: "Tue", value: "Tuesday" },
+    { label: "Wed", value: "Wednesday" },
+    { label: "Thu", value: "Thursday" },
+    { label: "Fri", value: "Friday" },
+    { label: "Sat", value: "Saturday" },
+    { label: "Sun", value: "Sunday" },
+  ];
 
   return (
     <div className={styles.page}>
-        {/* Top navigation bar */}
-        <header className={styles.navbar}>
-            <div className={styles.logo}>
-            <Dumbbell size={38} strokeWidth={1.8} />
-            <span className={styles.logoText}>Fitness Dashboard</span>
-            </div>
+      <header className={styles.navbar}>
+        <div className={styles.logo}>
+          <Dumbbell size={38} strokeWidth={1.8} />
+          <span className={styles.logoText}>Fitness Dashboard</span>
+        </div>
 
-            <button
-            type="button"
-            className={styles.userMenu}
-            aria-label="User account"
-            >
-            {username}
-            <ChevronDown size={21} />
-            </button>
-        </header>
+        <button
+          type="button"
+          className={styles.userMenu}
+          aria-label="User account"
+        >
+          {username}
+          <ChevronDown size={21} />
+        </button>
+      </header>
 
-        <main className={styles.main}>
-            {/* Page heading */}
-            <div className={styles.heading}>
-            <h1>Let’s get to know you</h1>
-
-            <p>
-                This information helps us personalize your fitness experience and create the best training plan for you
-            </p>
-            </div>
+      <main className={styles.main}>
+        <div className={styles.heading}>
+          <h1>Let’s get to know you</h1>
+          <p>
+            This information helps us personalize your fitness experience and
+            create the best training plan for you
+          </p>
+        </div>
 
         <section className={styles.card}>
-          {/* Progress indicator for the two onboarding steps */}
           <div className={styles.progressSection}>
-            <span className={styles.stepLabel}>
-              Step {step} of 2
-            </span>
+            <span className={styles.stepLabel}>Step {step} of 2</span>
 
             <div
               className={styles.progressTrack}
@@ -227,19 +330,18 @@ function Onboarding() {
 
           <form onSubmit={handleContinue}>
             {step === 1 ? (
-              /* Step 1 */
               <div className={styles.fieldsGrid}>
-                {/* Age input */}
+                {/* Age */}
                 <div className={styles.field}>
                   <div className={styles.fieldHeading}>
                     <span className={styles.iconCircle}>
                       <CalendarDays size={23} />
                     </span>
-
                     <div>
                       <h2>Age</h2>
                       <p>
-                        Used for basic health analytics and future personalization
+                        Used for basic health analytics and future
+                        personalization
                       </p>
                     </div>
                   </div>
@@ -252,26 +354,25 @@ function Onboarding() {
                       aria-label="Age"
                       value={formData.age}
                       onChange={handleChange}
-                      min="10"
+                      min="12"
                       max="120"
                       required
                     />
-
                     <span className={styles.unit}>years old</span>
                   </div>
                 </div>
 
-                {/* Gender dropdown */}
+                {/* Gender */}
                 <div className={styles.field}>
                   <div className={styles.fieldHeading}>
                     <span className={styles.iconCircle}>
                       <UsersRound size={24} />
                     </span>
-
                     <div>
                       <h2>Gender</h2>
                       <p>
-                        Used as optional profile information and for health-related analytics
+                        Used as optional profile information and for
+                        health-related analytics
                       </p>
                     </div>
                   </div>
@@ -292,13 +393,12 @@ function Onboarding() {
                   </Dropdown>
                 </div>
 
-                {/* Height input */}
+                {/* Height */}
                 <div className={styles.field}>
                   <div className={styles.fieldHeading}>
                     <span className={styles.iconCircle}>
                       <Ruler size={23} />
                     </span>
-
                     <div>
                       <h2>Height</h2>
                       <p>
@@ -315,26 +415,26 @@ function Onboarding() {
                       aria-label="Height in centimeters"
                       value={formData.height}
                       onChange={handleChange}
-                      min="1"
+                      min="50"
+                      max="250"
                       step="0.1"
                       required
                     />
-
                     <span className={styles.unit}>cm</span>
                   </div>
                 </div>
 
-                {/* Weight input */}
+                {/* Weight */}
                 <div className={styles.field}>
                   <div className={styles.fieldHeading}>
                     <span className={styles.iconCircle}>
                       <Weight size={23} />
                     </span>
-
                     <div>
                       <h2>Weight</h2>
                       <p>
-                        Used with height for body-weight-related analytics and progress tracking
+                        Used with height for body-weight-related analytics
+                        and progress tracking
                       </p>
                     </div>
                   </div>
@@ -347,30 +447,26 @@ function Onboarding() {
                       aria-label="Weight in pounds"
                       value={formData.weight}
                       onChange={handleChange}
-                      min="1"
+                      min="20"
+                      max="300"
                       step="0.1"
                       required
                     />
-
                     <span className={styles.unit}>lb</span>
                   </div>
                 </div>
               </div>
             ) : (
-              /* Step 2 */
               <div className={styles.fieldsGrid}>
-                {/* Primary fitness goal dropdown */}
+                {/* Primary goal */}
                 <div className={styles.field}>
                   <div className={styles.fieldHeading}>
                     <span className={styles.iconCircle}>
                       <Target size={23} />
                     </span>
-
                     <div>
                       <h2>Primary Goal</h2>
-                      <p>
-                        What would you most like to achieve?
-                      </p>
+                      <p>What would you most like to achieve?</p>
                     </div>
                   </div>
 
@@ -383,7 +479,9 @@ function Onboarding() {
                     <option value="" disabled>
                       Select Your Goal
                     </option>
-                    <option value="hypertrophy">Hypertrophy (Muscle Growth)</option>
+                    <option value="hypertrophy">
+                      Hypertrophy (Muscle Growth)
+                    </option>
                     <option value="strength">Strength</option>
                     <option value="weight_loss">Weight Loss</option>
                     <option value="endurance">Endurance</option>
@@ -391,18 +489,15 @@ function Onboarding() {
                   </Dropdown>
                 </div>
 
-                {/* Experience level dropdown */}
+                {/* Experience */}
                 <div className={styles.field}>
                   <div className={styles.fieldHeading}>
                     <span className={styles.iconCircle}>
                       <Dumbbell size={23} />
                     </span>
-
                     <div>
                       <h2>Experience Level</h2>
-                      <p>
-                        Help us personalize your training plan
-                      </p>
+                      <p>Help us personalize your training plan</p>
                     </div>
                   </div>
 
@@ -421,18 +516,15 @@ function Onboarding() {
                   </Dropdown>
                 </div>
 
-                {/* Preferred workout duration dropdown */}
+                {/* Workout duration */}
                 <div className={styles.field}>
                   <div className={styles.fieldHeading}>
                     <span className={styles.iconCircle}>
                       <Clock size={23} />
                     </span>
-
                     <div>
                       <h2>Preferred Workout Duration</h2>
-                      <p>
-                        How long is your typical workout?
-                      </p>
+                      <p>How long is your typical workout?</p>
                     </div>
                   </div>
 
@@ -445,184 +537,146 @@ function Onboarding() {
                     <option value="" disabled>
                       Select Workout Duration
                     </option>
-                    <option value="10">10 min</option>
-                    <option value="20">20 min</option>
-                    <option value="30">30 min</option>
-                    <option value="40">40 min</option>
-                    <option value="50">50 min</option>
-                    <option value="60">60 min</option>
-                    <option value="70">70 min</option>
-                    <option value="80">80 min</option>
-                    <option value="90">90 min</option>
-                    <option value="100">100 min</option>
-                    <option value="110">110 min</option>
-                    <option value="120">120 min</option>
-                    <option value="130">130 min</option>
-                    <option value="140">140 min</option>
-                    <option value="150">150 min</option>
-                    <option value="160">160 min</option>
-                    <option value="170">170 min</option>
-                    <option value="180">180 min</option>
+                    {Array.from({ length: 18 }, (_, index) => {
+                      const minutes = (index + 1) * 10;
+                      return (
+                        <option key={minutes} value={String(minutes)}>
+                          {minutes} min
+                        </option>
+                      );
+                    })}
                   </Dropdown>
                 </div>
-                
-                {/* Equipment selection button and popup */}
+
+                {/* Equipment selection */}
                 <div className={styles.field}>
-                <div className={styles.fieldHeading}>
+                  <div className={styles.fieldHeading}>
                     <span className={styles.iconCircle}>
-                    <Dumbbell size={23} />
+                      <Dumbbell size={23} />
                     </span>
-
                     <div>
-                    <h2>Equipment Available</h2>
-                    <p>Select the equipment you can use</p>
+                      <h2>Equipment Available</h2>
+                      <p>Select the equipment you can use</p>
                     </div>
-                </div>
+                  </div>
 
-                {/* Clicking this button opens the equipment popup. */}
-                <button
+                  <button
                     type="button"
                     className={styles.equipmentButton}
                     onClick={() => setEquipmentOpen(true)}
                     aria-haspopup="dialog"
                     aria-expanded={equipmentOpen}
-                >
+                  >
                     <span>
-                    {formData.equipment.length > 0
+                      {formData.equipment.length > 0
                         ? `${formData.equipment.length} selected`
                         : "Choose Equipment"}
                     </span>
-
                     <ChevronDown size={18} aria-hidden="true" />
-                </button>
+                  </button>
 
-                {/* Popup overlay with all available equipment options. */}
-                {equipmentOpen && (
+                  {equipmentOpen && (
                     <div
-                    className={styles.modalOverlay}
-                    onClick={(event) => {
-                        // Close only when the user clicks the overlay itself.
+                      className={styles.modalOverlay}
+                      onClick={(event) => {
                         if (event.target === event.currentTarget) {
-                        setEquipmentOpen(false);
+                          setEquipmentOpen(false);
                         }
-                    }}
+                      }}
                     >
-                    <section
+                      <section
                         className={styles.equipmentModal}
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="equipment-modal-title"
-                    >
+                      >
                         <div className={styles.modalHeader}>
-                        <div>
+                          <div>
                             <h2 id="equipment-modal-title">
-                            Available Equipment
+                              Available Equipment
                             </h2>
                             <p>Select all that apply.</p>
-                        </div>
+                          </div>
 
-                        {/* Close popup without clearing selections. */}
-                        <button
+                          <button
                             type="button"
                             className={styles.modalClose}
                             onClick={() => setEquipmentOpen(false)}
                             aria-label="Close equipment selection"
-                        >
+                          >
                             ×
-                        </button>
+                          </button>
                         </div>
 
-                        {/* These checkboxes update the existing React form state. */}
-
                         <div className={styles.modalOptions}>
-                        {[
-                            { label: "Bodyweight", value: "bodyweight" },
-                            { label: "Dumbbells", value: "dumbbells" },
-                            { label: "Kettlebells", value: "kettlebells" },
-                            { label: "Resistance Bands", value: "resistance_bands" },
-                            { label: "Barbell", value: "barbell" },
-                        ].map((equipment) => (
+                          {equipmentOptions.map((equipment) => (
                             <label
-                            key={equipment.value}
-                            className={styles.modalOption}
+                              key={equipment.value}
+                              className={styles.modalOption}
                             >
-                            <input
+                              <input
                                 type="checkbox"
                                 name="equipment"
                                 value={equipment.value}
                                 checked={formData.equipment.includes(
-                                equipment.value
+                                  equipment.value
                                 )}
                                 onChange={handleCheckboxChange}
-                            />
-
-                            <span>{equipment.label}</span>
+                              />
+                              <span>{equipment.label}</span>
                             </label>
-                        ))}
+                          ))}
                         </div>
 
-                        {/* Close the popup and keep the user's selections. */}
                         <div className={styles.modalActions}>
-                        <button
+                          <button
                             type="button"
                             className={styles.modalDone}
                             onClick={() => setEquipmentOpen(false)}
-                        >
+                          >
                             Done
                             {formData.equipment.length > 0
-                            ? ` (${formData.equipment.length} selected)`
-                            : ""}
-                        </button>
+                              ? ` (${formData.equipment.length} selected)`
+                              : ""}
+                          </button>
                         </div>
-                    </section>
+                      </section>
                     </div>
-                )}
+                  )}
                 </div>
 
-                {/* Preferred workout days using weekday checkboxes */}
+                {/* Workout days */}
                 <div className={styles.field}>
                   <div className={styles.fieldHeading}>
                     <span className={styles.iconCircle}>
                       <CalendarDays size={23} />
                     </span>
-
                     <div>
                       <h2>Preferred Workout Days</h2>
-                      <p>
-                        Select the days you prefer to train
-                      </p>
+                      <p>Select the days you prefer to train</p>
                     </div>
                   </div>
 
                   <CheckboxGroup
                     name="workout_days"
-                    options={[
-                      { label: "Mon", value: "Monday" },
-                      { label: "Tue", value: "Tuesday" },
-                      { label: "Wed", value: "Wednesday" },
-                      { label: "Thu", value: "Thursday" },
-                      { label: "Fri", value: "Friday" },
-                      { label: "Sat", value: "Saturday" },
-                      { label: "Sun", value: "Sunday" },
-                    ]}
+                    options={workoutDayOptions}
                   />
                 </div>
               </div>
             )}
 
-            {/* Display validation errors when needed */}
             {error && (
               <p className={styles.error} role="alert">
                 {error}
               </p>
             )}
 
-            {/* Back and Continue/Finish buttons */}
             <div className={styles.actions}>
               {step === 2 && (
                 <button
                   type="button"
                   className={styles.backButton}
+                  disabled={loading}
                   onClick={() => {
                     setError("");
                     setStep(1);
@@ -636,9 +690,14 @@ function Onboarding() {
               <button
                 type="submit"
                 className={styles.continueButton}
+                disabled={loading}
               >
-                {step === 1 ? "Continue" : "Finish"}
-                <ArrowRight size={21} />
+                {loading
+                  ? "Saving..."
+                  : step === 1
+                    ? "Continue"
+                    : "Finish"}
+                {!loading && <ArrowRight size={21} />}
               </button>
             </div>
           </form>
