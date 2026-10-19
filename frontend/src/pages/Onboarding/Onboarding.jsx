@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import {
   Dumbbell,
@@ -12,23 +11,30 @@ import {
   Target,
   Clock,
   ChevronDown,
+  LogOut,
 } from "lucide-react";
 import styles from "./Onboarding.module.css";
 
 const API_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:8888"
-).replace(/\/$/, "");
+).replace(/\/+$/, "");
 
 const REQUEST_TIMEOUT_MS = 20000;
 
 function Onboarding() {
   const navigate = useNavigate();
-  const username = localStorage.getItem("username") || "Username";
+  const username =
+    localStorage.getItem("username") ||
+    localStorage.getItem("user_name") ||
+    "Username";
 
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const dropdownRef = useRef(null);
 
   const [formData, setFormData] = useState({
     age: "",
@@ -42,14 +48,12 @@ function Onboarding() {
     workout_days: [],
   });
 
-  // Restore previously saved onboarding answers when the page opens.
+  // Restore previously saved onboarding answers.
   useEffect(() => {
     try {
       const savedData = localStorage.getItem("onboarding_data");
 
-      if (!savedData) {
-        return;
-      }
+      if (!savedData) return;
 
       const parsedData = JSON.parse(savedData);
 
@@ -79,6 +83,37 @@ function Onboarding() {
       console.error("Failed to load saved onboarding data:", err);
     }
   }, []);
+
+  // Close the user dropdown when clicking outside.
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Log out without deleting the user's onboarding completion status.
+  function handleLogout() {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_name");
+    localStorage.removeItem("username");
+    localStorage.removeItem("name");
+
+    setDropdownOpen(false);
+    navigate("/login", { replace: true });
+  }
 
   // Update text inputs and dropdowns.
   function handleChange(event) {
@@ -196,7 +231,7 @@ function Onboarding() {
     }
   }
 
-  // Parse the response and turn backend errors into readable messages.
+  // Parse backend responses and display readable errors.
   async function readResponse(response, fallbackMessage) {
     const responseText = await response.text();
 
@@ -233,29 +268,28 @@ function Onboarding() {
     return result;
   }
 
-  // Save onboarding information to the backend.
-
+  // Save both profile sections concurrently.
   async function saveOnboarding() {
     const token = localStorage.getItem("access_token");
-  
+
     if (!token) {
       throw new Error(
         "Your session has expired. Please log in again."
       );
     }
-  
+
     const headers = {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     };
-  
+
     const fitnessProfile = {
       age: Number(formData.age),
       gender: formData.gender,
       height: Number(formData.height),
       weight: Number(formData.weight),
     };
-  
+
     const userProfile = {
       primary_goal: formData.goal,
       experience_level: formData.experience,
@@ -265,8 +299,7 @@ function Onboarding() {
       ),
       session_duration: Number(formData.session_duration),
     };
-  
-    // Start both requests together instead of waiting for each in turn.
+
     const [fitnessResponse, preferencesResponse] = await Promise.all([
       fetchWithTimeout(`${API_URL}/profile/fitness-profile`, {
         method: "POST",
@@ -279,27 +312,23 @@ function Onboarding() {
         body: JSON.stringify(userProfile),
       }),
     ]);
-  
-    // Check both responses.
+
     await readResponse(
       fitnessResponse,
       "Could not save your fitness information."
     );
-  
+
     await readResponse(
       preferencesResponse,
       "Could not save your workout preferences."
     );
   }
-  
 
-  // Validate each step and save after the user finishes step 2.
+  // Validate each step and save after Step 2.
   async function handleContinue(event) {
     event.preventDefault();
 
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
     setError("");
 
@@ -348,7 +377,6 @@ function Onboarding() {
       return;
     }
 
-
     setLoading(true);
 
     try {
@@ -356,25 +384,30 @@ function Onboarding() {
 
       const userId = localStorage.getItem("user_id");
 
+      // Set completion only after both saves succeed.
       if (userId) {
-        localStorage.setItem(`onboarding_completed_${userId}`, "true");
+        localStorage.setItem(
+          `onboarding_completed_${userId}`,
+          "true"
+        );
       }
 
-      // Store answers locally only after both backend saves succeed.
-      localStorage.setItem("onboarding_data", JSON.stringify(formData));
+      localStorage.setItem(
+        "onboarding_data",
+        JSON.stringify(formData)
+      );
       localStorage.setItem("onboarding_completed", "true");
-    
-      navigate("/entry");
+
+      navigate("/entry", { replace: true });
     } catch (err) {
       console.error("Onboarding save error:", err);
-    
+
       setError(
         err.message || "Unable to save your onboarding information."
       );
     } finally {
       setLoading(false);
     }
-    
   }
 
   const equipmentOptions = [
@@ -403,14 +436,38 @@ function Onboarding() {
           <span className={styles.logoText}>Fitness Dashboard</span>
         </div>
 
-        <button
-          type="button"
-          className={styles.userMenu}
-          aria-label="User account"
-        >
-          {username}
-          <ChevronDown size={21} />
-        </button>
+        {/* Username dropdown */}
+        <div className={styles.userMenuContainer} ref={dropdownRef}>
+          <button
+            type="button"
+            className={styles.userMenu}
+            onClick={() => setDropdownOpen((previous) => !previous)}
+            aria-label="Open user menu"
+            aria-haspopup="true"
+            aria-expanded={dropdownOpen}
+          >
+            <span>{username}</span>
+            <ChevronDown
+              size={21}
+              className={`${styles.userChevron} ${
+                dropdownOpen ? styles.userChevronOpen : ""
+              }`}
+            />
+          </button>
+
+          {dropdownOpen && (
+            <div className={styles.userDropdown}>
+              <button
+                type="button"
+                className={styles.logoutItem}
+                onClick={handleLogout}
+              >
+                <LogOut size={17} />
+                <span>Log Out</span>
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
       <main className={styles.main}>

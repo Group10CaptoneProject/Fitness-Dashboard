@@ -43,6 +43,86 @@
     font: inherit;
     font-size: 18px;
 }
+
+/* User menu in the navigation bar */
+.userMenuContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .userMenu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .userMenu:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+  }
+  
+  .userMenu:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+  }
+  
+  .userChevron {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+  }
+  
+  .userChevronOpen {
+    transform: rotate(180deg);
+  }
+  
+  /* Dropdown panel */
+  .userDropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 30;
+    min-width: 180px;
+    padding: 6px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+  
+  /* Log out option */
+  .logoutItem {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 11px 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #dc2626;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .logoutItem:hover {
+    background-color: #fef2f2;
+  }
+  
+  .logoutItem:focus-visible {
+    outline: 2px solid #dc2626;
+    outline-offset: -2px;
+  }
   
 /* Main content and title */ 
 .main {
