@@ -112,6 +112,20 @@ class UserProfile(Base):
     # Storing multi-select lists as Postgres Arrays
     equipment_available: Mapped[List[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
     
+    # Preferred training days selected during onboarding
+    preferred_workout_days: Mapped[List[str]] = mapped_column(
+        ARRAY(String),
+        nullable=False,
+        default=list,
+    )
+
+    # Preferred workout duration in minutes
+    session_duration: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=60,
+    )
+
     user: Mapped["User"] = relationship("User", back_populates="profile")
 
 #user login info
@@ -293,3 +307,4 @@ async def test_connection():
 if __name__ == "__main__":
     asyncio.run(test_connection())
     # asyncio.run(init_db())
+

@@ -12,9 +12,12 @@ from sqlalchemy.orm import Mapped, mapped_column
 class UserProfileCreate(BaseModel):
     primary_goal: GoalEnum
     experience_level: ExperienceLevelEnum
-    
+
     equipment_available: List[EquipmentEnum] = Field(..., min_length=1)
+
     preferred_workout_days: List[DayOfWeekEnum] = Field(..., min_length=1, max_length=7)
+
+    session_duration: int = Field(..., ge=10, le=180)
 
 #profile response 
 class UserProfileResponse(UserProfileCreate):
