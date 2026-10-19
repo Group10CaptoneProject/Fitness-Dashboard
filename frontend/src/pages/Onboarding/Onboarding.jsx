@@ -353,7 +353,13 @@ function Onboarding() {
 
     try {
       await saveOnboarding();
-    
+
+      const userId = localStorage.getItem("user_id");
+
+      if (userId) {
+        localStorage.setItem(`onboarding_completed_${userId}`, "true");
+      }
+
       // Store answers locally only after both backend saves succeed.
       localStorage.setItem("onboarding_data", JSON.stringify(formData));
       localStorage.setItem("onboarding_completed", "true");

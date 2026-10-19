@@ -5,7 +5,9 @@ import { Dumbbell } from "lucide-react";
 import styles from "./Login.module.css";
 
 // Local backend URL for development (port 8888)
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8888";
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:8888"
+).replace(/\/+$/, "");
 
 function Login() {
   const navigate = useNavigate();
@@ -50,11 +52,32 @@ function Login() {
         return;
       }
 
+      // Save the authenticated user's information.
       localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("user_id", data.user_id);
+      localStorage.setItem("user_id", String(data.user_id));
       localStorage.setItem("username", data.username || "");
+      localStorage.setItem("user_name", data.username || "");
 
-      navigate("/onboarding");
+      // Check onboarding completion for this specific user.
+      const completionKey = `onboarding_completed_${data.user_id}`;
+      let onboardingCompleted =
+        localStorage.getItem(completionKey) === "true";
+
+      // Migrate the older completion flag if one exists.
+      // New onboarding saves should use the user-specific key below.
+      if (
+        !onboardingCompleted &&
+        localStorage.getItem("onboarding_completed") === "true"
+      ) {
+        onboardingCompleted = true;
+        localStorage.setItem(completionKey, "true");
+      }
+
+      if (onboardingCompleted) {
+        navigate("/entry", { replace: true });
+      } else {
+        navigate("/onboarding", { replace: true });
+      }
     } catch (error) {
       console.error("Login error:", error);
 
@@ -69,15 +92,15 @@ function Login() {
   return (
     <div className={styles["login-page"]}>
       <div className={styles["login-layout"]}>
-
         {/* Left blue section */}
         <section className={styles["hero-panel"]}>
           <div className={styles["home-logo"]}>
-            <Link to ="/">
-                <Dumbbell size={45} color="white" strokeWidth={2} />
-                <span>Fitness Dashboard</span>
+            <Link to="/">
+              <Dumbbell size={45} color="white" strokeWidth={2} />
+              <span>Fitness Dashboard</span>
             </Link>
           </div>
+
           <div className={styles["hero-content"]}>
             <h1>
               See fatigue

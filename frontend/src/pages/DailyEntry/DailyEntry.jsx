@@ -44,16 +44,13 @@ function DailyEntry() {
   }
 
   function handleLogout() {
-    // Clear authentication and onboarding session data.
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
-    localStorage.removeItem("onboarding_data");
-    localStorage.removeItem("onboarding_completed");
+    localStorage.removeItem("user_id");
     localStorage.removeItem("user_name");
     localStorage.removeItem("username");
     localStorage.removeItem("name");
-
-    setDropdownOpen(false);
+  
     navigate("/login", { replace: true });
   }
 
