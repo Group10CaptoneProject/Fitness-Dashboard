@@ -288,6 +288,7 @@ class PasswordResetCode(Base):
     )
 
 # User fitness data
+
 class UserFitnessProfile(Base):
     __tablename__ = "fitness_profile"
 
@@ -303,22 +304,18 @@ class UserFitnessProfile(Base):
         default=GenderEnum.PREFER_NOT_TO_SAY,
     )
 
-    age: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
+    age: Mapped[int] = mapped_column(Integer, nullable=False)
+    height: Mapped[int] = mapped_column(Integer, nullable=False)
+    weight: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    # Preferred days for workout scheduling.
+    preferred_workout_days: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=True,
+        default=dict,
     )
 
-    height: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-    )
-
-    weight: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-    )
-
-    # Optional weekly workout split
+    # Optional weekly workout split.
     weekly_split: Mapped[dict] = mapped_column(
         JSON,
         nullable=True,

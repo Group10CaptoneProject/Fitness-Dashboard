@@ -39,7 +39,7 @@ async def seed_database():
         print("Dropping and recreating database tables...")
 
         #uncommit the line below if changes are made to db file 
-        #await conn.run_sync(Base.metadata.drop_all)    
+        await conn.run_sync(Base.metadata.drop_all)
         
         await conn.run_sync(Base.metadata.create_all)
     print("Database schema successfully synchronized!")
@@ -110,6 +110,11 @@ async def seed_database():
                     heart_rate=random.randint(110, 175),
                     duration = 90,
                     difficulty=random.randint(4, 9),
+
+                    # Add these missing fields so they satisfy the database constraints:
+                    sets = random.randint(3, 5),
+                    reps = random.randint(8, 12),
+                    weight = round(random.uniform(135.0, 190.0), 2),
 
                     muscle_category=MuscleCategoryEnum.UPPER_BODY,
                     muscle_group= MuscleGroupEnum.CHEST,

@@ -9,21 +9,46 @@ import ResetPassword from "./pages/Auth/ResetPassword";
 import Landing from "./pages/Landing/Landing";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import DailyEntry from "./pages/DailyEntry/DailyEntry";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Landing/>} />
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/entry" element={<DailyEntry />} />
+
+        <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute>
+              <Onboarding />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/entry"
+          element={
+            <ProtectedRoute>
+              <DailyEntry />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-reset-code" element={<VerifyResetCode />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path ="/dashboard" element = {<Dashboard />} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
