@@ -45,7 +45,6 @@ app.include_router(dashboard_router)
 async def home():
     return {"message": "Hello home"}
 
-
 def start():
     uvicorn.run(
         "app.main:app",
@@ -53,3 +52,6 @@ def start():
         port=8888,
         reload=True,
     )
+
+if __name__ == "__main__":
+    start()

@@ -24,7 +24,7 @@ async def create_fitness_profile(profile_data: UserFitnessProfileCreate, current
     return fitness_profile
 
 #default fitness profile
-@router.get("/fitness-profile", response_model=UserProfileResponse)
+@router.get("/fitness-profile", response_model=UserFitnessProfileResponse)
 async def get_fitness_profile(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     #check if exist
     current_user_id = current_user.user_id
@@ -53,14 +53,14 @@ async def get_fitness_profile(current_user: User = Depends(get_current_user), db
 
 #update fitness profile 
 @router.put("/fitness-profile", response_model=UserFitnessProfileResponse)
-async def update_fitess_profile(fitness_profile, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def update_fitess_profile(fitness_profile: UserFitnessProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     
     current_user_id = current_user.user_id
     stmt = select(UserFitnessProfile).where(UserFitnessProfile.user_id == current_user_id)
     result = await db.execute(stmt)
     db_fitness_profile = result.scalar_one_or_none()
 
-    if not fitness_profile:
+    if not db_fitness_profile:
         raise HTTPException(status_code=404, detail="Fitness Profile not found")
 
     #update the fitness data

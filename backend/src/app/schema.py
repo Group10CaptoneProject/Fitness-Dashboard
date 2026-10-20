@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 import uuid 
 from typing import List, Optional 
 from datetime import date, datetime
@@ -22,6 +22,7 @@ class UserProfileCreate(BaseModel):
 #profile response 
 class UserProfileResponse(UserProfileCreate):
     user_id: uuid.UUID
+    model_config = ConfigDict(from_attributes=True)
 
     class Config:
         from_attributes = True 
@@ -38,6 +39,8 @@ class UserFitnessProfileResponse(UserFitnessProfileCreate):
     #ids saved in response
     user_id: uuid.UUID
     created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
     class Config:
         from_attributes = True 
@@ -99,7 +102,7 @@ class DailyEntryResponse(BaseModel):
     created_at: datetime 
 
     class Config:
-        from_attribute = True 
+        from_attributes = True 
 
 #daily score
 class DailyScoreResponse(BaseModel):
