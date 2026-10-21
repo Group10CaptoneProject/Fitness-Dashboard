@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import {
   Dumbbell,
@@ -11,19 +11,30 @@ import {
   Target,
   Clock,
   ChevronDown,
+  LogOut,
 } from "lucide-react";
 import styles from "./Onboarding.module.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8888";
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:8888"
+).replace(/\/+$/, "");
+
+const REQUEST_TIMEOUT_MS = 20000;
 
 function Onboarding() {
   const navigate = useNavigate();
-  const username = localStorage.getItem("username") || "Username";
+  const username =
+    localStorage.getItem("username") ||
+    localStorage.getItem("user_name") ||
+    "Username";
 
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const dropdownRef = useRef(null);
 
   const [formData, setFormData] = useState({
     age: "",
@@ -36,6 +47,73 @@ function Onboarding() {
     equipment: [],
     workout_days: [],
   });
+
+  // Restore previously saved onboarding answers.
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem("onboarding_data");
+
+      if (!savedData) return;
+
+      const parsedData = JSON.parse(savedData);
+
+      setFormData((previous) => ({
+        ...previous,
+        age:
+          parsedData.age == null ? "" : String(parsedData.age),
+        gender: parsedData.gender || "",
+        height:
+          parsedData.height == null ? "" : String(parsedData.height),
+        weight:
+          parsedData.weight == null ? "" : String(parsedData.weight),
+        goal: parsedData.goal || "",
+        experience: parsedData.experience || "",
+        session_duration:
+          parsedData.session_duration == null
+            ? ""
+            : String(parsedData.session_duration),
+        equipment: Array.isArray(parsedData.equipment)
+          ? parsedData.equipment
+          : [],
+        workout_days: Array.isArray(parsedData.workout_days)
+          ? parsedData.workout_days
+          : [],
+      }));
+    } catch (err) {
+      console.error("Failed to load saved onboarding data:", err);
+    }
+  }, []);
+
+  // Close the user dropdown when clicking outside.
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Log out without deleting the user's onboarding completion status.
+  function handleLogout() {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_name");
+    localStorage.removeItem("username");
+    localStorage.removeItem("name");
+
+    setDropdownOpen(false);
+    navigate("/login", { replace: true });
+  }
 
   // Update text inputs and dropdowns.
   function handleChange(event) {
@@ -59,7 +137,9 @@ function Onboarding() {
       return {
         ...previous,
         [name]: checked
-          ? [...currentValues, value]
+          ? currentValues.includes(value)
+            ? currentValues
+            : [...currentValues, value]
           : currentValues.filter((item) => item !== value),
       };
     });
@@ -116,12 +196,86 @@ function Onboarding() {
     );
   }
 
-  // Send onboarding information to the backend.
+  // Send a request that cannot wait indefinitely.
+  async function fetchWithTimeout(url, options) {
+    const controller = new AbortController();
+
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      REQUEST_TIMEOUT_MS
+    );
+
+    try {
+      return await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if (err.name === "AbortError") {
+        throw new Error(
+          "The server took too long to respond. Please check that your backend is running, then try again."
+        );
+      }
+
+      if (err instanceof TypeError) {
+        throw new Error(
+          "Cannot connect to the backend. Check that the FastAPI server is running at " +
+            API_URL +
+            " and that the API URL is correct."
+        );
+      }
+
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  // Parse backend responses and display readable errors.
+  async function readResponse(response, fallbackMessage) {
+    const responseText = await response.text();
+
+    let result = {};
+
+    if (responseText) {
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        result = {};
+      }
+    }
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(
+          "Your session may have expired. Please log in again and retry."
+        );
+      }
+
+      const detail = result.detail;
+
+      const message = Array.isArray(detail)
+        ? detail
+            .map((item) => item.msg || "Invalid input")
+            .join(" ")
+        : typeof detail === "string"
+          ? detail
+          : `${fallbackMessage} (HTTP ${response.status}).`;
+
+      throw new Error(message);
+    }
+
+    return result;
+  }
+
+  // Save both profile sections concurrently.
   async function saveOnboarding() {
     const token = localStorage.getItem("access_token");
 
     if (!token) {
-      throw new Error("Your session has expired. Please log in again.");
+      throw new Error(
+        "Your session has expired. Please log in again."
+      );
     }
 
     const headers = {
@@ -146,60 +300,36 @@ function Onboarding() {
       session_duration: Number(formData.session_duration),
     };
 
-    // Save age, gender, height, and weight.
-    const fitnessResponse = await fetch(
-      `${API_URL}/profile/fitness-profile`,
-      {
+    const [fitnessResponse, preferencesResponse] = await Promise.all([
+      fetchWithTimeout(`${API_URL}/profile/fitness-profile`, {
         method: "POST",
         headers,
         body: JSON.stringify(fitnessProfile),
-      }
-    );
-
-    const fitnessResult = await fitnessResponse.json().catch(() => ({}));
-
-    if (!fitnessResponse.ok) {
-      const detail = fitnessResult.detail;
-
-      const message = Array.isArray(detail)
-        ? detail.map((item) => item.msg).join(" ")
-        : typeof detail === "string"
-          ? detail
-          : "Could not save your fitness information.";
-
-      throw new Error(message);
-    }
-
-    // Save workout preferences.
-    const preferencesResponse = await fetch(
-      `${API_URL}/profile/user-profile`,
-      {
+      }),
+      fetchWithTimeout(`${API_URL}/profile/user-profile`, {
         method: "POST",
         headers,
         body: JSON.stringify(userProfile),
-      }
+      }),
+    ]);
+
+    await readResponse(
+      fitnessResponse,
+      "Could not save your fitness information."
     );
 
-    const preferencesResult = await preferencesResponse
-      .json()
-      .catch(() => ({}));
-
-    if (!preferencesResponse.ok) {
-      const detail = preferencesResult.detail;
-
-      const message = Array.isArray(detail)
-        ? detail.map((item) => item.msg).join(" ")
-        : typeof detail === "string"
-          ? detail
-          : "Could not save your workout preferences.";
-
-      throw new Error(message);
-    }
+    await readResponse(
+      preferencesResponse,
+      "Could not save your workout preferences."
+    );
   }
 
-  // Validate each step, then save when the user finishes step 2.
+  // Validate each step and save after Step 2.
   async function handleContinue(event) {
     event.preventDefault();
+
+    if (loading) return;
+
     setError("");
 
     if (step === 1) {
@@ -214,6 +344,9 @@ function Onboarding() {
       }
 
       if (
+        !Number.isFinite(Number(formData.age)) ||
+        !Number.isFinite(Number(formData.height)) ||
+        !Number.isFinite(Number(formData.weight)) ||
         Number(formData.age) < 12 ||
         Number(formData.age) > 120 ||
         Number(formData.height) < 50 ||
@@ -249,15 +382,28 @@ function Onboarding() {
     try {
       await saveOnboarding();
 
-      // Keep a local copy for convenience after backend saving succeeds.
-      localStorage.setItem("onboarding_data", JSON.stringify(formData));
+      const userId = localStorage.getItem("user_id");
+
+      // Set completion only after both saves succeed.
+      if (userId) {
+        localStorage.setItem(
+          `onboarding_completed_${userId}`,
+          "true"
+        );
+      }
+
+      localStorage.setItem(
+        "onboarding_data",
+        JSON.stringify(formData)
+      );
       localStorage.setItem("onboarding_completed", "true");
 
-      navigate("/entry");
-    } catch (saveError) {
-      console.error("Onboarding save error:", saveError);
+      navigate("/entry", { replace: true });
+    } catch (err) {
+      console.error("Onboarding save error:", err);
+
       setError(
-        saveError.message || "Unable to save onboarding information."
+        err.message || "Unable to save your onboarding information."
       );
     } finally {
       setLoading(false);
@@ -290,14 +436,38 @@ function Onboarding() {
           <span className={styles.logoText}>Fitness Dashboard</span>
         </div>
 
-        <button
-          type="button"
-          className={styles.userMenu}
-          aria-label="User account"
-        >
-          {username}
-          <ChevronDown size={21} />
-        </button>
+        {/* Username dropdown */}
+        <div className={styles.userMenuContainer} ref={dropdownRef}>
+          <button
+            type="button"
+            className={styles.userMenu}
+            onClick={() => setDropdownOpen((previous) => !previous)}
+            aria-label="Open user menu"
+            aria-haspopup="true"
+            aria-expanded={dropdownOpen}
+          >
+            <span>{username}</span>
+            <ChevronDown
+              size={21}
+              className={`${styles.userChevron} ${
+                dropdownOpen ? styles.userChevronOpen : ""
+              }`}
+            />
+          </button>
+
+          {dropdownOpen && (
+            <div className={styles.userDropdown}>
+              <button
+                type="button"
+                className={styles.logoutItem}
+                onClick={handleLogout}
+              >
+                <LogOut size={17} />
+                <span>Log Out</span>
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
       <main className={styles.main}>
@@ -337,6 +507,7 @@ function Onboarding() {
                     <span className={styles.iconCircle}>
                       <CalendarDays size={23} />
                     </span>
+
                     <div>
                       <h2>Age</h2>
                       <p>
@@ -356,6 +527,7 @@ function Onboarding() {
                       onChange={handleChange}
                       min="12"
                       max="120"
+                      step="1"
                       required
                     />
                     <span className={styles.unit}>years old</span>
@@ -368,6 +540,7 @@ function Onboarding() {
                     <span className={styles.iconCircle}>
                       <UsersRound size={24} />
                     </span>
+
                     <div>
                       <h2>Gender</h2>
                       <p>
@@ -389,7 +562,9 @@ function Onboarding() {
                     <option value="female">Female</option>
                     <option value="male">Male</option>
                     <option value="non_binary">Non-binary</option>
-                    <option value="prefer_not_to_say">Prefer not to say</option>
+                    <option value="prefer_not_to_say">
+                      Prefer not to say
+                    </option>
                   </Dropdown>
                 </div>
 
@@ -399,6 +574,7 @@ function Onboarding() {
                     <span className={styles.iconCircle}>
                       <Ruler size={23} />
                     </span>
+
                     <div>
                       <h2>Height</h2>
                       <p>
@@ -430,6 +606,7 @@ function Onboarding() {
                     <span className={styles.iconCircle}>
                       <Weight size={23} />
                     </span>
+
                     <div>
                       <h2>Weight</h2>
                       <p>
@@ -464,6 +641,7 @@ function Onboarding() {
                     <span className={styles.iconCircle}>
                       <Target size={23} />
                     </span>
+
                     <div>
                       <h2>Primary Goal</h2>
                       <p>What would you most like to achieve?</p>
@@ -482,19 +660,20 @@ function Onboarding() {
                     <option value="hypertrophy">
                       Hypertrophy (Muscle Growth)
                     </option>
-                    <option value="strength">Strength</option>
-                    <option value="weight_loss">Weight Loss</option>
                     <option value="endurance">Endurance</option>
-                    <option value="general_fitness">General Fitness</option>
+                    <option value="healthy_lifestyle">
+                      Healthy Lifestyle
+                    </option>
                   </Dropdown>
                 </div>
 
-                {/* Experience */}
+                {/* Experience level */}
                 <div className={styles.field}>
                   <div className={styles.fieldHeading}>
                     <span className={styles.iconCircle}>
                       <Dumbbell size={23} />
                     </span>
+
                     <div>
                       <h2>Experience Level</h2>
                       <p>Help us personalize your training plan</p>
@@ -522,6 +701,7 @@ function Onboarding() {
                     <span className={styles.iconCircle}>
                       <Clock size={23} />
                     </span>
+
                     <div>
                       <h2>Preferred Workout Duration</h2>
                       <p>How long is your typical workout?</p>
@@ -537,8 +717,10 @@ function Onboarding() {
                     <option value="" disabled>
                       Select Workout Duration
                     </option>
+
                     {Array.from({ length: 18 }, (_, index) => {
                       const minutes = (index + 1) * 10;
+
                       return (
                         <option key={minutes} value={String(minutes)}>
                           {minutes} min
@@ -554,6 +736,7 @@ function Onboarding() {
                     <span className={styles.iconCircle}>
                       <Dumbbell size={23} />
                     </span>
+
                     <div>
                       <h2>Equipment Available</h2>
                       <p>Select the equipment you can use</p>
@@ -645,12 +828,13 @@ function Onboarding() {
                   )}
                 </div>
 
-                {/* Workout days */}
+                {/* Preferred workout days */}
                 <div className={styles.field}>
                   <div className={styles.fieldHeading}>
                     <span className={styles.iconCircle}>
                       <CalendarDays size={23} />
                     </span>
+
                     <div>
                       <h2>Preferred Workout Days</h2>
                       <p>Select the days you prefer to train</p>
@@ -697,6 +881,7 @@ function Onboarding() {
                   : step === 1
                     ? "Continue"
                     : "Finish"}
+
                 {!loading && <ArrowRight size={21} />}
               </button>
             </div>

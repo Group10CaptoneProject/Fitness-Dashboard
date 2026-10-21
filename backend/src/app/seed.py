@@ -39,7 +39,7 @@ async def seed_database():
         print("Dropping and recreating database tables...")
 
         #uncommit the line below if changes are made to db file 
-        await conn.run_sync(Base.metadata.drop_all)    
+        await conn.run_sync(Base.metadata.drop_all)
         
         await conn.run_sync(Base.metadata.create_all)
     print("Database schema successfully synchronized!")

@@ -1,27 +1,28 @@
 import uuid
-import pandas as pd 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from ..db import get_db, User, UserFitnessProfile, UserProfile, GoalEnum, GenderEnum, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, DayOfWeekEnum
-from ..schema import UserProfileCreate, UserProfileResponse, UserFitnessProfileCreate, UserFitnessProfileResponse
-from ..analytics import main
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..db import (
+    get_db,
+    User,
+    UserFitnessProfile,
+    UserProfile,
+)
+from ..schema import (
+    UserProfileCreate,
+    UserProfileResponse,
+    UserFitnessProfileCreate,
+    UserFitnessProfileResponse,
+)
 from ..security import get_current_user
 
-router = APIRouter(prefix="/profile", tags=["profile"])
+router = APIRouter(
+    prefix="/profile",
+    tags=["profile"],
+)
 
-#fitness profile table 
-@router.post("/fitness-profile")
-async def create_fitness_profile(profile_data: UserFitnessProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    #convert data to SQL object
-    current_user_id = current_user.user_id
-    fitness_profile = UserFitnessProfile(user_id = current_user_id, **profile_data.model_dump())
-
-    db.add(fitness_profile)
-    await db.commit()
-    await db.refresh(fitness_profile)
-    return fitness_profile
 
 #default fitness profile
 @router.get("/fitness-profile", response_model=UserFitnessProfileResponse)
@@ -33,28 +34,30 @@ async def get_fitness_profile(current_user: User = Depends(get_current_user), db
     result = await db.execute(stmt)
     fitness_profile = result.scalar_one_or_none()
 
-    #create default profile
     if not fitness_profile:
         fitness_profile = UserFitnessProfile(
-            user_id = current_user_id,
-            gender = "male",
-            age = 22,
-            height = 170,
-            weight = 140,
-            preferd_workout_days = ["Monday", "Tuesday", "Thursday", "Friday"],
-            weekly_split = {"Monday": "Back, Triceps, Shoulders", "Tuesday": "Chest, Biceps, Glutes", "Thursday": "Back, Triceps, Shoulders", "Friday": "Chest, Biceps, Glutes"}
+            user_id=current_user_id,
+            gender="male",
+            age=22,
+            height=170,
+            weight=140,
+            preferd_workout_days=["Monday", "Tuesday", "Thursday", "Friday"],
+            weekly_split={"Monday": "Back, Triceps, Shoulders", "Tuesday": "Chest, Biceps, Glutes"}
         )
 
-    db.add(fitness_profile)
-    await db.commit()
-    await db.refresh(fitness_profile)
+        db.add(fitness_profile)
+        try:
+            await db.commit()
+            await db.refresh(fitness_profile)
+        except:
+            await db.rollback()
+            raise HTTPException(status_code=500, detail="Could not create default fitness profile.")
 
     return fitness_profile 
 
 #update fitness profile 
-@router.put("/fitness-profile", response_model=UserFitnessProfileResponse)
+@router.patch("/fitness-profile", response_model=UserFitnessProfileResponse)
 async def update_fitess_profile(fitness_profile: UserFitnessProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    
     current_user_id = current_user.user_id
     stmt = select(UserFitnessProfile).where(UserFitnessProfile.user_id == current_user_id)
     result = await db.execute(stmt)
@@ -68,23 +71,47 @@ async def update_fitess_profile(fitness_profile: UserFitnessProfileCreate, curre
     for key, value in fitness_profile_dict.items():
         setattr(db_fitness_profile, key, value)
 
-    await db.commit()
-    await db.refresh(db_fitness_profile)
+    try:
+        await db.commit()
+        await db.refresh(db_fitness_profile)
+    except:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail="Could not update fitness profile.")
+    
     return db_fitness_profile
     
 #use prpofile table
-@router.post("/user-profile")
-async def create_user_profile(profile_data: UserProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+@router.patch("/user-profile", response_model=UserProfileResponse)
+async def patch_user_profile(profile_data: UserProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     current_user_id = current_user.user_id
     
-    user_profile_data = profile_data.model_dump()
-    user_profile_data.pop("preferred_workout_days", None)
+    stmt = select(UserProfile).where(UserProfile.user_id == current_user_id)
+    result = await db.execute(stmt)
+    user_profile = result.scalar_one_or_none()
+    
+    #check if profile exists
+    if not user_profile:
+        raise HTTPException(status_code=404, detail="User profile not found.")
 
-    user_profile = UserProfile(user_id = current_user_id, **user_profile_data)
+    profile_data_dict = profile_data.model_dump(exclude_unset=True)
 
-    db.add(user_profile)
-    await db.commit()
-    await db.refresh(user_profile)
+    #handle JSON array data
+    if "equipment_available" in profile_data_dict and profile_data_dict["equipment_available"]:
+        #get equipment 
+        profile_data_dict["equipment_available"] = [item.value if hasattr(item, "value") else item for item in profile_data_dict["equipment_available"]]
+
+    if "preferred_workout_days" in profile_data_dict and profile_data_dict["preferred_workout_days"]:
+        profile_data_dict["preferred_workout_days"] = [day.value if hasattr(day, "value") else day for day in profile_data_dict["preferred_workout_days"]]
+
+    for field, value in profile_data_dict.items():
+        setattr(user_profile, field, value)
+
+    try:
+        await db.commit()
+        await db.refresh(user_profile)
+    except:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail="Could not update user profile.")
 
     return user_profile
 
@@ -106,28 +133,12 @@ async def get_or_create_user_profile(current_user: User  =Depends(get_current_us
             equipment_available=["dumbbells", "bodyweight"]
         )
         db.add(profile)
-        await db.commit()
-        await db.refresh(profile)
+        try:
+            await db.commit()
+            await db.refresh(profile)
+
+        except Exception:
+            await db.rollback()
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not save fitness information.")
 
     return profile
-
-#allow user to edit default
-@router.put("/user-profile", response_model=UserProfileResponse)
-async def update_user_profile(profile_data: UserProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    current_user_id = current_user.user_id
-    stmt = select(UserProfile).where(UserProfile.user_id == current_user_id)
-    result = await db.execute(stmt)
-    profile = result.scalar_one_or_none()
-
-    if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
-
-    # Update fields with incoming data
-    profile_dict = profile_data.model_dump(exclude_unset=True)
-    for key, value in profile_dict.items():
-        setattr(profile, key, value)
-
-    await db.commit()
-    await db.refresh(profile)
-    return profile
-

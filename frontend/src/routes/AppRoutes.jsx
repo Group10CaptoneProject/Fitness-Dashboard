@@ -17,7 +17,7 @@ function AppRoutes() {
       <Route path="/login" element={ <Login />}/>
       <Route path="/register" element={<Register />}/>
       <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>}/>
-      
+
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/verify-reset-code" element={<VerifyResetCode />} />
       <Route path="/reset-password" element={<ResetPassword />} />

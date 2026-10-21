@@ -24,8 +24,7 @@ class UserProfileResponse(UserProfileCreate):
     user_id: uuid.UUID
     model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True 
+    model_config = ConfigDict(from_attributes=True)
 
 #fitness profile
 class UserFitnessProfileCreate(BaseModel):
