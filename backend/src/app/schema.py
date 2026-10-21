@@ -41,9 +41,6 @@ class UserFitnessProfileResponse(UserFitnessProfileCreate):
 
     model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True 
-
 #new entry requirements
 class DailyEntryCreate(BaseModel):
     user_id: uuid.UUID
@@ -117,5 +114,4 @@ class DailyScoreResponse(BaseModel):
         from_attributes = True
 
 def main():
-   pass  
-        
+    pass

@@ -302,12 +302,12 @@ function Onboarding() {
 
     const [fitnessResponse, preferencesResponse] = await Promise.all([
       fetchWithTimeout(`${API_URL}/profile/fitness-profile`, {
-        method: "POST",
+        method: "PATCH",
         headers,
         body: JSON.stringify(fitnessProfile),
       }),
       fetchWithTimeout(`${API_URL}/profile/user-profile`, {
-        method: "POST",
+        method: "PATCH",
         headers,
         body: JSON.stringify(userProfile),
       }),
