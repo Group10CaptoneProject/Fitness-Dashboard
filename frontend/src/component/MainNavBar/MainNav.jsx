@@ -8,7 +8,8 @@ import {
   LogOut,
   NotebookPen,
   UserRoundPen,
-  Menu
+  Menu,
+  X
 } from "lucide-react";
 import styles from "./MainNav.module.css";
 
@@ -112,7 +113,7 @@ function MainNav({ username }) {
         aria-expanded={openMenu}
         aria-label="Toggle navigation menu"
       >
-        <Menu />
+        {openMenu? <X/> :<Menu />}
       </button>
 
       {openMenu && (
