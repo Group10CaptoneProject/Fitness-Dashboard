@@ -23,7 +23,6 @@ router = APIRouter(
     tags=["profile"],
 )
 
-
 #default fitness profile
 @router.get("/fitness-profile", response_model=UserFitnessProfileResponse)
 async def get_fitness_profile(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
