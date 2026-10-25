@@ -1,0 +1,19 @@
+.wrapper{
+    width: 100%;
+    max-width: 1320px;
+    min-height: calc(100vh - 56px);
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 28px 36px 32px;
+    display: flex;
+    flex-direction: column;
+}
+.welcome-description{
+    display: flex;
+    justify-content: space-between;
+}
+.date{
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}

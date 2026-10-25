@@ -9,6 +9,7 @@ import ResetPassword from "./pages/Auth/ResetPassword";
 import Landing from "./pages/Landing/Landing";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import DailyEntry from "./pages/DailyEntry/DailyEntry";
+import TrainingPlan from "./pages/TrainingPlan/TrainingPlan";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/training-plan" element={<ProtectedRoute><TrainingPlan /></ProtectedRoute>}/>
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-reset-code" element={<VerifyResetCode />} />
