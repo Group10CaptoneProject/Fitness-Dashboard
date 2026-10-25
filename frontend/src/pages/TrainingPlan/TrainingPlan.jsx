@@ -46,12 +46,16 @@ function TrainingPlan(){
     const [exercises, setExercises] = useState(initialExercises);
 
     const username = localStorage.getItem("username") || "Username";
-    const formattedDate = new Date().toLocaleDateString("en-US", {
-        weekday: "short",
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-    });
+    // Formatted current date: Weekday, Month Day, Year
+    const today = new Date();
+
+    const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    };
+    const formattedDate = today.toLocaleDateString('en-US', options);
 
     function toggleEquipment(item){
         setEquipment(current =>
