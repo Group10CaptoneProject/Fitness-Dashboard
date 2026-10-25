@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date
 
-
 from ..db import get_db, User
 from ..security import get_current_user # using your teammate's security!
 from ..RandomForestClassifier import calculate_weight_adjustment, exercise_recommendation

@@ -84,7 +84,7 @@ async def update_fitess_profile(fitness_profile: UserFitnessProfileCreate, curre
 
     return db_fitness_profile
 
-#use prpofile table
+#use prpofile table.
 @router.patch("/user-profile", response_model=UserProfileResponse)
 async def patch_user_profile(profile_data: UserProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     current_user_id = current_user.user_id
@@ -110,6 +110,7 @@ async def patch_user_profile(profile_data: UserProfileCreate, current_user: User
             **profile_data_dict,
         )
         db.add(user_profile)
+
     else:
         #update the existing user profile
         for field, value in profile_data_dict.items():

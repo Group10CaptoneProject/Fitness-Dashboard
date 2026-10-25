@@ -7,7 +7,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from datetime import datetime, date 
 from enum import Enum as PyEnum
 from collections.abc import AsyncGenerator
-from sqlalchemy import String, Integer, ForeignKey, Numeric, Date, DateTime, UniqueConstraint, func, text, Enum, ARRAY, JSON
+from sqlalchemy import String, Integer, ForeignKey, Numeric, Date, DateTime, UniqueConstraint, func, text, Enum, ARRAY, JSON, Boolean
 from decimal import Decimal
 from typing import List
 
@@ -137,6 +137,8 @@ class UserProfile(Base):
         nullable=False,
         default=list,
     )
+
+    is_onboarded: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Preferred workout duration in minutes
     session_duration: Mapped[int] = mapped_column(
@@ -325,6 +327,8 @@ class UserFitnessProfile(Base):
         nullable=True,
         default=dict,
     )
+    
+    is_onboarded: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

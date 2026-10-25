@@ -12,12 +12,12 @@ from sqlalchemy.orm import Mapped, mapped_column
 class UserProfileCreate(BaseModel):
     primary_goal: GoalEnum
     experience_level: ExperienceLevelEnum
-
     equipment_available: List[EquipmentEnum] = Field(..., min_length=1)
-
     preferred_workout_days: List[DayOfWeekEnum] = Field(..., min_length=1, max_length=7)
-
     session_duration: int = Field(..., ge=10, le=180)
+
+    #keep track of whether onboarding is done. 
+    is_onboarded: Optional[bool] = None
 
 #profile response 
 class UserProfileResponse(UserProfileCreate):
@@ -33,6 +33,9 @@ class UserFitnessProfileCreate(BaseModel):
     age: int = Field(..., ge=12, le=120)
     height: int = Field(..., ge=50, le=250, description="Height in cm")
     weight:int = Field(..., ge=20, le=300, description="Weight in lbs")
+
+    #is onobarding done? 
+    is_onboarded: Optional[bool] = None
 
 class UserFitnessProfileResponse(UserFitnessProfileCreate):
     #ids saved in response

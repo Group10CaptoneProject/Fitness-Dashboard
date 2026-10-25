@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
@@ -11,6 +10,7 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import DailyEntry from "./pages/DailyEntry/DailyEntry";
 import TrainingPlan from "./pages/TrainingPlan/TrainingPlan";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import OnboardingWizard from "./component/OnboardingWizard";
 
 function App() {
   return (
@@ -24,7 +24,7 @@ function App() {
           path="/onboarding"
           element={
             <ProtectedRoute>
-              <Onboarding />
+              <OnboardingWizard />
             </ProtectedRoute>
           }
         />

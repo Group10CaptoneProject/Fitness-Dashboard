@@ -69,21 +69,24 @@ function Login() {
       localStorage.setItem("user_name", data.username || "");
 
       // Check onboarding completion for this specific user.
-      const completionKey = `onboarding_completed_${data.user_id}`;
-      let onboardingCompleted =
-        localStorage.getItem(completionKey) === "true";
+      let isActuallyOnboarded = false;
+      try {
+        const profileResponse = await fetch(`${API_URL}/profile/user-profile`, {
+          headers: {
+            "Authorization": `Bearer ${data.access_token}`
+          }
+        });
 
-      // Migrate the older completion flag if one exists.
-      // New onboarding saves should use the user-specific key below.
-      if (
-        !onboardingCompleted &&
-        localStorage.getItem("onboarding_completed") === "true"
-      ) {
-        onboardingCompleted = true;
-        localStorage.setItem(completionKey, "true");
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          // Check the secure database flag!
+          isActuallyOnboarded = Boolean(profileData.is_onboarded);
+        }
+      } catch (profileErr) {
+        console.error("Could not fetch profile onboarding status from backend:", profileErr);
       }
 
-      if (onboardingCompleted) {
+      if (isActuallyOnboarded) {
         navigate("/entry", { replace: true });
       } else {
         navigate("/onboarding", { replace: true });

@@ -298,6 +298,7 @@ function Onboarding() {
         day.toLowerCase()
       ),
       session_duration: Number(formData.session_duration),
+      is_onboarded: true, 
     };
 
     const [fitnessResponse, preferencesResponse] = await Promise.all([
