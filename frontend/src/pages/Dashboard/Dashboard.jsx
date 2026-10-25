@@ -1,29 +1,20 @@
 import styles from "./Dashboard.module.css";
-import { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useState, useEffect} from "react";
 import {
     CalendarDays,
     ChartSpline,
     NotebookText,
     Gauge as GaugeIcon,
     Activity,
-    Dumbbell,
-    NotebookPen,
-    LayoutDashboard,
-    ChevronDown,
-    LogOut,
-    UserRoundPen,
 } from "lucide-react";
 import TrainingScoreCard from "./component/TrainingScoreCard/TrainingScoreCard";
 import ReadinessScaleCard from "./component/ReadinessScaleCard/ReadinessScaleCard";
 import SummaryCard from "./component/SummaryCard/SummaryCard";
 import TrainingTrendCard from "./component/TrainingTrendCard/TrainingTrendCard";
+import MainNav from "../../component/MainNavBar/MainNav";
+
 
 function Dashboard(){
-    const navigate = useNavigate();
-    const location = useLocation();
-    const dropdownRef = useRef(null);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
 
     const [trainingScore, setTrainingScore] = useState(0);
     const [recoveryScore, setRecoveryScore] = useState(0);
@@ -86,127 +77,9 @@ function Dashboard(){
         day: 'numeric'
     };
     const formattedDate = today.toLocaleDateString('en-US', options);
-
-    // Close the username dropdown when clicking outside it.
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (
-                dropdownRef.current &&
-                !dropdownRef.current.contains(event.target)
-            ) {
-                setDropdownOpen(false);
-            }
-        }
-
-        document.addEventListener("mousedown", handleClickOutside);
-
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
-
-    function handleNavigation(path) {
-        setDropdownOpen(false);
-        navigate(path);
-    }
-
-    function handleLogout() {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("user_id");
-        localStorage.removeItem("user_name");
-        localStorage.removeItem("username");
-        localStorage.removeItem("name");
-
-        setDropdownOpen(false);
-        navigate("/login", { replace: true });
-    }
-
-    const navItems = [
-        { label: "Daily Entry", path: "/entry", Icon: NotebookPen },
-        { label: "Dashboard", path: "/dashboard", Icon: LayoutDashboard },
-        { label: "Training Plan", path: "/training-plan", Icon: CalendarDays }
-    ];
-
     return(
         <>
-            {/* Navigation bar */}
-            <header className={styles.navbar}>
-                <button
-                    type="button"
-                    className={styles.logo}
-                    onClick={() => handleNavigation("/entry")}
-                    aria-label="Go to Daily Entry"
-                >
-                    <Dumbbell size={30} strokeWidth={1.8} />
-                    <span className={styles.logoText}>Fitness Dashboard</span>
-                </button>
-
-                {/* Navigation buttons beside the logo */}
-                <nav className={styles.navLinks} aria-label="Main navigation">
-                    {navItems.map(({ label, path, Icon }) => {
-                        const isActive = location.pathname === path;
-
-                        return (
-                            <button
-                                key={path}
-                                type="button"
-                                className={`${styles.navButton} ${
-                                    isActive ? styles.activeNavButton : ""
-                                }`}
-                                onClick={() => handleNavigation(path)}
-                                aria-current={isActive ? "page" : undefined}
-                            >
-                                <Icon size={18} />
-                                <span>{label}</span>
-                            </button>
-                        );
-                    })}
-                </nav>
-
-                {/* Username dropdown */}
-                <div className={styles.userMenuContainer} ref={dropdownRef}>
-                    <button
-                        type="button"
-                        className={styles.userMenuButton}
-                        onClick={() =>
-                            setDropdownOpen(previous => !previous)
-                        }
-                        aria-haspopup="true"
-                        aria-expanded={dropdownOpen}
-                    >
-                        <span className={styles.userName}>{username}</span>
-                        <ChevronDown
-                            size={20}
-                            className={`${styles.chevron} ${
-                                dropdownOpen ? styles.chevronOpen : ""
-                            }`}
-                        />
-                    </button>
-
-                    {dropdownOpen && (
-                        <div className={styles.dropdown}>
-                            <button
-                                type="button"
-                                className={styles.dropdownItem}
-                                onClick={() => handleNavigation("/onboarding")}
-                            >
-                                <UserRoundPen size={16} />
-                                Edit Onboarding Information
-                            </button>
-                            <button
-                                type="button"
-                                className={`${styles.dropdownItem} ${styles.logoutItem}`}
-                                onClick={handleLogout}
-                            >
-                                <LogOut size={17} />
-                                <span>Log Out</span>
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </header>
-
+            <MainNav username={username}/>
             <div className = {styles["dashboard-wrapper"]}>
                 <div className = {styles["dashboard-header"]}>
                     <div className = {styles["welcome-message"]}>

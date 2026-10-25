@@ -62,37 +62,38 @@ async def update_fitess_profile(fitness_profile: UserFitnessProfileCreate, curre
     result = await db.execute(stmt)
     db_fitness_profile = result.scalar_one_or_none()
 
-    if not db_fitness_profile:
-        raise HTTPException(status_code=404, detail="Fitness Profile not found")
-
-    #update the fitness data
+    #create the fitness profile if it does not exist
     fitness_profile_dict = fitness_profile.model_dump(exclude_unset=True)
-    for key, value in fitness_profile_dict.items():
-        setattr(db_fitness_profile, key, value)
+    if not db_fitness_profile:
+        db_fitness_profile = UserFitnessProfile(
+            user_id=current_user_id,
+            **fitness_profile_dict,
+        )
+        db.add(db_fitness_profile)
+    else:
+        #update the fitness data
+        for key, value in fitness_profile_dict.items():
+            setattr(db_fitness_profile, key, value)
 
     try:
         await db.commit()
         await db.refresh(db_fitness_profile)
-    except:
+    except Exception:
         await db.rollback()
-        raise HTTPException(status_code=500, detail="Could not update fitness profile.")
-    
+        raise HTTPException(status_code=500, detail="Could not save fitness profile.")
+
     return db_fitness_profile
-    
+
 #use prpofile table
 @router.patch("/user-profile", response_model=UserProfileResponse)
 async def patch_user_profile(profile_data: UserProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     current_user_id = current_user.user_id
-    
+
     stmt = select(UserProfile).where(UserProfile.user_id == current_user_id)
     result = await db.execute(stmt)
     user_profile = result.scalar_one_or_none()
-    
-    #check if profile exists
-    if not user_profile:
-        raise HTTPException(status_code=404, detail="User profile not found.")
 
-    profile_data_dict = profile_data.model_dump(exclude_unset=True)
+    profile_data_dict = profile_data.model_dump()
 
     #handle JSON array data
     if "equipment_available" in profile_data_dict and profile_data_dict["equipment_available"]:
@@ -102,15 +103,24 @@ async def patch_user_profile(profile_data: UserProfileCreate, current_user: User
     if "preferred_workout_days" in profile_data_dict and profile_data_dict["preferred_workout_days"]:
         profile_data_dict["preferred_workout_days"] = [day.value if hasattr(day, "value") else day for day in profile_data_dict["preferred_workout_days"]]
 
-    for field, value in profile_data_dict.items():
-        setattr(user_profile, field, value)
+    #create the user profile if it does not exist
+    if not user_profile:
+        user_profile = UserProfile(
+            user_id=current_user_id,
+            **profile_data_dict,
+        )
+        db.add(user_profile)
+    else:
+        #update the existing user profile
+        for field, value in profile_data_dict.items():
+            setattr(user_profile, field, value)
 
     try:
         await db.commit()
         await db.refresh(user_profile)
-    except:
+    except Exception:
         await db.rollback()
-        raise HTTPException(status_code=500, detail="Could not update user profile.")
+        raise HTTPException(status_code=500, detail="Could not save user profile.")
 
     return user_profile
 
