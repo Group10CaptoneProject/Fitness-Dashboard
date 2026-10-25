@@ -10,7 +10,6 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import DailyEntry from "./pages/DailyEntry/DailyEntry";
 import TrainingPlan from "./pages/TrainingPlan/TrainingPlan";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import OnboardingWizard from "./component/OnboardingWizard";
 
 function App() {
   return (
@@ -24,7 +23,7 @@ function App() {
           path="/onboarding"
           element={
             <ProtectedRoute>
-              <OnboardingWizard />
+              <Onboarding />
             </ProtectedRoute>
           }
         />
