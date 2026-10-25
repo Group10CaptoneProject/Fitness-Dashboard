@@ -1,11 +1,11 @@
 import { Navigate} from "react-router";
-import { getAccessToken, isAuthenticated, removeExpireToken } from "../auth/auth";
+import {isAuthenticated} from "../auth/auth";
 
 function ProtectedRoute({ children }) {
 
   if (!isAuthenticated()) {
     return (
-      <Navigate to="/login" replace />
+      <Navigate to="/login?reason=expired" replace />
     );
   }
 

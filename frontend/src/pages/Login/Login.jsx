@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState , useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { ReactTyped } from "react-typed";
 import { Dumbbell } from "lucide-react";
 import styles from "./Login.module.css";
+import { useSearchParams } from "react-router";
 
 // Local backend URL for development (port 8888)
 const API_URL = (
@@ -16,6 +17,15 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [searchParams] = useSearchParams();
+  const reason = searchParams.get("reason");
+
+  useEffect(() =>{
+    if (reason === "expired"){
+      setError("Your session is expired or invalid. Please log in again")
+    }
+  }, [reason]);
 
   async function handleSubmit(event) {
     event.preventDefault();
