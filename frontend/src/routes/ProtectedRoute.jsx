@@ -1,5 +1,5 @@
 import { Navigate} from "react-router";
-import { isAuthenticated } from "../auth/auth";
+import { getAccessToken, isAuthenticated, removeExpireToken } from "../auth/auth";
 
 function ProtectedRoute({ children }) {
 
@@ -8,6 +8,9 @@ function ProtectedRoute({ children }) {
       <Navigate to="/login" replace />
     );
   }
+
+  
+
 
   return children;
 }
