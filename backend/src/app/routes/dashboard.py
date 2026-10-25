@@ -13,7 +13,7 @@ from ..security import get_current_user
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 #get the entry data from entry path
-@router.get("/{user_id}")
+@router.get("/")
 async def get_daily_entry_data(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     
     #profile
@@ -69,7 +69,7 @@ async def get_daily_entry_data(current_user: User = Depends(get_current_user), d
        "readiness_summary": readiness_summary.to_dict(orient="records") if isinstance(readiness_summary, pd.DataFrame) else readiness_summary 
     }
 
-@router.get("/{user_id}/scores", response_model=List[DailyScoreResponse])
+@router.get("/scores", response_model=List[DailyScoreResponse])
 async def read_user_daily_scores(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     #fetch df
     user_id = current_user.user_id

@@ -22,6 +22,53 @@ function Dashboard(){
     const [workloadScore, setworkloadScore] = useState(0);
     const [weeklyScores, setWeeklyScores] = useState([]);
 
+    useEffect(() =>{
+        async function fetchDashboardData(){
+            const token = localStorage.getItem("access_token")
+            try{
+                const reponse = await fetch("http://localhost:8888/dashboard/scores",
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                })
+    
+                if (!reponse.ok){
+                    throw new Error("Failed to fetch dashboard data");
+                }
+    
+                const data = await reponse.json();
+    
+                setWeeklyScores(data)
+                if (data.length > 0) {
+                    const latestScore = data[data.length - 1];
+    
+                    setTrainingScore(
+                        Number(latestScore.final_training_score)
+                    );
+    
+                    setRecoveryScore(
+                        Number(latestScore.recovery)
+                    );
+    
+                    setfatigueScore(
+                        Number(latestScore.fatigue)
+                    );
+    
+                    setworkloadScore(
+                        Number(latestScore.workload_balance_score)
+                    );
+                }
+
+            }catch(error){
+                console.error("Dashboard error:", error);
+
+            }
+        }
+        fetchDashboardData();
+    }, []);
+
     // Mock data for testing purposes
     // const [weeklyScores, setWeeklyScores] = useState([
     //     {
