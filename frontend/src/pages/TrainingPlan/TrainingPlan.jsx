@@ -173,9 +173,11 @@ function TrainingPlan(){
                                                 </div>
                                             )}
                                         </td>
-                                        <td>{exercise.name && `${exercise.sets} × ${exercise.reps}`}</td>
-                                        <td>{exercise.rest}</td>
-                                        <td>{exercise.equipment}</td>
+                                        <td data-label="Set x Reps">
+                                            <span>{exercise.name ? `${exercise.sets} × ${exercise.reps}` : "—"}</span>
+                                        </td>
+                                        <td data-label="Rest Time"><span>{exercise.rest || "—"}</span></td>
+                                        <td data-label="Equipment"><span>{exercise.equipment || "—"}</span></td>
                                         <td className = {styles["action-cell"]}>
                                             {exercise.name && (
                                                 <>
