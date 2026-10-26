@@ -19,12 +19,22 @@ class UserProfileCreate(BaseModel):
     #keep track of whether onboarding is done. 
     is_onboarded: Optional[bool] = None
 
+
+# Allow updating only the fields sent by the frontend.
+class UserProfilePatch(BaseModel):
+    primary_goal: Optional[GoalEnum] = None
+    experience_level: Optional[ExperienceLevelEnum] = None
+    equipment_available: Optional[List[EquipmentEnum]] = Field(default=None, min_length=1)
+    preferred_workout_days: Optional[List[DayOfWeekEnum]] = Field(default=None, min_length=1, max_length=7)
+    session_duration: Optional[int] = Field(default=None, ge=10, le=180)
+    is_onboarded: Optional[bool] = None
+
+
 #profile response 
 class UserProfileResponse(UserProfileCreate):
     user_id: uuid.UUID
     model_config = ConfigDict(from_attributes=True)
 
-    model_config = ConfigDict(from_attributes=True)
 
 #fitness profile
 class UserFitnessProfileCreate(BaseModel):
@@ -34,8 +44,14 @@ class UserFitnessProfileCreate(BaseModel):
     height: int = Field(..., ge=50, le=250, description="Height in cm")
     weight:int = Field(..., ge=20, le=300, description="Weight in lbs")
 
-    #is onobarding done? 
-    is_onboarded: Optional[bool] = None
+
+# Allow updating only the fields sent by the frontend.
+class UserFitnessProfilePatch(BaseModel):
+    gender: Optional[GenderEnum] = None
+    age: Optional[int] = Field(default=None, ge=12, le=120)
+    height: Optional[int] = Field(default=None, ge=50, le=250, description="Height in cm")
+    weight: Optional[int] = Field(default=None, ge=20, le=300, description="Weight in lbs")
+
 
 class UserFitnessProfileResponse(UserFitnessProfileCreate):
     #ids saved in response
@@ -55,6 +71,7 @@ class DailyEntryCreate(BaseModel):
     heart_rate: int = Field(..., ge=30, le=220)
     duration: int = Field(..., ge=0)
     difficulty: int = Field(..., ge=1, le=10)
+
 
     # Replaced duration with mechanical load metrics (for next week?)
     #sets: int = Field(..., ge=1, le=100)

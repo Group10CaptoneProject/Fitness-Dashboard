@@ -79,8 +79,16 @@ function Login() {
 
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
-          // Check the secure database flag!
-          isActuallyOnboarded = Boolean(profileData.is_onboarded);
+          // Check the secure database flag when available, or the saved profile fields.
+          isActuallyOnboarded = Boolean(profileData.is_onboarded) || Boolean(
+            profileData.primary_goal &&
+            profileData.experience_level &&
+            Array.isArray(profileData.equipment_available) &&
+            profileData.equipment_available.length > 0 &&
+            Array.isArray(profileData.preferred_workout_days) &&
+            profileData.preferred_workout_days.length > 0 &&
+            profileData.session_duration
+          );
         }
       } catch (profileErr) {
         console.error("Could not fetch profile onboarding status from backend:", profileErr);

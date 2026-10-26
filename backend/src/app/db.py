@@ -138,6 +138,7 @@ class UserProfile(Base):
         default=list,
     )
 
+    #keep track of whether onboarding is done.
     is_onboarded: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Preferred workout duration in minutes
@@ -310,10 +311,7 @@ class UserFitnessProfile(Base):
     height: Mapped[int] = mapped_column(Integer, nullable=False)
     weight: Mapped[int] = mapped_column(Integer, nullable=False)
     
-    preferred_workout_days: Mapped[dict] = mapped_column(JSON, nullable=True, default=dict)
     #user cans tore their own muscle groups. kept in JSON dict. 
-    weekly_split: Mapped[dict] = mapped_column(JSON, nullable = True, default = dict)
-
     # Preferred days for workout scheduling.
     preferred_workout_days: Mapped[dict] = mapped_column(
         JSON,
@@ -327,8 +325,6 @@ class UserFitnessProfile(Base):
         nullable=True,
         default=dict,
     )
-    
-    is_onboarded: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -358,4 +354,3 @@ async def test_connection():
 if __name__ == "__main__":
     asyncio.run(test_connection())
     # asyncio.run(init_db())
-

@@ -12,8 +12,10 @@ from ..db import (
 )
 from ..schema import (
     UserProfileCreate,
+    UserProfilePatch,
     UserProfileResponse,
     UserFitnessProfileCreate,
+    UserFitnessProfilePatch,
     UserFitnessProfileResponse,
 )
 from ..security import get_current_user
@@ -40,7 +42,7 @@ async def get_fitness_profile(current_user: User = Depends(get_current_user), db
             age=22,
             height=170,
             weight=140,
-            preferd_workout_days=["Monday", "Tuesday", "Thursday", "Friday"],
+            preferred_workout_days={},
             weekly_split={"Monday": "Back, Triceps, Shoulders", "Tuesday": "Chest, Biceps, Glutes"}
         )
 
@@ -48,7 +50,7 @@ async def get_fitness_profile(current_user: User = Depends(get_current_user), db
         try:
             await db.commit()
             await db.refresh(fitness_profile)
-        except:
+        except Exception:
             await db.rollback()
             raise HTTPException(status_code=500, detail="Could not create default fitness profile.")
 
@@ -56,18 +58,29 @@ async def get_fitness_profile(current_user: User = Depends(get_current_user), db
 
 #update fitness profile 
 @router.patch("/fitness-profile", response_model=UserFitnessProfileResponse)
-async def update_fitess_profile(fitness_profile: UserFitnessProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def update_fitess_profile(fitness_profile: UserFitnessProfilePatch, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     current_user_id = current_user.user_id
     stmt = select(UserFitnessProfile).where(UserFitnessProfile.user_id == current_user_id)
     result = await db.execute(stmt)
     db_fitness_profile = result.scalar_one_or_none()
 
     #create the fitness profile if it does not exist
-    fitness_profile_dict = fitness_profile.model_dump(exclude_unset=True)
+    fitness_profile_dict = fitness_profile.model_dump(exclude_unset=True, exclude_none=True)
     if not db_fitness_profile:
+        # Supply defaults when creating a profile from a partial PATCH request.
+        profile_defaults = {
+            "gender": "prefer_not_to_say",
+            "age": 22,
+            "height": 170,
+            "weight": 140,
+            "preferred_workout_days": {},
+            "weekly_split": {},
+        }
+        profile_defaults.update(fitness_profile_dict)
+
         db_fitness_profile = UserFitnessProfile(
             user_id=current_user_id,
-            **fitness_profile_dict,
+            **profile_defaults,
         )
         db.add(db_fitness_profile)
     else:
@@ -86,14 +99,15 @@ async def update_fitess_profile(fitness_profile: UserFitnessProfileCreate, curre
 
 #use prpofile table.
 @router.patch("/user-profile", response_model=UserProfileResponse)
-async def patch_user_profile(profile_data: UserProfileCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def patch_user_profile(profile_data: UserProfilePatch, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     current_user_id = current_user.user_id
 
     stmt = select(UserProfile).where(UserProfile.user_id == current_user_id)
     result = await db.execute(stmt)
     user_profile = result.scalar_one_or_none()
 
-    profile_data_dict = profile_data.model_dump()
+    # Only update the fields included in this PATCH request.
+    profile_data_dict = profile_data.model_dump(exclude_unset=True, exclude_none=True)
 
     #handle JSON array data
     if "equipment_available" in profile_data_dict and profile_data_dict["equipment_available"]:
@@ -105,9 +119,20 @@ async def patch_user_profile(profile_data: UserProfileCreate, current_user: User
 
     #create the user profile if it does not exist
     if not user_profile:
+        # Supply defaults when creating a profile from a partial PATCH request.
+        profile_defaults = {
+            "primary_goal": "healthy_lifestyle",
+            "experience_level": "beginner",
+            "equipment_available": ["dumbbells", "bodyweight"],
+            "preferred_workout_days": ["monday"],
+            "session_duration": 60,
+            "is_onboarded": False,
+        }
+        profile_defaults.update(profile_data_dict)
+
         user_profile = UserProfile(
             user_id=current_user_id,
-            **profile_data_dict,
+            **profile_defaults,
         )
         db.add(user_profile)
 
@@ -140,7 +165,10 @@ async def get_or_create_user_profile(current_user: User  =Depends(get_current_us
             user_id=current_user_id,
             primary_goal="healthy_lifestyle",
             experience_level="beginner",
-            equipment_available=["dumbbells", "bodyweight"]
+            equipment_available=["dumbbells", "bodyweight"],
+            preferred_workout_days=["monday"],
+            session_duration=60,
+            is_onboarded=False,
         )
         db.add(profile)
         try:
