@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -19,6 +20,8 @@ from ..schema import (
     UserFitnessProfileResponse,
 )
 from ..security import get_current_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/profile",
@@ -42,7 +45,7 @@ async def get_fitness_profile(current_user: User = Depends(get_current_user), db
             age=22,
             height=170,
             weight=140,
-            preferred_workout_days={},
+            preferred_workout_days=[],
             weekly_split={"Monday": "Back, Triceps, Shoulders", "Tuesday": "Chest, Biceps, Glutes"}
         )
 
@@ -73,7 +76,7 @@ async def update_fitess_profile(fitness_profile: UserFitnessProfilePatch, curren
             "age": 22,
             "height": 170,
             "weight": 140,
-            "preferred_workout_days": {},
+            "preferred_workout_days": [],
             "weekly_split": {},
         }
         profile_defaults.update(fitness_profile_dict)
@@ -93,6 +96,7 @@ async def update_fitess_profile(fitness_profile: UserFitnessProfilePatch, curren
         await db.refresh(db_fitness_profile)
     except Exception:
         await db.rollback()
+        logger.exception("Could not save fitness profile for user %s", current_user_id)
         raise HTTPException(status_code=500, detail="Could not save fitness profile.")
 
     return db_fitness_profile

@@ -313,10 +313,10 @@ class UserFitnessProfile(Base):
     
     #user cans tore their own muscle groups. kept in JSON dict. 
     # Preferred days for workout scheduling.
-    preferred_workout_days: Mapped[dict] = mapped_column(
-        JSON,
+    preferred_workout_days: Mapped[list[str]] = mapped_column(
+        ARRAY(String),
         nullable=True,
-        default=dict,
+        default=list,
     )
 
     # Optional weekly workout split.

@@ -268,7 +268,7 @@ function Onboarding() {
     return result;
   }
 
-  // Save both profile sections concurrently.
+  // Save fitness information before marking onboarding complete.
   async function saveOnboarding() {
     const token = localStorage.getItem("access_token");
 
@@ -301,23 +301,18 @@ function Onboarding() {
       is_onboarded: true, 
     };
 
-    const [fitnessResponse, preferencesResponse] = await Promise.all([
-      fetchWithTimeout(`${API_URL}/profile/fitness-profile`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify(fitnessProfile),
-      }),
-      fetchWithTimeout(`${API_URL}/profile/user-profile`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify(userProfile),
-      }),
-    ]);
+    const fitnessResponse = await fetchWithTimeout(`${API_URL}/profile/fitness-profile`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(fitnessProfile),
+    });
+    await readResponse(fitnessResponse, "Could not save your fitness information.");
 
-    await readResponse(
-      fitnessResponse,
-      "Could not save your fitness information."
-    );
+    const preferencesResponse = await fetchWithTimeout(`${API_URL}/profile/user-profile`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(userProfile),
+    });
 
     await readResponse(
       preferencesResponse,
