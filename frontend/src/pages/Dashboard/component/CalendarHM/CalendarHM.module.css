@@ -1,0 +1,68 @@
+.calendarScroll {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #8aaff5 #edf2ff;
+}
+
+.calendarScroll:focus-visible {
+  outline: 2px solid #1d4fc5;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* The heatmap library supplies global class names, so keep these unscoped. */
+:global(.react-calendar-heatmap) {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 16px;
+  font-family: inherit;
+}
+
+:global(.react-calendar-heatmap) text {
+  font-size: 10px;
+  font-weight: 500;
+  fill: #64748b;
+}
+
+:global(.react-calendar-heatmap .react-calendar-heatmap-small-text) {
+  font-size: 5px;
+}
+
+:global(.react-calendar-heatmap) rect {
+  rx: 2px;
+  ry: 2px;
+  transition: fill 150ms ease, stroke 150ms ease;
+}
+
+:global(.react-calendar-heatmap .color-empty),
+:global(.react-calendar-heatmap .color-github-0),
+:global(.react-calendar-heatmap .color-gitlab-0) {
+  fill: #edf2ff;
+}
+
+:global(.react-calendar-heatmap .color-github-1),
+:global(.react-calendar-heatmap .color-gitlab-1) {
+  fill: #1d4fc5;
+}
+
+:global(.react-calendar-heatmap) rect:hover {
+  stroke: #163d99;
+  stroke-width: 1px;
+}
+
+@media (max-width: 768px) {
+  :global(.react-calendar-heatmap) {
+    min-width: 900px;
+    margin-top: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(.react-calendar-heatmap) rect {
+    transition: none;
+  }
+}

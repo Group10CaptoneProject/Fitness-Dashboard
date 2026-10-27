@@ -576,15 +576,15 @@ License notices for applicable dependencies can be stored in:
 THIRD_PARTY_LICENSES.md
 ```
 
-If `reactjs-calendar-heatmap` is added to the project, its MIT license notice should be included in that file.
+If `react-calendar-heatmap` is added to the project, its MIT license notice should be included in that file.
 
 Example:
 
 ```text id="heatmap-license"
-reactjs-calendar-heatmap
+react-calendar-heatmap
 
 Source:
-https://github.com/g1eb/reactjs-calendar-heatmap
+https://www.npmjs.com/package/react-calendar-heatmap
 
 Licensed under the MIT License.
 ```

@@ -46,6 +46,17 @@
     padding: 0.5rem;
     border-radius: 50%;
 }
+
+.calendar-card {
+    margin-top: 20px;
+    padding: 24px;
+    background: white;
+    border: 1px solid #d6e2ff;
+    border-radius: 12px;
+}
+.calendar-card {
+    margin-top: 28px;
+}
   
 @media (max-width: 768px) {
     .card-wrapper{
@@ -56,5 +67,8 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
+    }
+    .calendar-card {
+        padding: 16px;
     }
   }

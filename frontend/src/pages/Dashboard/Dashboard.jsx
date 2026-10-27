@@ -2,6 +2,7 @@ import styles from "./Dashboard.module.css";
 import { useState, useEffect} from "react";
 import {
     CalendarDays,
+    Calendar,
     ChartSpline,
     NotebookText,
     Gauge as GaugeIcon,
@@ -12,6 +13,7 @@ import ReadinessScaleCard from "./component/ReadinessScaleCard/ReadinessScaleCar
 import SummaryCard from "./component/SummaryCard/SummaryCard";
 import TrainingTrendCard from "./component/TrainingTrendCard/TrainingTrendCard";
 import MainNav from "../../component/MainNavBar/MainNav";
+import CalendarHM from "./component/CalendarHM/CalendarHM";
 
 
 function Dashboard(){
@@ -140,6 +142,18 @@ function Dashboard(){
                         </div>
                     </div>
                 </div>
+                {/* Full-width activity calendar */}
+                <div className={`${styles["card"]} ${styles["calendar-card"]}`}>
+                        <div className = {styles["card-header"]}>
+                            <span className = {styles["tag"]}>
+                                <Calendar size={24} color="white"/>
+                            </span>
+                            <div className = {styles["card-title"]}>
+                                <h2>Activities</h2>
+                            </div>
+                        </div>
+                        <CalendarHM />
+                    </div>
                 {/* Card sections */}
                 <div className = {styles["card-wrapper"]}>
                     {/* Final training score */}

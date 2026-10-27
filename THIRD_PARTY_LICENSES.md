@@ -1,6 +1,4 @@
-reactjs-calendar-heatmap
-Copyright (c) its respective author(s)
-Licensed under the MIT License.
+react-calendar-heatmap is Copyright © 2016 PatientsLikeMe, Inc. and is released under an MIT License. 
 
 Source:
-https://github.com/g1eb/reactjs-calendar-heatmap
+https://www.npmjs.com/package/react-calendar-heatmap
