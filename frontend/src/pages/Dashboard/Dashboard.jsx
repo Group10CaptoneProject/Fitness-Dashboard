@@ -23,6 +23,7 @@ function Dashboard(){
     const [fatigueScore, setfatigueScore] = useState(0);
     const [workloadScore, setworkloadScore] = useState(0);
     const [weeklyScores, setWeeklyScores] = useState([]);
+    const [heatMapData, setHeatMapData] = useState([]);
 
     useEffect(() =>{
         async function fetchDashboardData(){
@@ -43,6 +44,12 @@ function Dashboard(){
                 const data = await reponse.json();
     
                 setWeeklyScores(data)
+                setHeatMapData(
+                    data.map((score) => ({
+                        date: score.score_date,
+                        count: 1,
+                    }))
+                );
                 if (data.length > 0) {
                     const latestScore = data[data.length - 1];
     
@@ -152,7 +159,7 @@ function Dashboard(){
                                 <h2>Activities</h2>
                             </div>
                         </div>
-                        <CalendarHM />
+                        <CalendarHM data = {heatMapData}/>
                     </div>
                 {/* Card sections */}
                 <div className = {styles["card-wrapper"]}>
