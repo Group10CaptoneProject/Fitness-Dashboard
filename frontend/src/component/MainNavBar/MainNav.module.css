@@ -168,7 +168,7 @@
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 960px) {
   .navLinks {
     display: none;
   }
@@ -224,8 +224,6 @@
     background: #eaf3ff;
     color: #087cf0;
   }
-}
-@media (max-width: 768px) {
   .navLinks{
     display: none;
   }
