@@ -235,12 +235,6 @@
     background: #f0f3f8;
 }
 
-.preview-note{
-    font-size: 12px;
-    color: #747b86;
-    margin: 14px 0 0;
-}
-
 .sr-only{
     position: absolute;
     width: 1px;

@@ -215,9 +215,6 @@ function TrainingPlan(){
                         </table>
                     </div>
                 </section>
-                <p className = {styles["preview-note"]}>
-                    Frontend preview · Sample plan. Selections stay on this page and do not generate a new workout.
-                </p>
 
                 {/* Equipment editor */}
                 {editingEquipment && (
