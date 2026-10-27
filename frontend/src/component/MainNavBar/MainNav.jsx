@@ -9,7 +9,9 @@ import {
   NotebookPen,
   UserRoundPen,
   Menu,
-  X
+  X,
+  LineChart,
+  User
 } from "lucide-react";
 import styles from "./MainNav.module.css";
 
@@ -55,6 +57,7 @@ function MainNav({ username }) {
     { label: "Daily Entry", path: "/entry", Icon: NotebookPen },
     { label: "Dashboard", path: "/dashboard", Icon: LayoutDashboard },
     { label: "Training Plan", path: "/training-plan", Icon: CalendarDays },
+    { label: "Analytics", path: "/analytics", Icon: LineChart },
   ];
 
   const currentPath = location.pathname.replace(/\/+$/, "") || "/";
@@ -164,6 +167,15 @@ function MainNav({ username }) {
 
         {dropdownOpen && (
           <div className={styles.dropdown}>
+            <button
+              type="button"
+              className={styles.dropdownItem}
+              onClick={() => handleNavigation("/profile")}
+            >
+              <User size={16} />
+              <span>Profile</span>
+            </button>
+            
             <button
               type="button"
               className={styles.dropdownItem}
