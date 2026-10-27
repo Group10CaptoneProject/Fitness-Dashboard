@@ -42,8 +42,8 @@ function Dashboard(){
                 }
     
                 const data = await reponse.json();
-    
-                setWeeklyScores(data)
+                const lastWeekData = data.slice(-7)
+                setWeeklyScores(lastWeekData)
                 setHeatMapData(
                     data.map((score) => ({
                         date: score.score_date,
