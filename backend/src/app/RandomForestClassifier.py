@@ -9,7 +9,7 @@ import os
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import date, timedelta
 from typing import Optional
-
+from config.config import settings
 from db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db
 from analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile
 from security import get_current_user
@@ -20,15 +20,22 @@ router = APIRouter(prefix="/analytics", tags=["Analytics & Recommendations"])
 #save api data locally
 async def fetch_and_cache_exercises():
     # Example pattern for fetching from a public API and caching
-    url = "https://raw.githubusercontent.com/ExerciseDB/exercisedb-api/main/exercises.json" # (or relevant endpoint)
+    url = "https://exercise-db-fitness-workout-gym.p.rapidapi.com/exercises" # (or relevant endpoint)
+    headers = {
+        "x-rapid-api-key": settings.EXERCISEDB_API_KEY,
+        "x-rapidapi-host": "exercise-db-fitness-workout-gym.p.rapidapi.com"
+
+    }
     async with httpx.AsyncClient() as client:
-        response = await client.get(url)
+        response = await client.get(url, headers=headers)
         if response.status_code == 200:
             exercise_data = response.json()
             #loop through data. save to local DB
             with open("exercises_cache.json", "w") as f:
                 json.dump(exercise_data, f)
             print("Successfully cached exercises locally!")
+        else:
+            print(f"Failed to fetch exercises: {response.status_code}")
 
 #get exercise info from exercise API
 def get_exercise_stats() -> pd.DataFrame:
