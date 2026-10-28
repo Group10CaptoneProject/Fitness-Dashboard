@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import DailyEntry from "./pages/DailyEntry/DailyEntry";
 import TrainingPlan from "./pages/TrainingPlan/TrainingPlan";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import Research from "./pages/Research/Research";
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
           }
         />
         <Route path="/training-plan" element={<ProtectedRoute><TrainingPlan /></ProtectedRoute>}/>
+        <Route path="/research" element={<ProtectedRoute><Research /></ProtectedRoute>}/>
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-reset-code" element={<VerifyResetCode />} />

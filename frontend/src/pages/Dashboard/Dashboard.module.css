@@ -169,12 +169,29 @@
 section p{
     color: rgb(100, 116, 139)
 }
+.viewResearch{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.viewResearch a{
+    text-decoration: none;
+    color: #333;
+}
+.viewResearch a:hover{
+    text-decoration: underline; 
+    text-underline-offset: 4px; 
+}
+
 @media (max-width: 1100px) {
     .guideSteps { 
         grid-template-columns: repeat(2, minmax(0, 1fr)); 
     }
     .guideSteps::before { 
         display: none;
+    }
+    .viewResearch{
+        display: block;
     }
 }
 @media (max-width: 600px) {

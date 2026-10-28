@@ -257,10 +257,14 @@ function Dashboard(){
                     <h2>
                          What does each score mean?
                     </h2>
-                    <p>
-                        You may be wondering what each score represents. This section provides a
-                        clear summary of each.
-                    </p>
+                    <div className={styles.viewResearch}>
+                        <p>
+                            You may be wondering what each score represents. This section provides a
+                            clear summary of each. Click view research for more in-depth explainations.
+                        </p>
+                        <Link to = "/research"><span>View Research → </span></Link>
+                    </div>
+                    
                     
                 </section>
             </div>
