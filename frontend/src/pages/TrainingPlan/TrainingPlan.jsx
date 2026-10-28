@@ -32,7 +32,7 @@ useEffect(() => {
         async function fetchRecommendations() {
             const token = localStorage.getItem("access_token");
             try {
-                const response = await fetch("http://localhost:8888/analytics/exercise-recommendation", {
+                const response = await fetch("http://localhost:8888/exercise-recommendation", {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${token}`,

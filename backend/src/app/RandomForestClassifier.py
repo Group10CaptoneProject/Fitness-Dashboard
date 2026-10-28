@@ -88,6 +88,9 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
     goal_reps = current_plan['reps_goal'].iloc[-1] if not current_plan.empty else 0
     goal_sets = current_plan['sets_goal'].iloc[-1] if not current_plan.empty else 0
 
+    #get current goal from user
+    fitness_goal = current_plan['primary_goal']
+
     #get user profile info (experience, primary goal, equipment avaliable)
     user_profile_data = await get_user_profile(current_user_id)
     if user_profile_data:
