@@ -11,6 +11,7 @@
 .welcome-description{
     display: flex;
     justify-content: space-between;
+    color: rgb(100, 116, 139)
 }
 .date{
     display: flex;
@@ -164,6 +165,9 @@
 }
 .trend-card { 
     scroll-margin-top: 90px; 
+}
+section p{
+    color: rgb(100, 116, 139)
 }
 @media (max-width: 1100px) {
     .guideSteps { 
