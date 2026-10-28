@@ -224,6 +224,25 @@ function Dashboard(){
                         </div>
                     </div>
                 </div>
+                {/* Section with guides to help users that just landed */}
+                <section>
+                    <h2>
+                        Confused about where to started?
+                    </h2>
+                    <p>
+                        Here is how the workflow will look like. A step by step guide walking you through your first entry.
+                    </p>
+                </section>
+                {/* A lil section that explains more of what the scores mean */}
+                <section>
+                    <h2>
+                         What does each score mean?
+                    </h2>
+                    <p>
+                        You may be wondering what each score represents. This section provides a
+                        clear summary of each.
+                    </p>
+                </section>
             </div>
         </>
     )
