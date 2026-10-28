@@ -88,15 +88,14 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
     goal_reps = current_plan['reps_goal'].iloc[-1] if not current_plan.empty else 0
     goal_sets = current_plan['sets_goal'].iloc[-1] if not current_plan.empty else 0
 
-    #get current goal from user
-    fitness_goal = current_plan['primary_goal']
-
     #get user profile info (experience, primary goal, equipment avaliable)
     user_profile_data = await get_user_profile(current_user_id)
     if user_profile_data:
         experience_level = str(user_profile_data.experience_level).lower()
         goal = str(user_profile_data.primary_goal).lower()
         equipment_available = user_profile_data.equipment_available
+        primary_goal = user_profile_data.goal
+
     else:
         experience_level = "beginnger"
         goal = "healthy_lifestyle"
@@ -105,31 +104,62 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
     #tree logic here: stress -> experience -> reps -> difficulty 
     recommended_weight = current_weight
     if equipment_available:
-        if current_stress > 7:
-            if experience_level == "beginner":
-                recommended_weight = current_weight * 0.9
-            elif experience_level == "intermediate" or experience_level == "advanced":
-                recommended_weight = current_weight * 0.95
-            else:
-                print("Enter 'beginner', 'intermediate' or 'advanced'")
-        
-        if current_reps < 6:
-            recommended_weight = current_weight - 5
-        elif 7 <= current_reps < 9:
-            if current_difficulty < 7:
+        #3-4 sets. 8-12 reps. 2 min rest time for hypertropy
+        if goal == "endurance" or goal == "healthy_lifestyle":    
+            if current_stress > 7:
                 if experience_level == "beginner":
-                    recommended_weight = current_weight + 2
+                    recommended_weight = current_weight * 0.9
+                elif experience_level == "intermediate" or experience_level == "advanced":
+                    recommended_weight = current_weight * 0.95
                 else:
-                    recommended_weight = current_weight + 5
-            elif 7 <= current_difficulty < 9:
-                recommended_weight = current_weight 
+                    print("Enter 'beginner', 'intermediate' or 'advanced'")
+            
+            if current_reps < 8:
+                recommended_weight = current_weight - 5
+            elif 8 <= current_reps < 11:
+                if current_difficulty < 7:
+                    if experience_level == "beginner":
+                        recommended_weight = current_weight + 2
+                    else:
+                        recommended_weight = current_weight + 5
+                elif 7 <= current_difficulty < 9:
+                    recommended_weight = current_weight 
+            else:
+                    if experience_level == "beginner":
+                        recommended_weight = current_weight -10
+                    elif experience_level == "intermediate":
+                        recommended_weight = current_weight -5
+                    else:
+                        recommended_weight = current_weight - 2  
+
+        #strength: 6-8 reps. 2-3 reps. 3-5 min rest. 
+        if goal == "hypertrophy":
+            if current_stress > 7:
+                if experience_level == "beginner":
+                    recommended_weight = current_weight * 0.9
+                elif experience_level == "intermediate" or experience_level == "advanced":
+                    recommended_weight = current_weight * 0.95
+                else:
+                    print("Enter 'beginner', 'intermediate' or 'advanced'")
+                        
+            if current_reps < 6:
+                recommended_weight = current_weight - 5
+            elif 6 <= current_reps < 8:
+                if current_difficulty < 7:
+                    if experience_level == "beginner":
+                        recommended_weight = current_weight + 2
+                    else:
+                        recommended_weight = current_weight + 5
+                else:
+                    recommended_weight = current_weight 
             else:
                 if experience_level == "beginner":
                     recommended_weight = current_weight -10
                 elif experience_level == "intermediate":
                     recommended_weight = current_weight -5
                 else:
-                    recommended_weight = current_weight - 2         
+                    recommended_weight = current_weight - 2
+
         return recommended_weight
     else:
         return recommended_weight
