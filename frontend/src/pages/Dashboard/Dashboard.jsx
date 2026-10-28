@@ -1,5 +1,6 @@
 import styles from "./Dashboard.module.css";
 import { useState, useEffect} from "react";
+import { Link } from "react-router-dom";
 import {
     CalendarDays,
     Calendar,
@@ -191,7 +192,7 @@ function Dashboard(){
                     </div>
 
                     {/* Training trend (7 days) */}
-                    <div className={`${styles["card"]} ${styles["trend-card"]}`}>
+                    <div id="training-trend" className={`${styles["card"]} ${styles["trend-card"]}`}>
                         <div className = {styles["card-title"]}>
                             <div className = {styles["card-header"]}>
                                 <span className = {styles["tag"]}>
@@ -225,13 +226,31 @@ function Dashboard(){
                     </div>
                 </div>
                 {/* Section with guides to help users that just landed */}
-                <section>
-                    <h2>
-                        Confused about where to started?
+                <section className={styles.guideSection} aria-labelledby="getting-started-title">
+                    <h2 id="getting-started-title">
+                        Confused about where to start?
                     </h2>
                     <p>
                         Here is how the workflow will look like. A step by step guide walking you through your first entry.
                     </p>
+                    <ol className={styles.guideSteps}>
+                        {[
+                            { title: "Complete Daily Entry", description: "Log sleep, energy, soreness, stress, heart rate, and workout information.", label: "Start check-in", to: "/entry" },
+                            { title: "See Your Results", description: "Your dashboard turns your check-in into recovery, fatigue, workload, and training scores.", label: "View dashboard", to: "/dashboard" },
+                            { title: "Follow Your Plan", description: "Use readiness and recent training scores to guide your weekly workout intensity.", label: "Open training plan", to: "/training-plan" },
+                            { title: "Explore Analytics", description: "Review recent trends and understand how your training changes over time.", label: "View training trends", to: "#training-trend" },
+                        ].map((step, index) => (
+                            <li key={step.title} className={styles.guideStep}>
+                                <h3>{index + 1} . {step.title}</h3>
+                                <p>{step.description}</p>
+                                {step.to.startsWith("#") ? (
+                                    <a href={step.to}>{step.label} <span aria-hidden="true">→</span></a>
+                                ) : (
+                                    <Link to={step.to}>{step.label} <span aria-hidden="true">→</span></Link>
+                                )}
+                            </li>
+                        ))}
+                    </ol>
                 </section>
                 {/* A lil section that explains more of what the scores mean */}
                 <section>
@@ -242,6 +261,7 @@ function Dashboard(){
                         You may be wondering what each score represents. This section provides a
                         clear summary of each.
                     </p>
+                    
                 </section>
             </div>
         </>

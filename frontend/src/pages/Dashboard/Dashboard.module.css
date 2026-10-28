@@ -92,3 +92,91 @@
         padding: 16px;
     }
   }
+
+.guideSection { 
+    margin-top: 40px;
+}
+.guideSection > p { 
+    color: #64748b; 
+    line-height: 1.6; 
+    margin-bottom: 24px; 
+}
+.guideSteps {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    padding: 28px;
+    margin: 0;
+    list-style: none;
+    border: 1px solid #dce5ef;
+    border-radius: 12px;
+}
+.guideSteps::before {
+    content: "";
+    position: absolute;
+    top: 62px;
+    left: 60px;
+    right: 60px;
+    height: 2px;
+    background: #79AFFF;
+    opacity: 0.5;
+}
+.guideStep {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 24px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    background: whitesmoke;
+    color: black;
+}
+
+.guideStep h3 { 
+    margin: 22px 0 10px; 
+    font-size: 19px; 
+    line-height: 1.35; 
+}
+.guideStep p { 
+    margin: 0 0 24px; 
+    color: #333; 
+    line-height: 1.65; 
+    font-size: 15px; 
+}
+.guideStep a { 
+    margin-top: auto; 
+    color: #79AFFF; 
+    font-weight: 600; 
+    text-decoration: none; 
+    line-height: 1.5; 
+}
+.guideStep a:hover { 
+    color: #dbeafe; 
+    text-decoration: underline; 
+    text-underline-offset: 4px; 
+}
+.guideStep a:focus-visible { 
+    outline: 2px solid #93c5fd; 
+    outline-offset: 5px; 
+    border-radius: 2px; 
+}
+.trend-card { 
+    scroll-margin-top: 90px; 
+}
+@media (max-width: 1100px) {
+    .guideSteps { 
+        grid-template-columns: repeat(2, minmax(0, 1fr)); 
+    }
+    .guideSteps::before { 
+        display: none;
+    }
+}
+@media (max-width: 600px) {
+    .guideSteps { 
+        grid-template-columns: 1fr;
+        padding: 16px;
+        border-radius: 20px; 
+    }
+}
