@@ -105,7 +105,7 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
     recommended_weight = current_weight
     if equipment_available:
         #3-4 sets. 8-12 reps. 2 min rest time for hypertropy
-        if goal == "endurance" or goal == "healthy_lifestyle":    
+        if primary_goal == "endurance" or primary_goal == "healthy_lifestyle":    
             if current_stress > 7:
                 if experience_level == "beginner":
                     recommended_weight = current_weight * 0.9
@@ -133,7 +133,7 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
                         recommended_weight = current_weight - 2  
 
         #strength: 6-8 reps. 2-3 reps. 3-5 min rest. 
-        if goal == "hypertrophy":
+        if primary_goal == "hypertrophy":
             if current_stress > 7:
                 if experience_level == "beginner":
                     recommended_weight = current_weight * 0.9
