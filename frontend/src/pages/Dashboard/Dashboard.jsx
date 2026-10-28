@@ -164,7 +164,7 @@ function Dashboard(){
                 {/* Card sections */}
                 <div className = {styles["card-wrapper"]}>
                     {/* Final training score */}
-                    <div className =  {styles["card"]}>
+                    <div className={`${styles["card"]} ${styles["score-card"]}`}>
                         <div className = {styles["card-header"]}>
                             <span className = {styles["tag"]}>
                                 <GaugeIcon size={24} color="white"/>
@@ -176,7 +176,7 @@ function Dashboard(){
                         <TrainingScoreCard score = {trainingScore}/>
                     </div>
                     {/* Readiness scale */}
-                    <div className =  {styles["card"]}>
+                    <div className={`${styles["card"]} ${styles["score-card"]} ${styles["readiness-card"]}`}>
                         <div className = {styles["card-title"]}>
                             <div className = {styles["card-header"]}>
                                 <span className = {styles["tag"]}>
@@ -191,7 +191,7 @@ function Dashboard(){
                     </div>
 
                     {/* Training trend (7 days) */}
-                    <div className =  {styles["card"]}>
+                    <div className={`${styles["card"]} ${styles["trend-card"]}`}>
                         <div className = {styles["card-title"]}>
                             <div className = {styles["card-header"]}>
                                 <span className = {styles["tag"]}>
@@ -205,7 +205,7 @@ function Dashboard(){
                         <TrainingTrendCard scores={weeklyScores} />
                     </div >
                     {/* Today's summary */}
-                    <div className =  {styles["card"]}>
+                    <div className={`${styles["card"]} ${styles["summary-card"]}`}>
                         <div className = {styles["card-title"]}>
                             <div className = {styles["card-header"]}>
                                 <span className = {styles["tag"]}>
