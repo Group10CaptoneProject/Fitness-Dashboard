@@ -53,21 +53,15 @@ const createExercise = () => ({
 });
 
 const goalOptions = [
-  { value: "hypertrophy", label: "Build Muscle" },
-  { value: "strength", label: "Increase Strength" },
+  { value: "hypertrophy", label: "Hypertrophy (Muscle Growth)" },
   { value: "endurance", label: "Improve Endurance" },
-  { value: "weight_loss", label: "Lose Weight" },
-  { value: "healthy_lifestyle", label: "General Fitness" },
+  { value: "healthy_lifestyle", label: "Healthy Lifestyle" },
 ];
 
 const muscleAreaOptions = {
-  chest: ["Upper Chest", "Middle Chest", "Lower Chest"],
-  back: ["Upper Back", "Lats", "Lower Back", "Traps"],
-  shoulders: ["Front Delts", "Side Delts", "Rear Delts"],
-  arms: ["Biceps", "Triceps", "Forearms"],
-  legs: ["Quadriceps", "Hamstrings", "Glutes", "Calves"],
-  core: ["Abs", "Obliques", "Lower Abs"],
-  full_body: ["Full Body"],
+  upperBody: ["Chest", "Biceps", "Triceps", "Shoulders"],
+  lowerBody: ["Quads", "Hamstrings", "Glutes", "Calves"],
+  cardio: ["Abs"]
 };
 
 const ratingItems = [
