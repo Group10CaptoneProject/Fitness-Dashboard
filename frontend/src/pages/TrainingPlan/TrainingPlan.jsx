@@ -28,12 +28,12 @@ const initialExercises = [
 ];
 
 const equipmentOptions = [
-    "Bodyweight",
-    "Dumbbells",
-    "Barbell",
-    "Kettlebells",
-    "Resistance Bands",
-    "Machines"
+    "bodyweight",
+    "dumbbells",
+    "barbell",
+    "kettlebells",
+    "resistance_bands",
+    "machines"
 ];
 
 function TrainingPlan(){
@@ -96,9 +96,9 @@ function TrainingPlan(){
                             value={goal}
                             onChange={event => setGoal(event.target.value)}
                         >
-                            <option>Hypertrophy/Strength</option>
-                            <option>Muscle Endurance</option>
-                            <option>General Fitness</option>
+                            <option value="hypertrophy">Hypertrophy/Strength</option>
+                            <option value="endurance">Muscle Endurance</option>
+                            <option value="healthy_lifestyle">General Fitness</option>
                         </select>
                     </section>
                     <section className = {styles["card"]}>
@@ -122,9 +122,9 @@ function TrainingPlan(){
                             value={focus}
                             onChange={event => setFocus(event.target.value)}
                         >
-                            <option>Upper Body</option>
-                            <option>Lower Body</option>
-                            <option>Full Body</option>
+                            <option value="upper_body">Upper Body</option>
+                            <option value="lower_body">Lower Body</option>
+                            <option value="cardio_core">Cardio Core</option>
                         </select>
                     </section>
                     <button
