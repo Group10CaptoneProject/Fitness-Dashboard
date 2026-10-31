@@ -202,7 +202,7 @@ function Dashboard(){
                                     <ChartSpline size={24} color="white"/>
                                 </span>
                                 <div className = {styles["card-title"]}>
-                                    <h2>Past 7 Day Training Trend</h2>
+                                    <h2>Latest 7 Day Training Trend</h2>
                                 </div>
                             </div>
                         </div>
