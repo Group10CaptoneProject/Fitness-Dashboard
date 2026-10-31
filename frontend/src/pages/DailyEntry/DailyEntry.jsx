@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   CalendarDays,
@@ -15,6 +15,88 @@ import {
 } from "lucide-react";
 import styles from "./DailyEntry.module.css";
 import MainNav from "../../component/MainNavBar/MainNav";
+
+// Backend endpoints (same host the Dashboard and Onboarding pages use)
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:8888"
+).replace(/\/+$/, "");
+const SCORES_API_URL = `${API_URL}/dashboard/scores`;
+// NOTE: adjust this path if your entry router uses a different one
+const ENTRY_API_URL = `${API_URL}/entries/`;
+
+const REQUEST_TIMEOUT_MS = 20000;
+
+// Send a request that cannot wait indefinitely.
+async function fetchWithTimeout(url, options) {
+  const controller = new AbortController();
+
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    REQUEST_TIMEOUT_MS
+  );
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error(
+        "The server took too long to respond. Please check that your backend is running, then try again."
+      );
+    }
+
+    if (err instanceof TypeError) {
+      throw new Error(
+        "Cannot connect to the backend. Check that the FastAPI server is running at " +
+          API_URL +
+          " and that the API URL is correct."
+      );
+    }
+
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// Parse backend responses and display readable errors.
+async function readResponse(response, fallbackMessage) {
+  const responseText = await response.text();
+
+  let result = {};
+
+  if (responseText) {
+    try {
+      result = JSON.parse(responseText);
+    } catch {
+      result = {};
+    }
+  }
+
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        "Your session may have expired. Please log in again and retry."
+      );
+    }
+
+    const detail = result.detail;
+
+    const message = Array.isArray(detail)
+      ? detail
+          .map((item) => item.msg || "Invalid input")
+          .join(" ")
+      : typeof detail === "string"
+        ? detail
+        : `${fallbackMessage} (HTTP ${response.status}).`;
+
+    throw new Error(message);
+  }
+
+  return result;
+}
 
 // Get today's date in local YYYY-MM-DD format
 const getToday = () => {
@@ -59,8 +141,8 @@ const goalOptions = [
 ];
 
 const muscleAreaOptions = {
-  upperBody: ["Chest", "Biceps", "Triceps", "Shoulders"],
-  lowerBody: ["Quads", "Hamstrings", "Glutes", "Calves"],
+  upper_Body: ["Chest", "Biceps", "Triceps", "Shoulders"],
+  lower_Body: ["Quads", "Hamstrings", "Glutes", "Calves"],
   cardio: ["Abs"]
 };
 
@@ -424,6 +506,142 @@ function ExerciseCard({
   );
 }
 
+// Convert a saved entry from the backend into the form's state shape
+// Turns backend categories (upper_body) and older saved names (upperBody)
+// into the muscle group keys used by the dropdowns (upper_Body)
+const normalizeMuscleGroup = (group) => {
+  const key = String(group || "").toLowerCase().replace(/_/g, "");
+
+  return (
+    {
+      upperbody: "upper_Body",
+      lowerbody: "lower_Body",
+      cardio: "cardio",
+      cardiocore: "cardio",
+    }[key] ?? ""
+  );
+};
+
+const capitalize = (text) =>
+  String(text || "").replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+function mapSavedEntry(data, entryDate) {
+  if (!data) return null;
+
+  // Accept either a single object or a list of entries
+  const saved = Array.isArray(data)
+    ? data.find(
+        (item) => String(item.entry_date).slice(0, 10) === entryDate
+      )
+    : data;
+
+  if (!saved) return null;
+
+  // Never show an entry that belongs to a different date
+  if (String(saved.entry_date).slice(0, 10) !== entryDate) return null;
+
+  let savedExercises = [];
+
+  if (Array.isArray(saved.exercises) && saved.exercises.length > 0) {
+    savedExercises = saved.exercises.map((exercise) => ({
+      ...createExercise(),
+      duration: String(exercise.duration ?? ""),
+      muscleGroup: normalizeMuscleGroup(exercise.muscle_group),
+      muscleArea: exercise.muscle_area ?? "",
+      weights: String(exercise.weights ?? ""),
+      exercise: String(exercise.exercise_name ?? ""),
+      difficulty:
+        exercise.difficulty === null || exercise.difficulty === undefined
+          ? ""
+          : Number(exercise.difficulty),
+    }));
+  } else {
+    // Fallback for a flat, single-exercise row (daily_entries table shape)
+    savedExercises = [
+      {
+        ...createExercise(),
+        duration: String(saved.duration ?? ""),
+        muscleGroup: normalizeMuscleGroup(saved.muscle_category),
+        muscleArea: capitalize(saved.muscle_group),
+        weights: saved.weight ? String(saved.weight) : "",
+        exercise: String(saved.exercise_name ?? ""),
+        difficulty:
+          saved.difficulty === null || saved.difficulty === undefined
+            ? ""
+            : Number(saved.difficulty),
+      },
+    ];
+  }
+
+  return {
+    goal: saved.goal ?? "",
+    ratings: {
+      sleep: saved.sleep ?? "",
+      energy: saved.energy_level ?? "",
+      soreness: saved.soreness ?? "",
+      stress: saved.stress ?? "",
+    },
+    heartRate:
+      saved.heart_rate === null || saved.heart_rate === undefined
+        ? ""
+        : String(saved.heart_rate),
+    exercises: savedExercises,
+  };
+}
+
+// Map the form data to what the backend's DailyEntryCreate schema expects.
+// The backend stores ONE exercise row per user per date, so multiple
+// exercises are combined: durations are summed, difficulty is averaged,
+// and the first exercise's muscle info / name is used.
+const groupToCategory = {
+  upper_Body: "upper_body",
+  lower_Body: "lower_body",
+  cardio: "cardio_core",
+};
+
+// The JWT "sub" claim holds the user id (used by get_current_user)
+function getUserIdFromToken(token) {
+  try {
+    const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(payload)).sub;
+  } catch {
+    return null;
+  }
+}
+
+// Key for the browser copy of a saved entry (per user and per date)
+function getLocalEntryKey(token, date) {
+  return `daily_entry_${getUserIdFromToken(token)}_${date}`;
+}
+
+function buildBackendPayload(entry, token) {
+  const first = entry.exercises[0];
+  const totalDuration = entry.exercises.reduce(
+    (sum, exercise) => sum + exercise.duration,
+    0
+  );
+  const averageDifficulty = Math.round(
+    entry.exercises.reduce((sum, exercise) => sum + exercise.difficulty, 0) /
+      entry.exercises.length
+  );
+
+  return {
+    user_id: getUserIdFromToken(token) || localStorage.getItem("user_id"),
+    entry_date: entry.entry_date,
+    // Backend requires 1-10 for these, the form allows 0-10
+    sleep: entry.sleep,
+    energy_level: Math.max(1, entry.energy_level),
+    soreness: Math.max(1, entry.soreness),
+    stress: Math.max(1, entry.stress),
+    heart_rate: entry.heart_rate,
+    duration: totalDuration,
+    difficulty: Math.max(1, averageDifficulty),
+    muscle_category: groupToCategory[normalizeMuscleGroup(first.muscle_group)],
+    muscle_group: first.muscle_area.toLowerCase(),
+    exercise_name: first.exercise_name || first.muscle_area,
+  };
+}
+
 function DailyEntry() {
   const navigate = useNavigate();
   const dateInputRef = useRef(null);
@@ -447,6 +665,117 @@ function DailyEntry() {
   const [heartRate, setHeartRate] = useState("");
   const [exercises, setExercises] = useState([createExercise()]);
   const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  // True when the selected date already has a calculated score
+  const [hasSavedEntry, setHasSavedEntry] = useState(false);
+
+  // When the date changes, check the backend for scores on that date.
+  // If the user already calculated that day, show their saved input.
+  useEffect(() => {
+    let cancelled = false;
+
+    function resetForm() {
+      setGoal("");
+      setRatings({ sleep: "", energy: "", soreness: "", stress: "" });
+      setHeartRate("");
+      setExercises([createExercise()]);
+    }
+
+    async function loadSavedEntry() {
+      const token = localStorage.getItem("access_token");
+
+      try {
+        const scoresResponse = await fetchWithTimeout(SCORES_API_URL, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!scoresResponse.ok) {
+          throw new Error("Failed to fetch scores");
+        }
+
+        const scores = await scoresResponse.json();
+
+        const hasScore = scores.some(
+          (score) => String(score.score_date).slice(0, 10) === entryDate
+        );
+
+        if (cancelled) return;
+
+        setHasSavedEntry(hasScore);
+
+        // No scores for this date yet, so show a blank form
+        if (!hasScore) {
+          resetForm();
+          return;
+        }
+
+        let savedEntry = null;
+
+        // The browser copy has everything the user typed (goal and every
+        // exercise), since the backend only stores one exercise per day
+        try {
+          const localCopy = localStorage.getItem(
+            getLocalEntryKey(token, entryDate)
+          );
+          if (localCopy) {
+            savedEntry = mapSavedEntry(JSON.parse(localCopy), entryDate);
+          }
+        } catch (localError) {
+          console.error("Local entry read error:", localError);
+        }
+
+        // Otherwise load the saved entry from the backend
+        if (!savedEntry) {
+          try {
+            const entryResponse = await fetchWithTimeout(
+              `${ENTRY_API_URL}?entry_date=${entryDate}`,
+              {
+                method: "GET",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            if (!entryResponse.ok) {
+              throw new Error(
+                `Failed to fetch saved entry (${entryResponse.status})`
+              );
+            }
+
+            savedEntry = mapSavedEntry(
+              await entryResponse.json(),
+              entryDate
+            );
+          } catch (entryError) {
+            console.error("Daily entry fetch error:", entryError);
+          }
+        }
+
+        if (cancelled || !savedEntry) return;
+
+        setGoal(savedEntry.goal);
+        setRatings(savedEntry.ratings);
+        setHeartRate(savedEntry.heartRate);
+        setExercises(savedEntry.exercises);
+        setError("");
+      } catch (loadError) {
+        console.error("Daily entry load error:", loadError);
+      }
+    }
+
+    // Start every date with a blank form, then fill it with that date's data
+    resetForm();
+    setHasSavedEntry(false);
+    loadSavedEntry();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [entryDate]);
 
   // Open the native date picker when the date button is clicked
   function openDatePicker() {
@@ -551,10 +880,10 @@ function DailyEntry() {
     if (
       heartRate === "" ||
       !Number.isInteger(Number(heartRate)) ||
-      Number(heartRate) < 1 ||
-      Number(heartRate) > 250
+      Number(heartRate) < 30 ||
+      Number(heartRate) > 220
     ) {
-      return "Please enter a heart rate between 1 and 250 BPM";
+      return "Please enter a heart rate between 30 and 220 BPM";
     }
 
     if (exercises.length === 0) {
@@ -595,7 +924,7 @@ function DailyEntry() {
     return "";
   }
 
-  function handleCalculateScore(event) {
+  async function handleCalculateScore(event) {
     event.preventDefault();
 
     const validationError = validateEntry();
@@ -622,6 +951,49 @@ function DailyEntry() {
         difficulty: Number(exercise.difficulty),
       })),
     };
+
+    // Save the entry to the backend. If this date was already calculated, the
+    // backend overrides the saved entry and recalculates the score for the date
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      setError("Your session has expired. Please log in again.");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const response = await fetchWithTimeout(ENTRY_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(buildBackendPayload(entry, token)),
+      });
+
+      await readResponse(response, "Could not save your entry.");
+    } catch (saveError) {
+      console.error("Daily entry save error:", saveError);
+      setError(
+        saveError.message || "Could not save your entry. Please try again."
+      );
+      setIsSaving(false);
+      return;
+    }
+
+    setIsSaving(false);
+
+    // Keep a browser copy so the full entry can be shown again for this date
+    try {
+      localStorage.setItem(
+        getLocalEntryKey(token, entryDate),
+        JSON.stringify(entry)
+      );
+    } catch (storageError) {
+      console.error("Local entry save error:", storageError);
+    }
 
     // Keep the completed entry available for the dashboard
     sessionStorage.setItem("daily_entry_draft", JSON.stringify(entry));
@@ -746,8 +1118,8 @@ function DailyEntry() {
                   <input
                     id="heart-rate"
                     type="number"
-                    min="1"
-                    max="250"
+                    min="30"
+                    max="220"
                     step="1"
                     inputMode="numeric"
                     placeholder="Enter Heart Rate"
@@ -821,8 +1193,13 @@ function DailyEntry() {
               <button
                 type="submit"
                 className={styles.calculateButton}
+                disabled={isSaving}
               >
-                Calculate My Score
+                {isSaving
+                  ? "Saving..."
+                  : hasSavedEntry
+                    ? "Recalculate My Score"
+                    : "Calculate My Score"}
                 <ArrowRight size={20} />
               </button>
             </section>
