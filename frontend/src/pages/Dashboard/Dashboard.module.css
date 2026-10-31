@@ -233,6 +233,25 @@ section p{
     font-size: 15px;
     line-height: 1.65;
 }
+.wave {
+    display: inline-block;
+    transform-origin: 70% 70%;
+    animation: wave 2s ease-in-out 3;
+    font-size: 2rem;
+}
+
+@keyframes wave {
+    0%, 60%, 100% { transform: rotate(0deg); }
+    10%, 30% { transform: rotate(14deg); }
+    20%, 40% { transform: rotate(-8deg); }
+    50% { transform: rotate(10deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wave {
+        animation: wave 3s ease-in-out infinite;
+    }
+}
 @media (max-width: 768px) {
     .card-wrapper{
         grid-template-columns: 1fr;

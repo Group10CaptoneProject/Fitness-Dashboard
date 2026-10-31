@@ -143,7 +143,7 @@ function Dashboard(){
             <div className = {styles["dashboard-wrapper"]}>
                 <div className = {styles["dashboard-header"]}>
                     <div className = {styles["welcome-message"]}>
-                        <h2>Hello, {username}</h2>
+                        <h2>Hello, {username} <span className={styles.wave}> 👋</span></h2>
                     </div>
                     <div className = {styles["welcome-description"]}>
                         Here is your training status for today!
@@ -154,6 +154,12 @@ function Dashboard(){
                     </div>
                 </div>
                 {/* Full-width activity calendar */}
+                <section className={styles.guideSection} aria-labelledby="progress-title">
+                    <h2 id="progress-title">Look at your progress</h2>
+                    <p>
+                        Track your activity, review today's training scores, and see how your training has changed over the latest seven days.
+                    </p>
+                </section>
                 <div className={`${styles["card"]} ${styles["calendar-card"]}`}>
                         <div className = {styles["card-header"]}>
                             <span className = {styles["tag"]}>
