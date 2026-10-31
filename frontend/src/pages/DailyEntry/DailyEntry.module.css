@@ -24,7 +24,7 @@
   height: calc(100vh - 64px);
   min-height: 0;
   margin: 0 auto;
-  padding: 28px 36px 32px;
+  padding: 28px 36px 12px;
   overflow: hidden;
 }
 
@@ -166,6 +166,7 @@
 }
 
 .recoveryCard {
+  --rating-gap: clamp(12px, 1.7vh, 19px);
   flex: 1 1 0;
   min-height: 0;
 }
@@ -365,7 +366,7 @@
 .ratingList {
   display: flex;
   flex-direction: column;
-  gap: clamp(12px, 1.7vh, 19px);
+  gap: var(--rating-gap);
 }
 
 .ratingRow {
@@ -516,9 +517,8 @@
   grid-template-columns: 38px minmax(0, 1fr) auto;
   align-items: end;
   gap: 9px;
-  margin-top: 22px;
-  padding-top: 17px;
-  border-top: 1px solid #e7ecf4;
+  margin-top: var(--rating-gap);
+  /* border-top: 1px solid #e7ecf4; */
 }
 
 .heartRateRow > .roundIcon {
@@ -814,7 +814,7 @@
 @media (min-width: 761px) and (max-height: 820px) {
   .main {
     padding-top: 28px;
-    padding-bottom: 32px;
+    padding-bottom: 12px;
   }
 
   .pageHeading {
@@ -907,8 +907,8 @@
     font-size: 12px;
   }
 
-  .ratingList {
-    gap: 12px;
+  .recoveryCard {
+    --rating-gap: 12px;
   }
 
   .ratingLabel {
@@ -932,11 +932,6 @@
     flex-basis: 31px;
     width: 31px;
     height: 31px;
-  }
-
-  .heartRateRow {
-    margin-top: 15px;
-    padding-top: 12px;
   }
 
   .workoutScroll {
@@ -989,6 +984,154 @@
   .calculateButton {
     min-height: 36px;
     font-size: 13px;
+  }
+}
+
+/* Short desktop screens: tighten spacing so boxes 2 and 3 fit without scrolling */
+@media (min-width: 761px) and (max-height: 740px) {
+  .main {
+    padding-top: 16px;
+    padding-bottom: 12px;
+  }
+
+  .pageHeading {
+    margin-bottom: 8px;
+  }
+
+  .pageHeading h1 {
+    margin-bottom: 2px;
+    font-size: 24px;
+  }
+
+  .pageHeading p {
+    font-size: 13px;
+  }
+
+  .sectionHeading h2 {
+    margin: 0 0 2px;
+  }
+
+  .ratingLegend {
+    margin-top: 8px;
+    margin-bottom: 10px;
+  }
+
+  .recoveryCard {
+    --rating-gap: 9px;
+  }
+}
+
+/* Very short desktop screens */
+@media (min-width: 761px) and (max-height: 660px) {
+  .card {
+    padding: 10px 12px;
+  }
+
+  .goalCard,
+  .scoreCard {
+    padding: 10px 12px;
+  }
+
+  .sectionNumber {
+    flex-basis: 30px;
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+  }
+
+  .sectionHeading h2 {
+    font-size: 18px;
+  }
+
+  .sectionHeading p {
+    font-size: 12px;
+  }
+
+  .goalField {
+    margin-top: 6px;
+  }
+
+  .selectWrapper select,
+  .field input,
+  .durationContent input,
+  .heartRateField input {
+    height: 30px;
+  }
+
+  .ratingLegend > div {
+    min-height: 28px;
+    padding: 3px 6px;
+  }
+
+  .ratingLegend strong {
+    margin-bottom: 1px;
+  }
+
+  .ratingMain {
+    gap: 3px;
+  }
+
+  .rangeInput {
+    margin: 3px 0;
+  }
+
+  .ratingValue,
+  .difficultyControl .ratingValue {
+    height: 28px;
+  }
+
+  .ratingBadge {
+    padding: 4px;
+  }
+
+  .roundIcon {
+    flex-basis: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .heartRateField {
+    gap: 3px;
+  }
+
+  .unit {
+    padding-bottom: 6px;
+  }
+
+  .singleExercise {
+    gap: 8px;
+    padding-top: 0;
+  }
+
+  .durationContent label {
+    margin-bottom: 3px;
+  }
+
+  .field label {
+    margin-bottom: 3px;
+  }
+
+  .exerciseFields {
+    gap: 8px;
+  }
+
+  .difficultyContent > label {
+    margin-bottom: 2px;
+  }
+
+  .addExerciseButton {
+    min-height: 30px;
+    margin-top: 6px;
+    padding: 4px 12px;
+  }
+
+  .scoreCard .sectionHeading {
+    margin-bottom: 6px;
+  }
+
+  .calculateButton {
+    min-height: 32px;
+    padding: 5px 14px;
   }
 }
 
@@ -1167,8 +1310,8 @@
     font-size: 11px;
   }
 
-  .ratingList {
-    gap: 15px;
+  .recoveryCard {
+    --rating-gap: 15px;
   }
 
   .ratingRow {
@@ -1201,7 +1344,6 @@
   .heartRateRow {
     grid-template-columns: 30px minmax(0, 1fr) auto;
     gap: 7px;
-    margin-top: 20px;
   }
 
   .workoutScroll {
