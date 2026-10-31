@@ -264,11 +264,34 @@ function Dashboard(){
                         </p>
                         <Link to = "/research"><span>View Research → </span></Link>
                     </div>
-                    
-                    
+                    <div className={styles.scoreOverview}>
+                        {[
+                            { title: "Training Score", Icon: GaugeIcon, theme: "blue", description: "An overview of your training readiness, based on the combination of your subscores" },
+                            { title: "Recovery", Icon: Activity, theme: "green", description: " Sleep has the largest influence, followed by energy. More sleep and energy, with less soreness and stress, raise this score. The recovery represents how well you rested." },
+                            { title: "Fatigue", Icon: NotebookText, theme: "purple", description: "Reflects the soreness and stress you reported in your latest check-in. Fatigue measures the exhaustion from each workout session." },
+                            { title: "Workload Balance", Icon: ChartSpline, theme: "orange", description: "Represents the training load of your logged workout by combining its duration and difficulty. It measures the session load, longer or harder sessions increase this value." },
+                        ].map(({ title, Icon, theme, description }) => (
+                            <div key={title} className={`${styles.scoreOverviewCard} ${styles[theme]}`}>
+                                <div className={styles.scoreOverviewIcon}>
+                                    <Icon size={160} strokeWidth={1.25} stroke={`url(#score-icon-${theme})`} aria-hidden="true">
+                                        <defs>
+                                            <linearGradient id={`score-icon-${theme}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stopColor="var(--score-accent)" />
+                                                <stop offset="100%" stopColor="var(--score-accent-end)" />
+                                            </linearGradient>
+                                        </defs>
+                                    </Icon>
+                                </div>
+                                <div className={styles.scoreOverviewContent}>
+                                    <h3>{title}</h3>
+                                    <p>{description}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </section>
             </div>
         </>
     )
 }
-export default Dashboard;
+export default Dashboard;   
