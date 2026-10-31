@@ -8,6 +8,9 @@ import {
     NotebookText,
     Gauge as GaugeIcon,
     Activity,
+    HeartPulse,
+    BatteryLow,
+    Scale,
 } from "lucide-react";
 import TrainingScoreCard from "./component/TrainingScoreCard/TrainingScoreCard";
 import ReadinessScaleCard from "./component/ReadinessScaleCard/ReadinessScaleCard";
@@ -267,9 +270,9 @@ function Dashboard(){
                     <div className={styles.scoreOverview}>
                         {[
                             { title: "Training Score", Icon: GaugeIcon, theme: "blue", description: "An overview of your training readiness, based on the combination of your subscores" },
-                            { title: "Recovery", Icon: Activity, theme: "green", description: " Sleep has the largest influence, followed by energy. More sleep and energy, with less soreness and stress, raise this score. The recovery represents how well you rested." },
-                            { title: "Fatigue", Icon: NotebookText, theme: "purple", description: "Reflects the soreness and stress you reported in your latest check-in. Fatigue measures the exhaustion from each workout session." },
-                            { title: "Workload Balance", Icon: ChartSpline, theme: "orange", description: "Represents the training load of your logged workout by combining its duration and difficulty. It measures the session load, longer or harder sessions increase this value." },
+                            { title: "Recovery", Icon: HeartPulse, theme: "green", description: " Sleep has the largest influence, followed by energy. More sleep and energy, with less soreness and stress, raise this score. The recovery represents how well you rested." },
+                            { title: "Fatigue", Icon: BatteryLow, theme: "purple", description: "Reflects the soreness and stress you reported in your latest check-in. Fatigue measures the exhaustion from each workout session." },
+                            { title: "Workload Balance", Icon: Scale, theme: "orange", description: "Represents the training load of your logged workout by combining its duration and difficulty. It measures the session load, longer or harder sessions increase this value." },
                         ].map(({ title, Icon, theme, description }) => (
                             <div key={title} className={`${styles.scoreOverviewCard} ${styles[theme]}`}>
                                 <div className={styles.scoreOverviewIcon}>
