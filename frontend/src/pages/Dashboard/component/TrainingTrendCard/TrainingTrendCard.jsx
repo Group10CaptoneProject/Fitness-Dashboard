@@ -12,7 +12,12 @@ function TrainingTrendCard({ scores = [] }) {
     }
 
     const dates = scores.map((score) => {
-        const date = new Date(score.score_date);
+        // Build the date from its parts so the timezone does not shift it a day back
+        const [year, month, day] = String(score.score_date)
+            .slice(0, 10)
+            .split("-")
+            .map(Number);
+        const date = new Date(year, month - 1, day);
 
         return date.toLocaleDateString("en-US", {
             month: "short",
