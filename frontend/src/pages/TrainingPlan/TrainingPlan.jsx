@@ -14,57 +14,57 @@ import {
 
 // Placeholder content for the frontend preview. Replace with API data when ready.
 // 
-//const initialExercises = [
-//    {
-//      id: 1,
-//        name: "Exercise Name",
-//        sets: 3,
-//        reps: 8,
-//        rest: "45 sec",
-//        equipment: "----"
-//    },
-//    { id: 2 },
-//    { id: 3 },//  { id: 4 },
-//];
+const initialExercises = [
+    {
+      id: 1,
+        name: "Exercise Name",
+        sets: 3,
+        reps: 8,
+        rest: "45 sec",
+        equipment: "----"
+    },
+    { id: 2 },
+    { id: 3 },//  { id: 4 },
+];
 
 //api function to fetch exercise recommendations
-// useEffect(() => {
-//         async function fetchRecommendations() {
-//             const token = localStorage.getItem("access_token");
-//             try {
-//                 const response = await fetch("http://localhost:8888/exercise-recommendation", {
-//                     method: "GET",
-//                     headers: {
-//                         Authorization: `Bearer ${token}`,
-//                     },
-//                 });
+useEffect(() => {
+        async function fetchRecommendations() {
+            const token = localStorage.getItem("access_token");
+            try {
+                const response = await fetch("http://localhost:8888/analytics/exercise-recommendation", { //port number is right for calling local host. fixed api path 
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                     },
+                 });
 
-//                 if (!response.ok) {
-//                     throw new Error("Failed to fetch exercise recommendations");
-//                 }
+                 if (!response.ok) {
+                     throw new Error("Failed to fetch exercise recommendations");
+                 }
 
-//                 const data = await response.json();
+                 const data = await response.json();
                 
-//                 if (data.recommendations && data.recommendations.length > 0) {
-//                     // Map backend response fields to your frontend exercise state
-//                     const formattedExercises = data.recommendations.map((ex, index) => ({
-//                         id: index + 1,
-//                         name: ex.name,
-//                         sets: 3, // Default sets or map if your backend provides it
-//                         reps: 8, // Default reps or map if your backend provides it
-//                         rest: "45 sec",
-//                         equipment: Array.isArray(ex.equipment) ? ex.equipment.join(", ") : (ex.equipment || "—"),
-//                         gif_url: ex.gif_url
-//                     }));
-//                     setExercises(formattedExercises);
-//                 }
-//             } catch (error) {
-//                 console.error("Training plan error:", error);
-//             }
-//         }
+                 if (data.recommendations && data.recommendations.length > 0) {
+                     // Map backend response fields to your frontend exercise state
+                     const formattedExercises = data.recommendations.map((ex, index) => ({
+                         id: index + 1,
+                         name: ex.name,
+                         sets: 3, // Default sets or map if your backend provides it
+                         reps: 8, // Default reps or map if your backend provides it
+                         rest: "45 sec",
+                         equipment: Array.isArray(ex.equipment) ? ex.equipment.join(", ") : (ex.equipment || "—"),
+                         gif_url: ex.gif_url
+                     }));
+                     setExercises(formattedExercises);
+                 }
+             } catch (error) {
+                 console.error("Training plan error:", error);
+             }
+         }
         
-//         fetchRecommendations();
-//     }, []);
+         fetchRecommendations();
+    }, []);
 
 const equipmentOptions = [
     "bodyweight",
