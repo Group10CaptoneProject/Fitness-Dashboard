@@ -11,6 +11,7 @@ import DailyEntry from "./pages/DailyEntry/DailyEntry";
 import TrainingPlan from "./pages/TrainingPlan/TrainingPlan";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Research from "./pages/Research/Research";
+import Profile from "./pages/Profile/Profile";
 
 function App() {
   return (
@@ -54,6 +55,8 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/profile" element={<Profile />} />
+
       </Routes>
     </BrowserRouter>
   );

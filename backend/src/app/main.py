@@ -12,7 +12,6 @@ from .routes.dashboard import router as dashboard_router
 from .routes.AnalyticsRoute import router as predict_router
 from .RandomForestClassifier import router as recommendation_router
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await test_connection()
