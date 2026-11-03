@@ -14,11 +14,12 @@ import {
   ChevronDown,
 } from "lucide-react";
 import styles from "./DailyEntry.module.css";
+import { mergeCompletedWorkouts, removeCompletedWorkout, workoutMuscleAreas } from "../../utils/completedWorkouts";
 import MainNav from "../../component/MainNavBar/MainNav";
 
 // Backend endpoints (same host the Dashboard and Onboarding pages use)
 const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:8888"
+  process.env.REACT_APP_API_URL || "http://localhost:8888"
 ).replace(/\/+$/, "");
 const SCORES_API_URL = `${API_URL}/dashboard/scores`;
 // NOTE: adjust this path if your entry router uses a different one
@@ -140,11 +141,7 @@ const goalOptions = [
   { value: "healthy_lifestyle", label: "Healthy Lifestyle" },
 ];
 
-const muscleAreaOptions = {
-  upper_Body: ["Chest", "Biceps", "Triceps", "Shoulders"],
-  lower_Body: ["Quads", "Hamstrings", "Glutes", "Calves"],
-  cardio: ["Abs"]
-};
+const muscleAreaOptions = workoutMuscleAreas;
 
 const ratingItems = [
   { key: "sleep", label: "Sleep Quality", Icon: BedDouble },
@@ -295,6 +292,9 @@ function ExerciseCard({
 
   const content = (
     <>
+      {exercise.sets && <p>Completed recommendation: {exercise.reps_by_set?.length
+        ? `${exercise.sets} sets: ${exercise.reps_by_set.join(" / ")} reps`
+        : `${exercise.sets} × ${exercise.reps} reps`}</p>}
       <div className={styles.durationRow}>
         <div className={styles.roundIcon}>
           <Clock3 size={22} />
@@ -545,6 +545,7 @@ function mapSavedEntry(data, entryDate) {
   if (Array.isArray(saved.exercises) && saved.exercises.length > 0) {
     savedExercises = saved.exercises.map((exercise) => ({
       ...createExercise(),
+      sets: exercise.sets, reps: exercise.reps, reps_by_set: exercise.reps_by_set,
       duration: String(exercise.duration ?? ""),
       muscleGroup: normalizeMuscleGroup(exercise.muscle_group),
       muscleArea: exercise.muscle_area ?? "",
@@ -678,7 +679,7 @@ function DailyEntry() {
       setGoal("");
       setRatings({ sleep: "", energy: "", soreness: "", stress: "" });
       setHeartRate("");
-      setExercises([createExercise()]);
+      setExercises(mergeCompletedWorkouts([createExercise()], entryDate));
     }
 
     async function loadSavedEntry() {
@@ -760,7 +761,7 @@ function DailyEntry() {
         setGoal(savedEntry.goal);
         setRatings(savedEntry.ratings);
         setHeartRate(savedEntry.heartRate);
-        setExercises(savedEntry.exercises);
+        setExercises(mergeCompletedWorkouts(savedEntry.exercises, entryDate));
         setError("");
       } catch (loadError) {
         console.error("Daily entry load error:", loadError);
@@ -841,6 +842,7 @@ function DailyEntry() {
       : "Are you sure you want to delete this exercise?";
 
     if (window.confirm(message)) {
+      removeCompletedWorkout(exerciseName || "", entryDate);
       setExercises((previous) =>
         previous.filter((item) => item.id !== id)
       );
@@ -943,6 +945,7 @@ function DailyEntry() {
       stress: Number(ratings.stress),
       heart_rate: Number(heartRate),
       exercises: exercises.map((exercise) => ({
+        sets: exercise.sets, reps: exercise.reps, reps_by_set: exercise.reps_by_set,
         duration: Number(exercise.duration),
         muscle_group: exercise.muscleGroup,
         muscle_area: exercise.muscleArea,

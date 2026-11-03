@@ -31,7 +31,8 @@ async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
                 "sets": entry.sets,
                 "reps": entry.reps,
                 "weight": entry.weight,
-                "exercise_name": entry.exercise_name
+                "exercise_name": entry.exercise_name,
+                "muscle_group": entry.muscle_group.value
             }
             for entry in entries
         ])

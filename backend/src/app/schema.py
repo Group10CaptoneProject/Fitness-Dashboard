@@ -91,7 +91,8 @@ class DailyEntryCreate(BaseModel):
                 MuscleGroupEnum.CHEST, 
                 MuscleGroupEnum.BACK, 
                 MuscleGroupEnum.BICEPS,
-                MuscleGroupEnum.TRICEPS, MuscleGroupEnum.SHOULDERS
+                MuscleGroupEnum.TRICEPS, MuscleGroupEnum.SHOULDERS,
+                MuscleGroupEnum.FOREARMS, MuscleGroupEnum.NECK
             },
             MuscleCategoryEnum.LOWER_BODY: {
                 MuscleGroupEnum.QUADS, 
@@ -100,7 +101,7 @@ class DailyEntryCreate(BaseModel):
                 MuscleGroupEnum.CALVES
             },
             MuscleCategoryEnum.CARDIO_CORE: {
-                MuscleGroupEnum.ABS
+                MuscleGroupEnum.ABS, MuscleGroupEnum.CARDIO
             }
         }
 

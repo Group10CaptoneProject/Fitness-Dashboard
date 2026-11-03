@@ -6,7 +6,8 @@ BASE_DIR = Path(__file__).resolve().parents[3]
 
 class Settings(BaseSettings):
     database_url: str
-    EXERCISEDB_API_KEY: str
+    EXERCISEDB_API_KEY: Optional[str] = None
+    exercise_data_url: str = "https://raw.githubusercontent.com/bootstrapping-lab/exercisedb-api/main/src/data/exercises.json"
     jwt_secret_key: str = "dev_jwt_secret"
     resend_api_key: Optional[str] = None
     

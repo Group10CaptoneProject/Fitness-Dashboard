@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { completeWorkout, completedWorkouts } from "../../utils/completedWorkouts";
+import IntensityAdjustment from "./IntensityAdjustment";
 import MainNav from "../../component/MainNavBar/MainNav";
 import styles from "./TrainingPlan.module.css";
 import {
@@ -12,77 +14,91 @@ import {
     X,
 } from "lucide-react";
 
-// Placeholder content for the frontend preview. Replace with API data when ready.
-// 
-const initialExercises = [
-    {
-      id: 1,
-        name: "Exercise Name",
-        sets: 3,
-        reps: 8,
-        rest: "45 sec",
-        equipment: "----"
-    },
-    { id: 2 },
-    { id: 3 },//  { id: 4 },
-];
-
-//api function to fetch exercise recommendations
-useEffect(() => {
-        async function fetchRecommendations() {
-            const token = localStorage.getItem("access_token");
-            try {
-                const response = await fetch("http://localhost:8888/analytics/exercise-recommendation", { //port number is right for calling local host. fixed api path 
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                     },
-                 });
-
-                 if (!response.ok) {
-                     throw new Error("Failed to fetch exercise recommendations");
-                 }
-
-                 const data = await response.json();
-                
-                 if (data.recommendations && data.recommendations.length > 0) {
-                     // Map backend response fields to your frontend exercise state
-                     const formattedExercises = data.recommendations.map((ex, index) => ({
-                         id: index + 1,
-                         name: ex.name,
-                         sets: 3, // Default sets or map if your backend provides it
-                         reps: 8, // Default reps or map if your backend provides it
-                         rest: "45 sec",
-                         equipment: Array.isArray(ex.equipment) ? ex.equipment.join(", ") : (ex.equipment || "—"),
-                         gif_url: ex.gif_url
-                     }));
-                     setExercises(formattedExercises);
-                 }
-             } catch (error) {
-                 console.error("Training plan error:", error);
-             }
-         }
-        
-         fetchRecommendations();
-    }, []);
-
 const equipmentOptions = [
     "bodyweight",
     "dumbbells",
     "barbell",
     "kettlebells",
     "resistance_bands",
-    "machines"
+    "machines",
+    "cable"
 ];
 
 function TrainingPlan(){
 
-    const [goal, setGoal] = useState("Hypertrophy/Strength");
-    const [focus, setFocus] = useState("Upper Body");
+    const [goal, setGoal] = useState("");
+    const [focus, setFocus] = useState("");
     const [editingEquipment, setEditingEquipment] = useState(false);
-    const [equipment, setEquipment] = useState([]);
+    const [equipment, setEquipment] = useState(null);
+    const [profileEquipment, setProfileEquipment] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [notice, setNotice] = useState("");
+    const [message, setMessage] = useState("");
+    const [reload, setReload] = useState(0);
     const [openMenu, setOpenMenu] = useState(null);
     const [exercises, setExercises] = useState([]);
+    const [trainingScore, setTrainingScore] = useState(null);
+    const [scoreLoading, setScoreLoading] = useState(true);
+    const [scoreError, setScoreError] = useState(false);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        async function fetchRecommendations() {
+            setLoading(true);
+            setScoreLoading(true);
+            setScoreError(false);
+            setTrainingScore(null);
+            setError("");
+            setExercises([]);
+            const token = localStorage.getItem("access_token");
+            try {
+                if (!token) throw new Error("Sign in to see your training plan.");
+                const params = new URLSearchParams();
+                if (goal) params.set("goal", goal);
+                if (focus) params.set("focus", focus);
+                // Send an explicit empty value when all equipment is deselected.
+                if (equipment !== null) {
+                    (equipment.length ? equipment : [""]).forEach(item => params.append("equipment", item));
+                }
+                const today = new Date();
+                const localDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+                params.set("target_date", localDate);
+                const apiBase = (process.env.REACT_APP_API_URL || "http://localhost:8888").replace(/\/$/, "");
+                const response = await fetch(`${apiBase}/analytics/exercise-recommendation?${params}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    signal: controller.signal,
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(response.status === 401 ? "Your session expired. Sign in again." :
+                        (typeof data.detail === "string" ? data.detail : "Unable to load your training plan."));
+                }
+                if (controller.signal.aborted) return;
+                const done = completedWorkouts();
+                setExercises(data.recommendations.filter(exercise => !done.some(item => item.id === exercise.id || item.name.toLowerCase() === exercise.name.toLowerCase())).map(exercise => ({
+                    ...exercise,
+                    rest: `${exercise.rest_seconds} sec`,
+                    equipment: exercise.equipment.join(", "),
+                })));
+                setTrainingScore(data.final_training_score ?? null);
+                setProfileEquipment(data.equipment_available);
+                setMessage(data.message || "No exercises available for this plan.");
+            } catch (error) {
+                if (!controller.signal.aborted) {
+                    setError(error.message);
+                    setScoreError(true);
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                    setScoreLoading(false);
+                }
+            }
+        }
+        fetchRecommendations();
+        return () => controller.abort();
+    }, [goal, focus, equipment, reload]);
 
     const username = localStorage.getItem("username") || "Username";
     // Formatted current date: Weekday, Month Day, Year
@@ -98,9 +114,9 @@ function TrainingPlan(){
 
     function toggleEquipment(item){
         setEquipment(current =>
-            current.includes(item)
-                ? current.filter(value => value !== item)
-                : [...current, item]
+            (current || profileEquipment).includes(item)
+                ? (current || profileEquipment).filter(value => value !== item)
+                : [...(current || profileEquipment), item]
         );
     }
 
@@ -135,6 +151,7 @@ function TrainingPlan(){
                             value={goal}
                             onChange={event => setGoal(event.target.value)}
                         >
+                            <option value="">Saved profile goal</option>
                             <option value="hypertrophy">Hypertrophy/Strength</option>
                             <option value="endurance">Muscle Endurance</option>
                             <option value="healthy_lifestyle">General Fitness</option>
@@ -147,7 +164,7 @@ function TrainingPlan(){
                             </span>
                             Intensity Adjustment
                         </h2>
-                        <p className = {styles["card-value"]}></p>
+                        <IntensityAdjustment score={trainingScore} loading={scoreLoading} error={scoreError} />
                     </section>
                     <section className = {styles["card"]}>
                         <h2>
@@ -161,6 +178,7 @@ function TrainingPlan(){
                             value={focus}
                             onChange={event => setFocus(event.target.value)}
                         >
+                            <option value="">Today’s weekly split</option>
                             <option value="upper_body">Upper Body</option>
                             <option value="lower_body">Lower Body</option>
                             <option value="cardio_core">Cardio Core</option>
@@ -176,13 +194,18 @@ function TrainingPlan(){
                     </button>
                 </div>
 
+                {notice && <p role="status">{notice} <a href="/entry">Open Daily Entry</a></p>}
+                {error && <p className={styles["error-message"]} role="alert">{error}</p>}
+                <button type="button" className={styles["refresh-button"]} disabled={loading}
+                    onClick={() => setReload(value => value + 1)}>Refresh recommendations</button>
+
                 {/* Exercise table */}
                 <section className = {styles["exercise-section"]} aria-labelledby="muscle-heading">
                     <h2 id="muscle-heading">
                         <span className = {styles["icon"]}>
                             <NotebookText size={22} aria-hidden="true" />
                         </span>
-                        Muscle Group
+                        Recommended Exercises
                     </h2>
                     <div className = {styles["table-scroll"]}>
                         <table className = {styles["table"]}>
@@ -199,21 +222,31 @@ function TrainingPlan(){
                                 </tr>
                             </thead>
                             <tbody>
+                                {(loading || (!error && exercises.length === 0)) && (
+                                    <tr><td colSpan={6} className={styles["empty-state"]} role="status">
+                                        {loading ? "Loading your training plan…" : message}
+                                    </td></tr>
+                                )}
                                 {exercises.map((exercise, index) => (
                                     <tr key={exercise.id}>
                                         <td>{index + 1}</td>
                                         <td>
                                             {exercise.name && (
                                                 <div className = {styles["exercise-info"]}>
-                                                    <span className = {styles["image-placeholder"]}>
-                                                        Image of<br />Exercise
-                                                    </span>
-                                                    <span>{exercise.name}</span>
+                                                    {exercise.gif_url ? (
+                                                        <img className={styles["exercise-image"]} src={exercise.gif_url}
+                                                            alt={`${exercise.name} demonstration`} loading="lazy"
+                                                            onError={() => setExercises(current => current.map(item =>
+                                                                item.id === exercise.id ? { ...item, gif_url: null } : item))} />
+                                                    ) : <span className={styles["image-placeholder"]}>GIF unavailable</span>}
+                                                    <span>{exercise.name}<br /><small>{exercise.target_muscle?.join(", ")}</small></span>
                                                 </div>
                                             )}
                                         </td>
                                         <td data-label="Set x Reps">
-                                            <span>{exercise.name ? `${exercise.sets} × ${exercise.reps}` : "—"}</span>
+                                            <span>{exercise.name ? (exercise.reps_by_set?.length && new Set(exercise.reps_by_set).size > 1
+                                                ? `${exercise.sets} sets: ${exercise.reps_by_set.join(" / ")} reps`
+                                                : `${exercise.sets} × ${exercise.reps}`) : "—"}</span>
                                         </td>
                                         <td data-label="Rest Time"><span>{exercise.rest || "—"}</span></td>
                                         <td data-label="Equipment"><span>{exercise.equipment || "—"}</span></td>
@@ -231,6 +264,14 @@ function TrainingPlan(){
                                                     </button>
                                                     {openMenu === exercise.id && (
                                                         <div className = {styles["action-menu"]}>
+                                                            <button type="button" onClick={() => {
+                                                                try {
+                                                                    completeWorkout(exercise);
+                                                                    setExercises(current => current.filter(item => item.id !== exercise.id));
+                                                                    setNotice(`${exercise.name} added to Today’s Workout in Daily Entry.`);
+                                                                    setOpenMenu(null);
+                                                                } catch (error) { setError(error.message); }
+                                                            }}>Done</button>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => {
@@ -280,12 +321,12 @@ function TrainingPlan(){
                                     <X />
                                 </button>
                             </div>
-                            <p>Choose your equipment for this preview.</p>
+                            <p>Choose equipment for these recommendations. Your saved profile stays unchanged.</p>
                             {equipmentOptions.map(item => (
                                 <label className = {styles["equipment-option"]} key={item}>
                                     <input
                                         type="checkbox"
-                                        checked={equipment.includes(item)}
+                                        checked={(equipment || profileEquipment).includes(item)}
                                         onChange={() => toggleEquipment(item)}
                                     />
                                     {item}

@@ -47,6 +47,15 @@ class GoalEnum(str, PyEnum):
     ENDURANCE = "endurance"
     HEALTHY_LIFESTYLE = "healthy_lifestyle"
 
+
+class GoalEnumType(Enum):
+    """Read the legacy HYPERTROPY spelling while writing canonical enum names."""
+
+    def _object_value_for_elem(self, elem):
+        return super()._object_value_for_elem(
+            "HYPERTROPHY" if elem == "HYPERTROPY" else elem
+        )
+
 class GenderEnum(str, PyEnum):
     MALE = "male"
     FEMALE = "female"
@@ -65,6 +74,8 @@ class MuscleGroupEnum(str, PyEnum):
     BICEPS = "biceps"
     TRICEPS = "triceps"
     SHOULDERS = "shoulders"
+    FOREARMS = "forearms"
+    NECK = "neck"
     
     # Lower Body
     QUADS = "quads"
@@ -74,6 +85,7 @@ class MuscleGroupEnum(str, PyEnum):
     
     # Cardio/Core
     ABS = "abs"
+    CARDIO = "cardio"
 
 class ExperienceLevelEnum(str, PyEnum):
     BEGINNER = "beginner"
@@ -113,7 +125,7 @@ class UserProfile(Base):
     )
 
     primary_goal: Mapped[GoalEnum] = mapped_column(
-        Enum(GoalEnum, native_enum=False),
+        GoalEnumType(GoalEnum, native_enum=False),
         nullable=False,
         default=GoalEnum.HYPERTROPHY,
     )

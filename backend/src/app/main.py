@@ -9,6 +9,7 @@ from .routes.auth import router as auth_router
 from .routes.profile import router as profile_router
 from .routes.entries import router as entries_router
 from .routes.dashboard import router as dashboard_router
+from .RandomForestClassifier import router as recommendation_router
 
 
 @asynccontextmanager
@@ -39,6 +40,7 @@ app.include_router(auth_router)
 app.include_router(profile_router)
 app.include_router(entries_router)
 app.include_router(dashboard_router)
+app.include_router(recommendation_router)
 
 
 @app.get("/")
