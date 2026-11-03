@@ -1,5 +1,6 @@
 import logging
 import uuid
+import inspect
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -20,6 +21,11 @@ from ..schema import (
     UserFitnessProfileResponse,
 )
 from ..security import get_current_user
+
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from sqlalchemy.exc import IntegrityError
+from .. import security
 
 logger = logging.getLogger(__name__)
 
@@ -184,3 +190,125 @@ async def get_or_create_user_profile(current_user: User  =Depends(get_current_us
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not save fitness information.")
 
     return profile
+
+#account information (username, email, member since)
+class AccountResponse(BaseModel):
+    username: str
+    email: str
+    first_name: str
+    last_name: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+#only the username can be edited
+class AccountPatch(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+
+    @field_validator("username")
+    @classmethod
+    def clean_username(cls, value: str) -> str:
+        value = value.strip()
+        if len(value) < 3:
+            raise ValueError("Username must be at least 3 characters.")
+        if any(character.isspace() for character in value):
+            raise ValueError("Username cannot contain spaces.")
+        return value
+
+
+#change password request (max 72 because bcrypt ignores anything longer)
+class PasswordChange(BaseModel):
+    current_password: str = Field(..., min_length=1, max_length=72)
+    new_password: str = Field(..., min_length=8, max_length=72)
+
+
+#use the password helpers from security.py. If yours have different names, add them here.
+async def _call_password_helper(names, *args):
+    for name in names:
+        helper = getattr(security, name, None)
+        if helper:
+            result = helper(*args)
+            if inspect.isawaitable(result):
+                result = await result
+            return result
+
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Password helpers were not found in security.py.",
+    )
+
+
+async def _verify_password(plain_password: str, hashed_password: str) -> bool:
+    return await _call_password_helper(("verify_password",), plain_password, hashed_password)
+
+
+async def _hash_password(password: str) -> str:
+    return await _call_password_helper(("hash_password", "get_password_hash"), password)
+
+
+#get the logged in user's account information
+@router.get("/account", response_model=AccountResponse)
+async def get_account(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.user_id == current_user.user_id))
+    user = result.scalar_one()
+
+    return user
+
+
+#update the username
+@router.patch("/account", response_model=AccountResponse)
+async def update_account(account_data: AccountPatch, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.user_id == current_user.user_id))
+    user = result.scalar_one()
+
+    if account_data.username != user.username:
+        #usernames must be unique
+        taken_result = await db.execute(
+            select(User.user_id).where(
+                User.username == account_data.username,
+                User.user_id != user.user_id,
+            )
+        )
+        if taken_result.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="That username is already taken.")
+
+        user.username = account_data.username
+
+        try:
+            await db.commit()
+            await db.refresh(user)
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="That username is already taken.")
+        except Exception:
+            await db.rollback()
+            logger.exception("Could not update username for user %s", user.user_id)
+            raise HTTPException(status_code=500, detail="Could not update username.")
+
+    return user
+
+
+#change the password (the current password must be correct)
+@router.post("/change-password")
+async def change_password(password_data: PasswordChange, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.user_id == current_user.user_id))
+    user = result.scalar_one()
+
+    #400 instead of 401/403 so the page does not report an expired session
+    if not await _verify_password(password_data.current_password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect.")
+
+    if password_data.new_password == password_data.current_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New password must be different from your current password.")
+
+    user.password_hash = await _hash_password(password_data.new_password)
+
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        logger.exception("Could not update password for user %s", user.user_id)
+        raise HTTPException(status_code=500, detail="Could not update password.")
+
+    return {"message": "Password updated."}

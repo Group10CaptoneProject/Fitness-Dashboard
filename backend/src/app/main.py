@@ -11,7 +11,6 @@ from .routes.entries import router as entries_router
 from .routes.dashboard import router as dashboard_router
 from .RandomForestClassifier import router as recommendation_router
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await test_connection()
