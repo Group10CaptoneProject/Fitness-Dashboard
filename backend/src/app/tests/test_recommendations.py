@@ -78,11 +78,23 @@ class RecommendationTests(unittest.TestCase):
                     self.assertEqual((exercise["original_sets"], exercise["original_reps"]), (3, 8))
                     self.assertEqual(exercise["rest_seconds"], 120)
 
-    def test_old_score_does_not_adjust_today(self):
+    def test_latest_score_on_or_before_plan_date_is_used(self):
+        self.scores_mock.return_value = pd.DataFrame([
+            {"score_date": date(2026, 11, 3), "final_training_score": 0},
+            {"score_date": date(2026, 11, 1), "final_training_score": 85},
+            {"score_date": date(2026, 10, 31), "final_training_score": 20},
+        ])
+        data = self.request().json()
+        self.assertEqual(data["score_date"], "2026-11-01")
+        self.assertEqual(data["workout_adjustment"], 1.05)
+        self.assertEqual(data["recommendations"][0]["total_reps"], 25)
+
+    def test_latest_zero_score_skips_workout_and_future_only_score_is_ignored(self):
         self.scores_mock.return_value = pd.DataFrame([{"score_date": date(2026, 11, 1), "final_training_score": 0}])
+        self.assertEqual(self.request().json()["recommendations"], [])
+        self.scores_mock.return_value = pd.DataFrame([{"score_date": date(2026, 11, 3), "final_training_score": 85}])
         data = self.request().json()
         self.assertIsNone(data["final_training_score"])
-        self.assertEqual(data["workout_adjustment"], 1)
         self.assertEqual(data["recommendations"][0]["total_reps"], 24)
 
     def test_imported_muscle_areas_are_accepted_by_daily_entry_schema(self):

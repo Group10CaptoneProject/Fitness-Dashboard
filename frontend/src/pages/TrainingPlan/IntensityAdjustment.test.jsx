@@ -21,6 +21,13 @@ test.each([
 
 test.each([null, undefined, '', 'invalid', -1, 101])('missing or invalid score %s does not imply rest', score => {
     render(<IntensityAdjustment score={score} />);
-    expect(screen.getByText(/No training score for today/)).toBeInTheDocument();
+    expect(screen.getByText(/No saved training score/)).toBeInTheDocument();
     expect(screen.queryByText('Skip planned workout')).not.toBeInTheDocument();
+});
+
+
+test('shows the date of the score used for adjustment', () => {
+    render(<IntensityAdjustment score={85} scoreDate="2026-11-01" />);
+    expect(screen.getByText('2026-11-01')).toHaveAttribute('dateTime', '2026-11-01');
+    expect(screen.getByText('Increase by 5%')).toBeInTheDocument();
 });

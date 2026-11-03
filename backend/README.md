@@ -17,15 +17,15 @@ reps, and rest defaults. Focus filters the eligible muscle groups before the
 plan is selected. Limited equipment and recovery exclusions can leave the same
 exercises eligible for multiple goals.
 
-The recommendation endpoint reads the saved Final Training Score for the requested
+The recommendation endpoint reads the latest saved Final Training Score on or before the requested
 date using the existing analytics helper. It scales each exercise's total reps
 by 1.05, 1.00, 0.90, or 0.75 for scores at least 80, 60, 40, or 20 respectively.
 Whole total reps are rounded to the nearest integer and distributed across the
 original sets in `reps_by_set`; weights and rest intervals are unchanged. Scores
 below 20 return no planned exercises and a rest/gentle activity message. Missing
-or invalid scores leave the baseline unchanged, and older scores are not reused.
+or invalid scores leave the baseline unchanged, and future-dated scores are excluded.
 The response includes `final_training_score`, `readiness_level`, and
-`workout_adjustment` so the card and the adjusted plan share the same score.
+`workout_adjustment`, plus the selected `score_date`, so the card and the adjusted plan share the same score.
 
 `EXERCISE_DATA_URL` in `.env` overrides the default public JSON catalog:
 https://raw.githubusercontent.com/bootstrapping-lab/exercisedb-api/main/src/data/exercises.json

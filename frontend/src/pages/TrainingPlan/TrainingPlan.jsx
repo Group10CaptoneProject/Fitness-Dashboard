@@ -38,6 +38,7 @@ function TrainingPlan(){
     const [reload, setReload] = useState(0);
     const [openMenu, setOpenMenu] = useState(null);
     const [exercises, setExercises] = useState([]);
+    const [scoreDate, setScoreDate] = useState(null);
     const [trainingScore, setTrainingScore] = useState(null);
     const [scoreLoading, setScoreLoading] = useState(true);
     const [scoreError, setScoreError] = useState(false);
@@ -49,6 +50,7 @@ function TrainingPlan(){
             setScoreLoading(true);
             setScoreError(false);
             setTrainingScore(null);
+            setScoreDate(null);
             setError("");
             setExercises([]);
             const token = localStorage.getItem("access_token");
@@ -82,6 +84,7 @@ function TrainingPlan(){
                     equipment: exercise.equipment.join(", "),
                 })));
                 setTrainingScore(data.final_training_score ?? null);
+                setScoreDate(data.score_date ?? null);
                 setProfileEquipment(data.equipment_available);
                 setMessage(data.message || "No exercises available for this plan.");
             } catch (error) {
@@ -164,7 +167,7 @@ function TrainingPlan(){
                             </span>
                             Intensity Adjustment
                         </h2>
-                        <IntensityAdjustment score={trainingScore} loading={scoreLoading} error={scoreError} />
+                        <IntensityAdjustment scoreDate={scoreDate} score={trainingScore} loading={scoreLoading} error={scoreError} />
                     </section>
                     <section className = {styles["card"]}>
                         <h2>

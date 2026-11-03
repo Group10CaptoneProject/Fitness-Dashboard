@@ -1,8 +1,8 @@
-export default function IntensityAdjustment({ score, loading, error }) {
+export default function IntensityAdjustment({ score, scoreDate, loading, error }) {
     if (loading) return <p role="status">Loading readiness…</p>;
-    if (error) return <p role="alert">Unable to load today’s training score.</p>;
+    if (error) return <p role="alert">Unable to load your latest training score.</p>;
     if (score === null || score === undefined || score === '' || !Number.isFinite(Number(score)) || Number(score) < 0 || Number(score) > 100) {
-        return <p>No training score for today. Add a daily entry to see your adjustment.</p>;
+        return <p>No saved training score. Add a daily entry to see your adjustment.</p>;
     }
     const value = Number(score);
     const [readiness, adjustment, target] = value >= 80
@@ -14,8 +14,9 @@ export default function IntensityAdjustment({ score, loading, error }) {
         : value >= 20
         ? ['Low readiness', 'Decrease by 25%', '75% of original plan']
         : ['Very low readiness', 'Rest or gentle activity', 'Skip planned workout'];
-    return <div aria-label="Today’s intensity adjustment">
+    return <div aria-label="Latest intensity adjustment">
         <p>Final training score: <strong>{value}/100</strong></p>
+        {scoreDate && <p>Score date: <time dateTime={scoreDate}>{scoreDate}</time></p>}
         <p>{readiness}</p>
         <p><strong>{adjustment}</strong></p>
         <p>{target}</p>

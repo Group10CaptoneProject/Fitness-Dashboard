@@ -154,6 +154,7 @@ class TrainingRecommendations(BaseModel):
     equipment_available: list[str]
     muscle_groups: list[str]
     message: Optional[str] = None
+    score_date: Optional[date] = None
     final_training_score: Optional[float] = None
     readiness_level: Optional[str] = None
     workout_adjustment: float = 1.0
@@ -290,7 +291,8 @@ async def exercise_recommendation(
               "muscle_groups": sorted(groups), "recommendations": [], "message": None}
     scores = await get_daily_score(current_user.user_id)
     if not scores.empty:
-        dated = scores[pd.to_datetime(scores["score_date"]).dt.date == target_date]
+        dated = scores.assign(_score_date=pd.to_datetime(scores["score_date"]).dt.date)
+        dated = dated[dated["_score_date"] <= target_date].sort_values("_score_date", kind="stable")
         if not dated.empty:
             score = float(dated.iloc[-1]["final_training_score"])
             if isfinite(score) and 0 <= score <= 100:
@@ -300,9 +302,9 @@ async def exercise_recommendation(
                     (40, "Reduced readiness", 0.9), (20, "Low readiness", 0.75),
                     (0, "Very low readiness", 0.0),
                 ) if score >= threshold)
-                result.update(final_training_score=score, readiness_level=readiness, workout_adjustment=factor)
+                result.update(score_date=dated.iloc[-1]["_score_date"], final_training_score=score, readiness_level=readiness, workout_adjustment=factor)
     if result.get("workout_adjustment") == 0:
-        result["message"] = "Rest or gentle activity. Skip the planned workout based on today’s training score."
+        result["message"] = "Rest or gentle activity. Skip the planned workout based on your latest training score."
         return result
     if not available:
         result["message"] = "Choose available equipment to see recommendations."
