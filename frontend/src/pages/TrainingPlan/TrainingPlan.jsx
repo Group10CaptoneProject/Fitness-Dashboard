@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 
 // Placeholder content for the frontend preview. Replace with API data when ready.
-// 
 const initialExercises = [
     {
       id: 1,
