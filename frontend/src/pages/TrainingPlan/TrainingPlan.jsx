@@ -243,9 +243,12 @@ function TrainingPlan(){
                                         <td>
                                             {exercise.name && (
                                                 <div className = {styles["exercise-info"]}>
-                                                    <span className = {styles["image-placeholder"]}>
-                                                        Image of<br />Exercise
-                                                    </span>
+                                                    <img
+                                                        src={exercise.gif_url}
+                                                        alt={exercise.name}
+                                                        className={styles["exercise-image"]}
+                                                        loading="lazy"
+                                                    />
                                                     <span>{exercise.name}</span>
                                                 </div>
                                             )}
