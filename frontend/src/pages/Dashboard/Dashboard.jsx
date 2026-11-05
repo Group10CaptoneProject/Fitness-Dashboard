@@ -255,9 +255,9 @@ function Dashboard(){
                     </p>
                     <ol className={styles.guideSteps}>
                         {[
+                            { title: "Follow Your Plan", description: "Use readiness and recent training scores to guide your weekly workout intensity.", label: "Open training plan", to: "/training-plan" },
                             { title: "Complete Daily Entry", description: "Log sleep, energy, soreness, stress, heart rate, and workout information.", label: "Start check-in", to: "/entry" },
                             { title: "See Your Results", description: "Your dashboard turns your check-in into recovery, fatigue, workload, and training scores.", label: "View dashboard", to: "/dashboard" },
-                            { title: "Follow Your Plan", description: "Use readiness and recent training scores to guide your weekly workout intensity.", label: "Open training plan", to: "/training-plan" },
                             { title: "Explore Analytics", description: "Review recent trends and understand how your training changes over time.", label: "View training trends", to: "#training-trend" },
                         ].map((step, index) => (
                             <li key={step.title} className={styles.guideStep}>
