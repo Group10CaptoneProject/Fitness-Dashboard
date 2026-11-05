@@ -46,24 +46,39 @@ function TrainingPlan(){
     const [equipment, setEquipment] = useState([]);
     const [openMenu, setOpenMenu] = useState(null);
     const [exercises, setExercises] = useState([]);
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(true);
     //api function to fetch exercise recommendations
     useEffect(() => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
+        let active = true;
         async function fetchRecommendations() {
             const token = localStorage.getItem("access_token");
             try {
+                if (!token) {
+                    throw new Error("Please log in to view your training plan.");
+                }
                 const response = await fetch("http://localhost:8888/analytics/exercise-recommendation", { //port number is right for calling local host. fixed api path 
                     method: "GET",
+                    signal: controller.signal,
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
 
                 if (!response.ok) {
-                    throw new Error("Failed to fetch exercise recommendations");
+                    const body = await response.json().catch(() => ({}));
+                    throw new Error(
+                        response.status === 401
+                            ? "Your session has expired. Please log in again."
+                            : (typeof body.detail === "string" ? body.detail : `Failed to fetch exercise recommendations (${response.status})`)
+                    );
                 }
 
                 const data = await response.json();
                 
+                if (!active) return;
                 if (data.recommendations && data.recommendations.length > 0) {
                     // Map backend response fields to your frontend exercise state
                     const formattedExercises = data.recommendations.map((ex, index) => ({
@@ -76,13 +91,29 @@ function TrainingPlan(){
                         gif_url: ex.gif_url
                     }));
                     setExercises(formattedExercises);
+                } else {
+                    setExercises([]);
                 }
             } catch (error) {
+                if (!active) return;
                 console.error("Training plan error:", error);
+                setError(error.name === "AbortError"
+                    ? "The training service took too long to respond. Restart the backend and refresh this page."
+                    : error instanceof TypeError
+                    ? "Cannot reach the training service. Check that the backend is running on port 8888."
+                    : error.message);
+            } finally {
+                clearTimeout(timeout);
+                if (active) setLoading(false);
             }
         }
-        
+
         fetchRecommendations();
+        return () => {
+            active = false;
+            clearTimeout(timeout);
+            controller.abort();
+        };
     }, []);
 
     const username = localStorage.getItem("username") || "Username";
@@ -176,6 +207,12 @@ function TrainingPlan(){
                         Edit Equipment
                     </button>
                 </div>
+
+                {loading && <p role="status">Loading your exercises…</p>}
+                {error && <p role="alert">{error}</p>}
+                {!loading && !error && exercises.length === 0 && (
+                    <p role="status">No exercises match your saved equipment, workout split, and recovery rules today.</p>
+                )}
 
                 {/* Exercise table */}
                 <section className = {styles["exercise-section"]} aria-labelledby="muscle-heading">
