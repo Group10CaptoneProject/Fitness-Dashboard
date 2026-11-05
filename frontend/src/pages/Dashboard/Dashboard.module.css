@@ -95,8 +95,9 @@
     overflow: hidden;
     min-height: 280px;
     border-radius: 28px;
-    background: #b7e3ef;
-    color: #101c24;
+    background: linear-gradient(120deg, #f3f7ff 0%, #e5efff 100%);
+    border: 1px solid #d8e5fa;
+    color: #0f172a;
 }
 .bannerContent {
     position: relative;
@@ -109,7 +110,7 @@
     display: inline-block;
     padding: 8px 12px;
     border-radius: 30px;
-    background: #4a9eb5;
+    background: #1d4fc5;
     color: white;
     font-size: 10px;
     font-weight: 700;
@@ -123,7 +124,7 @@
 }
 .bannerContent p {
     margin: 0;
-    color: #365363;
+    color: #64748b;
     font-size: 14px;
     line-height: 1.6;
 }
