@@ -74,6 +74,7 @@ class MuscleGroupEnum(str, PyEnum):
     
     # Cardio/Core
     ABS = "abs"
+    CARDIO = "cardio"
 
 class ExperienceLevelEnum(str, PyEnum):
     BEGINNER = "beginner"
