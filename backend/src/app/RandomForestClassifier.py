@@ -9,11 +9,11 @@ import os
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import date, timedelta
 from typing import Optional
-from config.config import settings
-from db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db
-from analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile
-from security import get_current_user
-from routes.profile import get_fitness_profile
+from .config.config import settings
+from .db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db
+from .analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile
+from .security import get_current_user
+from .routes.profile import get_fitness_profile
 
 router = APIRouter(prefix="/analytics", tags=["Analytics & Recommendations"])
 

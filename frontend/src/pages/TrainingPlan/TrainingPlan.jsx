@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MainNav from "../../component/MainNavBar/MainNav";
 import styles from "./TrainingPlan.module.css";
 import {
@@ -27,44 +27,7 @@ const initialExercises = [
     { id: 3 },//  { id: 4 },
 ];
 
-//api function to fetch exercise recommendations
-useEffect(() => {
-        async function fetchRecommendations() {
-            const token = localStorage.getItem("access_token");
-            try {
-                const response = await fetch("http://localhost:8888/analytics/exercise-recommendation", { //port number is right for calling local host. fixed api path 
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                     },
-                 });
 
-                 if (!response.ok) {
-                     throw new Error("Failed to fetch exercise recommendations");
-                 }
-
-                 const data = await response.json();
-                
-                 if (data.recommendations && data.recommendations.length > 0) {
-                     // Map backend response fields to your frontend exercise state
-                     const formattedExercises = data.recommendations.map((ex, index) => ({
-                         id: index + 1,
-                         name: ex.name,
-                         sets: 3, // Default sets or map if your backend provides it
-                         reps: 8, // Default reps or map if your backend provides it
-                         rest: "45 sec",
-                         equipment: Array.isArray(ex.equipment) ? ex.equipment.join(", ") : (ex.equipment || "—"),
-                         gif_url: ex.gif_url
-                     }));
-                     setExercises(formattedExercises);
-                 }
-             } catch (error) {
-                 console.error("Training plan error:", error);
-             }
-         }
-        
-         fetchRecommendations();
-    }, []);
 
 const equipmentOptions = [
     "bodyweight",
@@ -83,6 +46,44 @@ function TrainingPlan(){
     const [equipment, setEquipment] = useState([]);
     const [openMenu, setOpenMenu] = useState(null);
     const [exercises, setExercises] = useState([]);
+    //api function to fetch exercise recommendations
+    useEffect(() => {
+        async function fetchRecommendations() {
+            const token = localStorage.getItem("access_token");
+            try {
+                const response = await fetch("http://localhost:8888/analytics/exercise-recommendation", { //port number is right for calling local host. fixed api path 
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch exercise recommendations");
+                }
+
+                const data = await response.json();
+                
+                if (data.recommendations && data.recommendations.length > 0) {
+                    // Map backend response fields to your frontend exercise state
+                    const formattedExercises = data.recommendations.map((ex, index) => ({
+                        id: index + 1,
+                        name: ex.name,
+                        sets: 3, // Default sets or map if your backend provides it
+                        reps: 8, // Default reps or map if your backend provides it
+                        rest: "45 sec",
+                        equipment: Array.isArray(ex.equipment) ? ex.equipment.join(", ") : (ex.equipment || "—"),
+                        gif_url: ex.gif_url
+                    }));
+                    setExercises(formattedExercises);
+                }
+            } catch (error) {
+                console.error("Training plan error:", error);
+            }
+        }
+        
+        fetchRecommendations();
+    }, []);
 
     const username = localStorage.getItem("username") || "Username";
     // Formatted current date: Weekday, Month Day, Year
