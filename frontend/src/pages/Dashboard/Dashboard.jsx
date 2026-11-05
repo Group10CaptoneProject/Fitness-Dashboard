@@ -18,6 +18,7 @@ import SummaryCard from "./component/SummaryCard/SummaryCard";
 import TrainingTrendCard from "./component/TrainingTrendCard/TrainingTrendCard";
 import MainNav from "../../component/MainNavBar/MainNav";
 import CalendarHM from "./component/CalendarHM/CalendarHM";
+import dashboardAthlete from "../../assets/dashboard.png";
 
 
 function Dashboard(){
@@ -153,14 +154,23 @@ function Dashboard(){
                         </div>
                     </div>
                 </div>
-                {/* Full-width activity calendar */}
+                {/* Training banner and activity calendar */}
                 <section className={styles.guideSection} aria-labelledby="progress-title">
                     <h2 id="progress-title">Look at your progress</h2>
                     <p>
                         Track your activity, review today's training scores, and see how your training has changed over the latest seven days.
                     </p>
                 </section>
-                <div className={`${styles["card"]} ${styles["calendar-card"]}`}>
+                <div className={styles.activityRow}>
+                    <section className={styles.trainingBanner} aria-labelledby="dashboard-banner-title">
+                        <div className={styles.bannerContent}>
+                            <span className={styles.bannerLabel}>DASHBOARD</span>
+                            <h2 id="dashboard-banner-title">Build strength.<br />Keep showing up.</h2>
+                            <p>One workout at a time.<br />Every effort moves you forward.</p>
+                        </div>
+                        <img className={styles.bannerAthlete} src={dashboardAthlete} alt="Athlete training with battle ropes" />
+                    </section>
+                    <div className={`${styles["card"]} ${styles["calendar-card"]}`}>
                         <div className = {styles["card-header"]}>
                             <span className = {styles["tag"]}>
                                 <Calendar size={24} color="white"/>
@@ -171,6 +181,7 @@ function Dashboard(){
                         </div>
                         <CalendarHM data = {heatMapData}/>
                     </div>
+                </div>
                 {/* Card sections */}
                 <div className = {styles["card-wrapper"]}>
                     {/* Final training score */}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import MainNav from "../../component/MainNavBar/MainNav";
 import styles from "./TrainingPlan.module.css";
+import trainingGym from "../../assets/training-gym.jpg";
 import {
     CalendarDays,
     Target,
@@ -10,6 +11,7 @@ import {
     NotebookText,
     MoreVertical,
     X,
+    Dumbbell,
 } from "lucide-react";
 
 // Placeholder content for the frontend preview. Replace with API data when ready.
@@ -153,6 +155,17 @@ function TrainingPlan(){
                     </div>
                 </header>
 
+                <section className={styles["training-banner"]} aria-labelledby="training-banner-title">
+                    <img className={styles["banner-image"]} src={trainingGym} alt="Blue-lit gym with strength and cardio equipment" />
+                    <div className={styles["banner-content"]}>
+                        <span className={styles["banner-label"]}>
+                            <Dumbbell size={16} aria-hidden="true" /> YOUR TRAINING, YOUR PACE
+                        </span>
+                        <h2 id="training-banner-title">Show up today.<br />Get stronger tomorrow.</h2>
+                        <p>A plan built around you. Make every rep count.</p>
+                    </div>
+                </section>
+
                 {/* Training preferences */}
                 <div className = {styles["controls-grid"]}>
                     <section className = {styles["card"]}>
@@ -216,7 +229,7 @@ function TrainingPlan(){
 
                 {/* Exercise table */}
                 <section className = {styles["exercise-section"]} aria-labelledby="muscle-heading">
-                    <h2 id="muscle-heading">
+                    <h2 id="muscle-heading" tabIndex={-1}>
                         <span className = {styles["icon"]}>
                             <NotebookText size={22} aria-hidden="true" />
                         </span>
