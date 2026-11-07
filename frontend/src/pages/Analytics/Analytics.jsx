@@ -1,6 +1,6 @@
 import MainNav from "../../component/MainNavBar/MainNav";
 import styles from "./Analytics.module.css";
-import { CalendarDays, Dumbbell } from "lucide-react";
+import { CalendarDays, Circle } from "lucide-react";
 import analyticImg from "../../assets/analytics.webp";
 
 
@@ -42,7 +42,7 @@ function Analytics() {
                     <img className={styles["banner-image"]} src={analyticImg} alt="Blue-lit gym with strength and cardio equipment" />
                     <div className={styles["banner-content"]}>
                         <span className={styles["banner-label"]}>
-                            <Dumbbell size={16} aria-hidden="true" /> DATA-DRIVEN TRAINING
+                            <Circle size={16} aria-hidden="true" /> DATA-DRIVEN TRAINING
                         </span>
                         <h2>With Knowledge , <br />Get result more effectively</h2>
                         <p>Train smarter, not harder.</p>

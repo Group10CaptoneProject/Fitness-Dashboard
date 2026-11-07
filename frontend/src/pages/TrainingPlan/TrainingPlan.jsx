@@ -12,6 +12,7 @@ import {
     MoreVertical,
     X,
     Dumbbell,
+    Circle,
 } from "lucide-react";
 
 // Placeholder content for the frontend preview. Replace with API data when ready.
@@ -159,7 +160,7 @@ function TrainingPlan(){
                     <img className={styles["banner-image"]} src={trainingGym} alt="Blue-lit gym with strength and cardio equipment" />
                     <div className={styles["banner-content"]}>
                         <span className={styles["banner-label"]}>
-                            <Dumbbell size={16} aria-hidden="true" /> YOUR TRAINING, YOUR PACE
+                            <Circle size={16} aria-hidden="true" /> YOUR TRAINING, YOUR PACE
                         </span>
                         <h2 id="training-banner-title">Show up today.<br />Get stronger tomorrow.</h2>
                         <p>A plan built around you. Make every rep count.</p>

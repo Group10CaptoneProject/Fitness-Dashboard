@@ -11,6 +11,7 @@ import {
     HeartPulse,
     BatteryLow,
     Scale,
+    Circle,
 } from "lucide-react";
 import TrainingScoreCard from "./component/TrainingScoreCard/TrainingScoreCard";
 import ReadinessScaleCard from "./component/ReadinessScaleCard/ReadinessScaleCard";
@@ -164,7 +165,9 @@ function Dashboard(){
                 <div className={styles.activityRow}>
                     <section className={styles.trainingBanner} aria-labelledby="dashboard-banner-title">
                         <div className={styles.bannerContent}>
-                            <span className={styles.bannerLabel}>DASHBOARD</span>
+                            <span className={styles.bannerLabel}>
+                                <Circle size={16} aria-hidden="true" /> DASHBOARD
+                            </span>
                             <h2 id="dashboard-banner-title">Build strength.<br />Keep showing up.</h2>
                             <p>One workout at a time.<br />Every effort moves you forward.</p>
                         </div>
