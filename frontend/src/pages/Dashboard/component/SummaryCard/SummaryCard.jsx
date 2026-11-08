@@ -7,7 +7,7 @@ function SummaryCard({finalScore = 0, recoveryScore = 0, fatigueScore = 0, workl
         {label: "Final Score" , score : finalScore , Icon : Gauge},
         {label: "Recovery" , score : recoveryScore , Icon : HeartPulse},
         {label: "Fatigue" , score : fatigueScore, Icon : BatteryLow},
-        {label: "Workload Balance" , score : fatigueScore, Icon : Scale}
+        {label: "Workload Balance" , score : workloadBalanceScore, Icon : Scale}
     ]
     return(
         <div className = {styles.wrapper}>
