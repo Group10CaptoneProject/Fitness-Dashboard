@@ -26,6 +26,11 @@ function Analytics() {
 
     const [scores, setScores] = useState([]);
 
+    const [selectedDate, setSelectedDate] = useState("latest_seven");
+    const handleDateSelect = (event) => {
+        setSelectedDate(event.target.value);
+    };
+
     useEffect(() =>{
         async function fetchTrainingData(){
             const token = localStorage.getItem("access_token")
@@ -38,13 +43,45 @@ function Analytics() {
                     },
                 })
                 const data = await reponse.json();
-                setScores(data);
+                if (selectedDate === "latest_seven") {
+                    setScores(data.slice(-7));
+                    return;
+                } else if (selectedDate === "latest_thirty") {
+                    setScores(data.slice(-30));
+                    return;
+                }
+
+                const now = new Date();
+                const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+                if (selectedDate === "week") {
+                    // Calendar weeks start on Monday.
+                    const daysSinceMonday = (startDate.getDay() + 6) % 7;
+                    startDate.setDate(startDate.getDate() - daysSinceMonday);
+                } 
+                else if (selectedDate === "month") {
+                    startDate.setDate(1);
+                }
+
+                const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+                const filteredData = data.filter((score) => {
+                    // Parse calendar dates locally to avoid UTC shifting the day.
+                    const [year, month, day] = String(score.score_date)
+                        .slice(0, 10)
+                        .split("-")
+                        .map(Number);
+                    const scoreDate = new Date(year, month - 1, day);
+
+                    return scoreDate >= startDate && scoreDate < endDate;
+                });
+
+                setScores(filteredData);
             } catch (error) {
                 console.error("Error fetching training data:", error);
             }
         }
         fetchTrainingData();
-    },[])
+    },[selectedDate]);
 
     return (
         <>
@@ -74,6 +111,18 @@ function Analytics() {
                 </section>
                 <section className={styles["chart-section"]}>
                     <h2>Training Trends</h2>
+                    <div className={styles["selector-wrapper"]}>
+                        <select
+                            value = {selectedDate}
+                            onChange = {handleDateSelect}
+                        >   
+                            <option value = "latest_seven" > Latest 7 days</option>
+                            <option value = "latest_thirty" > Latest 30 days</option>
+                            <option value = "week" > This Week</option>
+                            <option value = "month" > This Month</option>
+                        </select>
+
+                    </div>
                     <IndividualChart scores={scores} />
                 </section>
             </main>
