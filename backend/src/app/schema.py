@@ -91,7 +91,8 @@ class DailyEntryCreate(BaseModel):
                 MuscleGroupEnum.CHEST, 
                 MuscleGroupEnum.BACK, 
                 MuscleGroupEnum.BICEPS,
-                MuscleGroupEnum.TRICEPS, MuscleGroupEnum.SHOULDERS
+                MuscleGroupEnum.TRICEPS, 
+                MuscleGroupEnum.SHOULDERS
             },
             MuscleCategoryEnum.LOWER_BODY: {
                 MuscleGroupEnum.QUADS, 
@@ -100,7 +101,8 @@ class DailyEntryCreate(BaseModel):
                 MuscleGroupEnum.CALVES
             },
             MuscleCategoryEnum.CARDIO_CORE: {
-                MuscleGroupEnum.ABS
+                MuscleGroupEnum.ABS,
+                MuscleGroupEnum.CARDIO,
             }
         }
 
@@ -110,6 +112,11 @@ class DailyEntryCreate(BaseModel):
                 f"Muscle group '{self.muscle_group.value}' is invalid for category '{self.muscle_category.value}'"
             )
         return self
+
+#create replacement. validate request before processing 
+class RejectedExercise(BaseModel):
+    exercise_id: str
+    rejection_date: date
 
 #entry esponse 
 class DailyEntryResponse(BaseModel):

@@ -14,9 +14,16 @@ from app.db import async_session_maker, MuscleCategoryEnum, MuscleGroupEnum, Dai
 # 1. Daily Entries DataFrame
 async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
     async with async_session_maker() as session:
-        stmt = select(DailyEntry).where(DailyEntry.user_id == current_user_id).order_by(DailyEntry.entry_date.asc())
+        # Read only the fields used below; unrelated legacy enum values can
+        # otherwise prevent valid workout history from loading.
+        stmt = select(
+            DailyEntry.entry_date, DailyEntry.sleep, DailyEntry.energy_level,
+            DailyEntry.soreness, DailyEntry.stress, DailyEntry.heart_rate,
+            DailyEntry.duration, DailyEntry.difficulty, DailyEntry.sets,
+            DailyEntry.reps, DailyEntry.weight, DailyEntry.exercise_name,
+        ).where(DailyEntry.user_id == current_user_id).order_by(DailyEntry.entry_date.asc())
         result = await session.execute(stmt)
-        entries = result.scalars().all()
+        entries = result.all()
 
         return pd.DataFrame([
             {
@@ -489,5 +496,3 @@ async def main():
 
     #show the graphs 
     plt.show()
-
-    

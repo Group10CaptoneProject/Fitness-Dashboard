@@ -77,10 +77,82 @@
 }
 
 .calendar-card {
-    margin-top: 28px;
+    margin-top: 0;
     border-color: #dbe6f7;
     border-radius: 12px;
     box-shadow: none;
+}
+.activityRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    margin-top: 28px;
+    align-items: stretch;
+}
+.trainingBanner {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 280px;
+    border-radius: 28px;
+    background: linear-gradient(120deg, #f3f7ff 0%, #e5efff 100%);
+    border: 1px solid #d8e5fa;
+    color: #0f172a;
+}
+.bannerContent {
+    position: relative;
+    z-index: 1;
+    width: 58%;
+    box-sizing: border-box;
+    padding: 30px 0 30px 28px;
+}
+.bannerLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 30px;
+    background: #1d4fc5;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+.bannerContent h2 {
+    margin: 22px 0 14px;
+    font-size: clamp(26px, 2.5vw, 34px);
+    line-height: 1.12;
+    letter-spacing: -0.035em;
+}
+.bannerContent p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+}
+.bannerAthlete {
+    position: absolute;
+    right: -6%;
+    bottom: 0;
+    width: 60%;
+    height: 100%;
+    object-fit: contain;
+    object-position: right bottom;
+}
+@media (max-width: 1000px) {
+    .activityRow {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+@media (max-width: 600px) {
+    .bannerContent {
+        padding-left: 20px;
+        width: 62%;
+    }
+    .bannerLabel {
+        font-size: 9px;
+        padding: 8px;
+    }
 }
 .guideSection { 
     margin-top: 40px;

@@ -74,6 +74,7 @@ class MuscleGroupEnum(str, PyEnum):
     
     # Cardio/Core
     ABS = "abs"
+    CARDIO = "cardio"
 
 class ExperienceLevelEnum(str, PyEnum):
     BEGINNER = "beginner"
@@ -167,6 +168,7 @@ class User(Base):
     target_plan: Mapped["TargetPlan"] = relationship("TargetPlan", back_populates="user", uselist=False, cascade="all, delete-orphan")
     daily_entries: Mapped[list["DailyEntry"]] = relationship("DailyEntry", back_populates="user", cascade="all, delete-orphan")
     daily_scores: Mapped[list["DailyScore"]] = relationship("DailyScore", back_populates="user", cascade="all, delete-orphan")
+    rejected_exercise: Mapped[list["RejectedExercise"]] = relationship("RejectedExercise", back_populates="user", cascade="all, delete-orphan"])
 
     #onbaording page 1
     fitness_profile: Mapped["UserFitnessProfile"] = relationship("UserFitnessProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -233,7 +235,46 @@ class DailyScore(Base):
 
     __table_args__ = (
         UniqueConstraint("user_id", "score_date", name="unique_score_date"),
-    )   
+    )  
+
+class RejectedExercise(Base):
+    __tablename__ = "rejected_exercises"
+
+    rejection_id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    exercise_id: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False
+    )
+
+    rejection_date: Mapped[date] = mapped_column(
+        Date,
+        nullable=False
+    )
+
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="rejected_exercises"
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "exercise_id",
+            "rejection_date",
+            name="unique_user_rejected_exercise_per_day"
+        ),
+    ) 
 
 class TargetPlan(Base):
     __tablename__ = "target_plans"

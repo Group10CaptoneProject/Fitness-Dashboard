@@ -47,6 +47,90 @@
     align-items: stretch;
 }
 
+.training-banner{
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    margin: 28px 0 12px;
+    border-radius: 28px;
+    background: linear-gradient(120deg, #f3f7ff 0%, #e5efff 100%);
+    border: 1px solid #d8e5fa;
+    color: #0f172a;
+    min-height: 280px;
+}
+
+.banner-image{
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: -2;
+    width: 60%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 55%;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%);
+    mask-image: linear-gradient(90deg, transparent, #000 30%);
+}
+
+
+.banner-content{
+    padding: 34px 40px;
+    width: 48%;
+    box-sizing: border-box;
+}
+
+.banner-label{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid #d6e2ff;
+    border-radius: 30px;
+    background: #1d4fc5;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.banner-content h2{
+    margin: 20px 0 12px;
+    font-size: clamp(28px, 3.2vw, 42px);
+    line-height: 1.12;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+}
+
+.banner-content p{
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+@media (max-width: 600px){
+    .training-banner{
+        margin-top: 24px;
+        border-radius: 22px;
+    }
+
+    .banner-content{
+        padding: 28px 24px;
+        width: 75%;
+    }
+
+    .training-banner::before{
+        left: 52%;
+        width: 30%;
+    }
+
+    .banner-image{
+        width: 48%;
+        object-position: 65% center;
+        opacity: 0.65;
+    }
+}
+
 .card{
     min-width: 0;
     background: white;

@@ -1,65 +1,92 @@
-from sklearn.ensemble import RandomForestClassifier
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-import uuid
-import pandas as pd
-import httpx
-import json 
-import os
-from sqlalchemy.dialects.postgresql import UUID
-from datetime import date, timedelta
+"""Exercise catalog integration and personalized training recommendations."""
+
+import asyncio
+from datetime import date
+from time import monotonic
+from math import floor, isfinite
 from typing import Optional
-from config.config import settings
-from db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db
-from analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile
-from security import get_current_user
-from routes.profile import get_fitness_profile
+
+import httpx
+import pandas as pd
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from .config.config import settings
+from .db import User, UserProfile, UserFitnessProfile, GoalEnum, MuscleCategoryEnum, get_db
+from .analytics import get_entries_by_id, get_target_plan, get_user_profile, get_daily_score
+from .security import get_current_user
 
 router = APIRouter(prefix="/analytics", tags=["Analytics & Recommendations"])
 
+def normalize(value):
+    """Accept API arrays and comma-separated profile values."""
+    if value is None:
+        return ()
+    values = value if isinstance(value, (list, tuple)) else str(value).split(",")
+    return tuple(str(item).strip().lower() for item in values if str(item).strip())
+
 #save api data locally
 async def fetch_and_cache_exercises():
-    # Example pattern for fetching from a public API and caching
-    url = "https://exercise-db-fitness-workout-gym.p.rapidapi.com/exercises" # (or relevant endpoint)
-    headers = {
-        "x-rapid-api-key": settings.EXERCISEDB_API_KEY,
-        "x-rapidapi-host": "exercise-db-fitness-workout-gym.p.rapidapi.com"
+    if os.path.exists("exercises_cache.json"):
+        return
 
-    }
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers)
-        if response.status_code == 200:
+    url = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json"
+    async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+        try:
+            response = await client.get(url)
+            response.raise_for_status()
             exercise_data = response.json()
-            #loop through data. save to local DB
-            with open("exercises_cache.json", "w") as f:
-                json.dump(exercise_data, f)
-            print("Successfully cached exercises locally!")
-        else:
-            print(f"Failed to fetch exercises: {response.status_code}")
+            if not isinstance(exercise_data, list) or not exercise_data:
+                raise ValueError("Exercise service returned no exercise data")
+        except (httpx.HTTPError, ValueError) as exc:
+            raise HTTPException(status_code=502, detail="Exercise service is unavailable. Please try again later.") from exc
+
+    with open("exercises_cache.json", "w") as f:
+        json.dump(exercise_data, f)
+    print("Successfully cached exercises locally!")
 
 #get exercise info from exercise API
 def get_exercise_stats() -> pd.DataFrame:
     #get key info from exercise db api
     if not os.path.exists("exercises_cache.json"):
         print("Cache not found. Please run fetch_and_cache_exercises() first.")
-        return pd.DataFrame(columns=["exercise_name", "required_equipment", "muscle_group", "targeted_muscles"])
+        return pd.DataFrame(columns=["exercise_id", "exercise_name", "required_equipment", "muscle_group", "targeted_muscles"])
 
     with open("exercises_cache.json", "r") as f:
         data = json.load(f)
 
+    if isinstance(data, dict):
+        data = data.get("data", data.get("exercises", []))
+        if isinstance(data, dict):
+            data = data.get("exercises", [])
+
     #loop through JSON file 
     exercise_stats = []
+    equipment_names = {
+        "body only": "bodyweight", "body weight": "bodyweight", "dumbbell": "dumbbells",
+        "kettlebells": "kettlebells", "bands": "resistance_bands",
+        "machine": "machines", "exercise ball": "exercise_ball",
+    }
+    body_parts = {
+        "lats": "back", "middle back": "back", "lower back": "back", "traps": "back",
+        "quadriceps": "quads", "abdominals": "abs",
+    }
     for item in data:
+        muscles = item.get("primaryMuscles", [])
+        equipment = item.get("equipment")
         exercise_stats.append({
+            "exercise_id": item.get("id"),
             "exercise_name": item.get("name"),
-            "required_equipment": item.get("equipments"),
-            "muscle_group": item.get("bodyParts"),
-            "targeted_muscles": item.get("targetMuscles"),
+            "required_equipment": tuple(equipment_names.get(eq, eq) for eq in normalized_values(item.get("equipments", equipment))),
+            "muscle_group": normalized_values(item.get("bodyParts", list(dict.fromkeys(body_parts.get(m, m) for m in muscles)))),
+            "targeted_muscles": normalized_values(item.get("targetMuscles", muscles)),
             "gif_url": item.get("gifUrl")
         })
 
     #convert key properties to df
-    return pd.DataFrame(exercise_stats)
+    return pd.DataFrame(exercise_stats, columns=["exercise_name", "required_equipment", "muscle_group", "targeted_muscles", "gif_url"])
 
 #for exercise w/ weights
 @router.post("/weight-adjustment")
@@ -164,6 +191,24 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
     else:
         return recommended_weight
 
+@router.post("/removed-exercise")
+async def get_removed_exercise(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None):
+    current_user_id = current_user.user_id
+    
+    exercise_id = 
+    rejection_date = #from faily entry 
+    
+    #get exercise from frotntend
+    
+
+    #save it to list of removed exercises
+
+    #make sure removed exercise does not appear in exercise recommendation function
+
+
+
+
+
 #next exercise 
 @router.get("/exercise-recommendation")
 async def exercise_recommendation(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None):
@@ -181,28 +226,28 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     if not user_profile or not user_profile.equipment_available:
         return {"day": target_date.strftime('%A').lower(), "recommendations": []}
     
-    equipment_avaliable = [eq.lower() for eq in user_profile.equipment_available]
     user_equipment = [eq.lower() for eq in user_profile.equipment_available]
     
     #only filter through exercises user can do based on equipment they have
     available_exercises = exercise_data[
         exercise_data['required_equipment'].apply(
-            lambda eq: any(e.lower() in user_equipment for e in (eq if isinstance(eq, list) else [eq]))
+            lambda eq: any(e in user_equipment for e in eq)
         )
     ]
 
     #user can choose what they want to work out each day. 
-    fitness_profile = await get_fitness_profile(current_user, Depends())
+    fitness_profile = await get_fitness_profile(current_user, db)
     target_day_name = target_date.strftime('%A').lower()
 
     today_muscle_groups = []
     if fitness_profile and fitness_profile.weekly_split:
         #get the muscle groups for user
-        today_muscle_groups = [mg.lower() for mg in fitness_profile.weekly_split.get(target_day_name, [])]
+        weekly_split = {day.lower(): groups for day, groups in fitness_profile.weekly_split.items()}
+        today_muscle_groups = normalized_values(weekly_split.get(target_day_name, []))
 
     #only recommend exercises that fit w/ today's muscle groups
     if today_muscle_groups:
-        available_exercises = available_exercises[available_exercises['muscle_group'].str.lower().isin(today_muscle_groups)]
+        available_exercises = available_exercises[available_exercises['muscle_group'].apply(lambda groups: any(group in today_muscle_groups for group in groups))]
     
     user_entries = await get_entries_by_id(current_user_id)
 
@@ -215,7 +260,7 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
         for i, entry in today_entries.iterrows():
             matched_exercise = exercise_data[exercise_data['exercise_name'] == entry.get('exercise_name')]
             if not matched_exercise.empty:
-                targeted_muscles_worked_out.add(matched_exercise.iloc[0]['targeted_muscles'])
+                targeted_muscles_worked_out.update(matched_exercise.iloc[0]['targeted_muscles'])
 
         # 2. 48-HOUR RECOVERY BUFFER: Check the latest entry to enforce recovery rules
         latest_entry = user_entries.sort_values('entry_date').iloc[-1]
@@ -223,12 +268,13 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
         
         # If the last workout was less than 2 days ago, block that muscle group
         if (target_date - latest_date).days < 2 and (target_date - latest_date).days >= 0:
-            recent_muscle_group = str(latest_entry.get('muscle_group')).lower()
+            recent_exercise = exercise_data[exercise_data['exercise_name'] == latest_entry.get('exercise_name')]
+            recent_groups = set(group for groups in recent_exercise['muscle_group'] for group in groups)
             
             # Find any exercises matching this recent group and add their targets to the exclusion set
-            recent_matches = exercise_data[exercise_data['muscle_group'].str.lower() == recent_muscle_group]
+            recent_matches = exercise_data[exercise_data['muscle_group'].apply(lambda groups: bool(recent_groups.intersection(groups)))]
             for _, row in recent_matches.iterrows():
-                targeted_muscles_worked_out.add(row['targeted_muscles'])
+                targeted_muscles_worked_out.update(row['targeted_muscles'])
 
     #loop through exericses and get up to 3 
     recommended_exercises = []
@@ -239,16 +285,18 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     for _, row in available_exercises.iterrows():
         muscle_group = row['muscle_group']
         target_muscles = row['targeted_muscles']
-        exercise_name = row['exercise_name']        
+        exercise_name = row['exercise_name']     
+        exercise_id = row['exercise_id']   
 
         if muscle_group not in muscle_group_counts:
             muscle_group_counts[muscle_group] = 0
         
         #hard cap at 2 exercises per muscle
-        if target_muscles not in targeted_muscles_worked_out and muscle_group_counts[muscle_group] < max_per_muscle_group:
-            targeted_muscles_worked_out.add(target_muscles)
+        if targeted_muscles_worked_out.isdisjoint(target_muscles) and muscle_group_counts[muscle_group] < max_per_muscle_group:
+            targeted_muscles_worked_out.update(target_muscles)
             muscle_group_counts[muscle_group] += 1 
             recommended_exercise = {
+                "id": exercise_id,
                 "name": exercise_name,
                 "target_muscle": target_muscles,
                 "equipment": row["required_equipment"],

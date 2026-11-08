@@ -11,6 +11,8 @@ import DailyEntry from "./pages/DailyEntry/DailyEntry";
 import TrainingPlan from "./pages/TrainingPlan/TrainingPlan";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Research from "./pages/Research/Research";
+import Profile from "./pages/Profile/Profile";
+import Analytics from "./pages/Analytics/Analytics";
 
 function App() {
   return (
@@ -47,6 +49,7 @@ function App() {
           }
         />
         <Route path="/training-plan" element={<ProtectedRoute><TrainingPlan /></ProtectedRoute>}/>
+        <Route path="/analytics" element={<ProtectedRoute><Analytics/></ProtectedRoute>}/>
         <Route path="/research" element={<ProtectedRoute><Research /></ProtectedRoute>}/>
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -54,6 +57,8 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/profile" element={<Profile />} />
+
       </Routes>
     </BrowserRouter>
   );
