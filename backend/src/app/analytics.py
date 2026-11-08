@@ -327,16 +327,31 @@ async def calculate_readiness_data(df: pd.DataFrame) -> pd.DataFrame:
     df["stress_7d"] = df["stress_norm"].rolling(window=7, min_periods=1).mean()
 
     # 2. Composite Recovery Score (0-100)
-    df["recovery"] = (
-        (df["sleep_7d"] / 10 * 0.35) +
-        (df["energy_7d"] / 10 * 0.25) +
-        (df["soreness_7d"] / 10 * 0.20) +
-        (df["stress_7d"] / 10 * 0.20)
-    ) * 100
+    # df["recovery"] = (
+    #     (df["sleep_7d"] / 10 * 0.35) +
+    #     (df["energy_7d"] / 10 * 0.25) +
+    #     (df["soreness_7d"] / 10 * 0.20) +
+    #     (df["stress_7d"] / 10 * 0.20)
+    # ) * 100
 
-    df["fatigue"] = ((df["soreness"] + df["stress"]) / 20) * 100
-    df["workload_balance"] = (df["duration"] * df["difficulty"]) / 10
-    df["final_training_score"] = df["recovery"].clip(0, 100).round(2)
+    # df["fatigue"] = ((df["soreness"] + df["stress"]) / 20) * 100
+    # df["workload_balance"] = (df["duration"] * df["difficulty"]) / 10
+    # df["final_training_score"] = df["recovery"].clip(0, 100).round(2)
+
+    #UPDATED FORMULA Nov 8 2026
+
+    df["recovery"] = (df["sleep"] + df["energy_level"]) * 5
+
+    df["fatigue"] = 100 - 5 * (df["soreness"] + df["stress"])
+
+    # Scale by duration and invert difficulty so harder workouts lower the score.
+    df["workload_balance"] = (
+        (df["duration"].clip(0, 180) / 180) * ((10 - df["difficulty"]) / 10) * 100
+    ).clip(0, 100)
+
+    df["final_training_score"] = (
+        (df["recovery"] + df["fatigue"] + df["workload_balance"]) / 3
+    ).round(2)
 
     # 3. Vectorized Readiness Matrix Conditions
     conditions = [
@@ -496,3 +511,5 @@ async def main():
 
     #show the graphs 
     plt.show()
+
+    
