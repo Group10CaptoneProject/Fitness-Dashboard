@@ -346,7 +346,7 @@ async def calculate_readiness_data(df: pd.DataFrame) -> pd.DataFrame:
 
     # Scale by duration and invert difficulty so harder workouts lower the score.
     df["workload_balance"] = (
-        (df["duration"] / 180) * ((10 - df["difficulty"]) / 10) * 100
+        (df["duration"].clip(0, 180) / 180) * ((10 - df["difficulty"]) / 10) * 100
     ).clip(0, 100)
 
     df["final_training_score"] = (
