@@ -114,7 +114,7 @@ class DailyEntryCreate(BaseModel):
         return self
 
 #create replacement. validate request before processing 
-class RejectedExercise(BaseModel):
+class RejectedExerciseCreate(BaseModel):
     exercise_id: str
     rejection_date: date
 

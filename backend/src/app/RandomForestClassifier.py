@@ -1,26 +1,22 @@
 """Exercise catalog integration and personalized training recommendations."""
-
+import pandas as pd 
+import os
+import httpx 
+import json
 import asyncio
 from datetime import date
 from time import monotonic
 from math import floor, isfinite
 from typing import Optional
-
-import httpx
-import pandas as pd
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from .config.config import settings
-from .db import User, UserProfile, UserFitnessProfile, GoalEnum, MuscleCategoryEnum, get_db
-from .analytics import get_entries_by_id, get_target_plan, get_user_profile, get_daily_score
+from .db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db
+from .analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile
 from .security import get_current_user
+from .routes.profile import get_fitness_profile
+from .schema import RejectedExerciseCreate 
 
 router = APIRouter(prefix="/analytics", tags=["Analytics & Recommendations"])
 
-def normalize(value):
+def normalized_values(value):
     """Accept API arrays and comma-separated profile values."""
     if value is None:
         return ()
@@ -86,7 +82,7 @@ def get_exercise_stats() -> pd.DataFrame:
         })
 
     #convert key properties to df
-    return pd.DataFrame(exercise_stats, columns=["exercise_name", "required_equipment", "muscle_group", "targeted_muscles", "gif_url"])
+    return pd.DataFrame(exercise_stats, columns=["exercise_id", "exercise_name", "required_equipment", "muscle_group", "targeted_muscles", "gif_url"])
 
 #for exercise w/ weights
 @router.post("/weight-adjustment")
@@ -191,24 +187,6 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
     else:
         return recommended_weight
 
-@router.post("/removed-exercise")
-async def get_removed_exercise(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None):
-    current_user_id = current_user.user_id
-    
-    exercise_id = 
-    rejection_date = #from faily entry 
-    
-    #get exercise from frotntend
-    
-
-    #save it to list of removed exercises
-
-    #make sure removed exercise does not appear in exercise recommendation function
-
-
-
-
-
 #next exercise 
 @router.get("/exercise-recommendation")
 async def exercise_recommendation(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None):
@@ -276,6 +254,7 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
             for _, row in recent_matches.iterrows():
                 targeted_muscles_worked_out.update(row['targeted_muscles'])
 
+
     #loop through exericses and get up to 3 
     recommended_exercises = []
     muscle_group_counts = {}  # Tracks how many exercises we've picked per muscle group
@@ -311,3 +290,17 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
         "day": target_day_name,
         "recommendations": recommended_exercises
     }
+
+@router.post("/removed-exercise")
+async def get_removed_exercise(request: RejectedExerciseCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None):
+    current_user_id = current_user.user_id
+    
+    #get exercise from frotntend
+    rejected_exercise_list = 
+
+    #save it to list of removed exercises
+
+    #make sure removed exercise does not appear in exercise recommendation function
+
+
+

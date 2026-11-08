@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import { completeWorkout, completedWorkouts } from "../../utils/completedWorkouts";
 import IntensityAdjustment from "./IntensityAdjustment";
+=======
+import { useState, useEffect } from "react";
+>>>>>>> c1b366746d429f7a830d11eb6889cfb2c199a96e
 import MainNav from "../../component/MainNavBar/MainNav";
 import styles from "./TrainingPlan.module.css";
+import trainingGym from "../../assets/training-gym.jpg";
 import {
     CalendarDays,
     Target,
@@ -12,8 +17,30 @@ import {
     NotebookText,
     MoreVertical,
     X,
+    Dumbbell,
+    Circle,
 } from "lucide-react";
 
+<<<<<<< HEAD
+=======
+// Placeholder content for the frontend preview. Replace with API data when ready.
+// 
+const initialExercises = [
+    {
+      id: 1,
+        name: "Exercise Name",
+        sets: 3,
+        reps: 8,
+        rest: "45 sec",
+        equipment: "----"
+    },
+    { id: 2 },
+    { id: 3 },//  { id: 4 },
+];
+
+
+
+>>>>>>> c1b366746d429f7a830d11eb6889cfb2c199a96e
 const equipmentOptions = [
     "bodyweight",
     "dumbbells",
@@ -40,6 +67,7 @@ function TrainingPlan(){
     const [reload, setReload] = useState(0);
     const [openMenu, setOpenMenu] = useState(null);
     const [exercises, setExercises] = useState([]);
+<<<<<<< HEAD
     const [scoreDate, setScoreDate] = useState(null);
     const [trainingScore, setTrainingScore] = useState(null);
     const [scoreLoading, setScoreLoading] = useState(true);
@@ -104,6 +132,77 @@ function TrainingPlan(){
         fetchRecommendations();
         return () => controller.abort();
     }, [goal, focus, equipment, reload]);
+=======
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(true);
+    //api function to fetch exercise recommendations
+    useEffect(() => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
+        let active = true;
+        async function fetchRecommendations() {
+            const token = localStorage.getItem("access_token");
+            try {
+                if (!token) {
+                    throw new Error("Please log in to view your training plan.");
+                }
+                const response = await fetch("http://localhost:8888/analytics/exercise-recommendation", { //port number is right for calling local host. fixed api path 
+                    method: "GET",
+                    signal: controller.signal,
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    const body = await response.json().catch(() => ({}));
+                    throw new Error(
+                        response.status === 401
+                            ? "Your session has expired. Please log in again."
+                            : (typeof body.detail === "string" ? body.detail : `Failed to fetch exercise recommendations (${response.status})`)
+                    );
+                }
+
+                const data = await response.json();
+                
+                if (!active) return;
+                if (data.recommendations && data.recommendations.length > 0) {
+                    // Map backend response fields to your frontend exercise state
+                    const formattedExercises = data.recommendations.map((ex, index) => ({
+                        id: index + 1,
+                        name: ex.name,
+                        sets: 3, // Default sets or map if your backend provides it
+                        reps: 8, // Default reps or map if your backend provides it
+                        rest: "45 sec",
+                        equipment: Array.isArray(ex.equipment) ? ex.equipment.join(", ") : (ex.equipment || "—"),
+                        gif_url: ex.gif_url
+                    }));
+                    setExercises(formattedExercises);
+                } else {
+                    setExercises([]);
+                }
+            } catch (error) {
+                if (!active) return;
+                console.error("Training plan error:", error);
+                setError(error.name === "AbortError"
+                    ? "The training service took too long to respond. Restart the backend and refresh this page."
+                    : error instanceof TypeError
+                    ? "Cannot reach the training service. Check that the backend is running on port 8888."
+                    : error.message);
+            } finally {
+                clearTimeout(timeout);
+                if (active) setLoading(false);
+            }
+        }
+
+        fetchRecommendations();
+        return () => {
+            active = false;
+            clearTimeout(timeout);
+            controller.abort();
+        };
+    }, []);
+>>>>>>> c1b366746d429f7a830d11eb6889cfb2c199a96e
 
     const username = localStorage.getItem("username") || "Username";
     // Formatted current date: Weekday, Month Day, Year
@@ -189,6 +288,17 @@ function TrainingPlan(){
                     </div>
                 </header>
 
+                <section className={styles["training-banner"]} aria-labelledby="training-banner-title">
+                    <img className={styles["banner-image"]} src={trainingGym} alt="Blue-lit gym with strength and cardio equipment" />
+                    <div className={styles["banner-content"]}>
+                        <span className={styles["banner-label"]}>
+                            <Circle size={16} aria-hidden="true" /> YOUR TRAINING, YOUR PACE
+                        </span>
+                        <h2 id="training-banner-title">Show up today.<br />Get stronger tomorrow.</h2>
+                        <p>A plan built around you. Make every rep count.</p>
+                    </div>
+                </section>
+
                 {/* Training preferences */}
                 <div className = {styles["controls-grid"]}>
                     <section className = {styles["card"]}>
@@ -246,14 +356,22 @@ function TrainingPlan(){
                     </button>
                 </div>
 
+<<<<<<< HEAD
                 {notice && <p role="status">{notice} <a href="/entry">Open Daily Entry</a></p>}
                 {error && <p className={styles["error-message"]} role="alert">{error}</p>}
                 <button type="button" className={styles["refresh-button"]} disabled={loading}
                     onClick={() => setReload(value => value + 1)}>Refresh recommendations</button>
+=======
+                {loading && <p role="status">Loading your exercises…</p>}
+                {error && <p role="alert">{error}</p>}
+                {!loading && !error && exercises.length === 0 && (
+                    <p role="status">No exercises match your saved equipment, workout split, and recovery rules today.</p>
+                )}
+>>>>>>> c1b366746d429f7a830d11eb6889cfb2c199a96e
 
                 {/* Exercise table */}
                 <section className = {styles["exercise-section"]} aria-labelledby="muscle-heading">
-                    <h2 id="muscle-heading">
+                    <h2 id="muscle-heading" tabIndex={-1}>
                         <span className = {styles["icon"]}>
                             <NotebookText size={22} aria-hidden="true" />
                         </span>
@@ -285,6 +403,7 @@ function TrainingPlan(){
                                         <td>
                                             {exercise.name && (
                                                 <div className = {styles["exercise-info"]}>
+<<<<<<< HEAD
                                                     {exercise.gif_url ? (
                                                         <img className={styles["exercise-image"]} src={exercise.gif_url}
                                                             alt={`${exercise.name} demonstration`} loading="lazy"
@@ -292,6 +411,15 @@ function TrainingPlan(){
                                                                 item.id === exercise.id ? { ...item, gif_url: null } : item))} />
                                                     ) : <span className={styles["image-placeholder"]}>GIF unavailable</span>}
                                                     <span>{exercise.name}<br /><small>{exercise.target_muscle?.join(", ")}</small></span>
+=======
+                                                    <img
+                                                        src={exercise.gif_url}
+                                                        alt={exercise.name}
+                                                        className={styles["exercise-image"]}
+                                                        loading="lazy"
+                                                    />
+                                                    <span>{exercise.name}</span>
+>>>>>>> c1b366746d429f7a830d11eb6889cfb2c199a96e
                                                 </div>
                                             )}
                                         </td>
