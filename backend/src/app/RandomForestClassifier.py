@@ -9,6 +9,8 @@ from time import monotonic
 from math import floor, isfinite
 from typing import Optional
 from sqlalchemy import select
+from fastapi import Depends, APIRouter, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 from .db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db, RejectedExercise
 from .analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile, get_rejected_exercises
 from .security import get_current_user
@@ -218,8 +220,6 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
         ) & ~exercise_data['exericse_id'].isin(rejected_exercise_ids)
     ]
 
-    available_exercises = available_exercises[available_exercises['exercise_name'].apply(lambda exerercise: any(e in ))]
-
     #user can choose what they want to work out each day. 
     fitness_profile = await get_fitness_profile(current_user, db)
     target_day_name = target_date.strftime('%A').lower()
@@ -327,6 +327,6 @@ async def save_removed_exercise(request: RejectedExerciseCreate, current_user: U
     if existing_rejection:
         return {"message": "Exercise already in rejected exercises list"}
     else:
-        db.add(existing_rejection)
+        db.add(rejected_exercise)
         await db.commit()  
         return {"message": "Exercises succesffuly rejected"}      
