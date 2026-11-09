@@ -9,7 +9,7 @@ import matplotlib.dates as mdates
 from sqlalchemy import select
 from decimal import Decimal
 from datetime import date, timedelta
-from app.db import async_session_maker, MuscleCategoryEnum, MuscleGroupEnum, DailyEntry, DailyScore, TargetPlan, User, UserProfile, UserFitnessProfile
+from app.db import async_session_maker, MuscleCategoryEnum, MuscleGroupEnum, DailyEntry, DailyScore, TargetPlan, User, UserProfile, UserFitnessProfile, RejectedExercise
 
 # 1. Daily Entries DataFrame
 async def get_entries_by_id(current_user_id: uuid.UUID) -> pd.DataFrame:
@@ -79,6 +79,29 @@ async def update_entries_by_id(
         await session.merge(new_entry)
         await session.commit()
         print(f"Successfully saved raw daily entry for {entry_date} to Neon!")
+
+async def get_rejected_exercises(current_user_id: uuid.UUID, target_date: date) -> pd.DataFrame:
+    async with async_session_maker() as session:
+        stmt = (
+            select(
+                RejectedExercise.rejection_id, 
+                RejectedExercise.user_id, 
+                RejectedExercise.exercise_id, 
+                RejectedExercise.rejection_date
+            ).where(RejectedExercise.user_id == current_user_id, RejectedExercise.rejection_date == target_date)
+            .order_by(RejectedExercise.rejection_date.asc()))
+        result = await session.execute(stmt)
+        rejected_exercises = result.all()
+
+        return pd.DataFrame([
+            {
+                "rejection_id": row.rejection_id,
+                "user_id": row.user_id, 
+                "exercise_id": row.exercise_id,
+                "rejection_date": row.rejection_date
+            }
+            for row in rejected_exercises
+        ])
 
 async def show_weight_trends(user_id: uuid.UUID):
     #get user id first

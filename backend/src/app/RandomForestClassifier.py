@@ -8,8 +8,9 @@ from datetime import date
 from time import monotonic
 from math import floor, isfinite
 from typing import Optional
-from .db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db
-from .analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile
+from sqlalchemy import select
+from .db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db, RejectedExercise
+from .analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile, get_rejected_exercises
 from .security import get_current_user
 from .routes.profile import get_fitness_profile
 from .schema import RejectedExerciseCreate 
@@ -199,6 +200,10 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     await fetch_and_cache_exercises()
     exercise_data = get_exercise_stats()
 
+    #rejected exercises
+    rejected_exercises = await get_rejected_exercises(current_user_id, target_date)
+    rejected_exercise_ids = set(rejected_exercises["exercise_id"])
+
     #get user equipment
     user_profile = await get_user_profile(current_user_id)
     if not user_profile or not user_profile.equipment_available:
@@ -210,8 +215,10 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     available_exercises = exercise_data[
         exercise_data['required_equipment'].apply(
             lambda eq: any(e in user_equipment for e in eq)
-        )
+        ) & ~exercise_data['exericse_id'].isin(rejected_exercise_ids)
     ]
+
+    available_exercises = available_exercises[available_exercises['exercise_name'].apply(lambda exerercise: any(e in ))]
 
     #user can choose what they want to work out each day. 
     fitness_profile = await get_fitness_profile(current_user, db)
@@ -292,15 +299,34 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     }
 
 @router.post("/removed-exercise")
-async def get_removed_exercise(request: RejectedExerciseCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None):
+async def save_removed_exercise(request: RejectedExerciseCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None):
     current_user_id = current_user.user_id
     
-    #get exercise from frotntend
-    rejected_exercise_list = 
+    #get exercise id + date from frotntend
+    rejected_exercise_id = request.exercise_id 
+    rejectDate = request.rejection_date 
 
-    #save it to list of removed exercises
+    #create entry for rejected exercise
+    rejected_exercise = RejectedExercise(
+        user_id = current_user_id,
+        exercise_id = rejected_exercise_id,
+        rejection_date = rejectDate
+    )
 
-    #make sure removed exercise does not appear in exercise recommendation function
+    #store in database
+    stmt = (select(RejectedExercise.user_id, RejectedExercise.exercise_id, RejectedExercise.rejection_date, RejectedExercise.rejection_id)
+    .where(RejectedExercise.user_id == current_user_id, RejectedExercise.exercise_id == rejected_exercise_id, RejectedExercise.rejection_date == rejectDate)
+    )
 
+    result = await db.execute(stmt)
 
+    #check if exists 
+    existing_rejection = result.scalar_one_or_none()
 
+    #check if it texists
+    if existing_rejection:
+        return {"message": "Exercise already in rejected exercises list"}
+    else:
+        db.add(existing_rejection)
+        await db.commit()  
+        return {"message": "Exercises succesffuly rejected"}      
