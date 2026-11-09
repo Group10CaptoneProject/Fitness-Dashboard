@@ -31,6 +31,20 @@ function Analytics() {
         setSelectedDate(event.target.value);
     };
 
+    const [selectedScores, setSelectedScores] = useState([
+        "training",
+        "recovery",
+        "fatigue",
+        "workload",
+    ]);
+    const toggleScore = (scoreType) => {
+        setSelectedScores((previous) =>
+            previous.includes(scoreType)
+                ? previous.filter((type) => type !== scoreType)
+                : [...previous, scoreType]
+        );
+    };
+
     useEffect(() =>{
         async function fetchTrainingData(){
             const token = localStorage.getItem("access_token")
@@ -121,9 +135,21 @@ function Analytics() {
                             <option value = "week" > This Week</option>
                             <option value = "month" > This Month</option>
                         </select>
-
                     </div>
-                    <IndividualChart scores={scores} />
+                    <fieldset className={styles["score-selector"]}>
+                        <legend>Scores to display</legend>
+                        {["training", "recovery", "fatigue", "workload"].map((type) => (
+                            <label key={type}>
+                                <input
+                                    type="checkbox"
+                                    checked={selectedScores.includes(type)}
+                                    onChange={() => toggleScore(type)}
+                                />
+                                {type.charAt(0).toUpperCase() + type.slice(1)}
+                            </label>
+                        ))}
+                    </fieldset>
+                    <IndividualChart scores={scores} selectedScores={selectedScores}/>
                 </section>
             </main>
         </>

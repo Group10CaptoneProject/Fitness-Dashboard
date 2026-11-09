@@ -1,8 +1,8 @@
 import { LineChart } from "@mui/x-charts/LineChart";
 import styles from "./individualChart.module.css";
 
-function IndividualChart({scores =[]}) {
-        if (scores.length === 0) {
+function IndividualChart({scores =[], selectedScores = []}) {
+    if (scores.length === 0) {
         return (
             <div className={styles["no-data"]}>
                 No training data available yet.
@@ -41,6 +41,45 @@ function IndividualChart({scores =[]}) {
     );
 
 
+    const allSeries = [
+        {
+            data: trainingScores,
+            label: "Training",
+            id: "training",
+            color: "#2563eb",
+            showMark: true,
+        },
+        {
+            data: recoveryScores,
+            label: "Recovery",
+            id: "recovery",
+            color: "#16a34a",
+            showMark: true,
+        },
+        {
+            data: fatigueScores,
+            label: "Fatigue",
+            id: "fatigue",
+            color: "#dc2626",
+            showMark: true,
+        },
+        {
+            data: workloadScores,
+            label: "Workload",
+            id: "workload",
+            color: "#9333ea",
+            showMark: true,
+        },
+    ];
+
+    if (selectedScores.length === 0) {
+        return (
+            <div className={styles["no-data"]}>
+                Select at least one score to display.
+            </div>
+        );
+    }
+
     return (
         <div className={styles["trend-wrapper"]}>
             <LineChart
@@ -62,28 +101,7 @@ function IndividualChart({scores =[]}) {
                     },
                 ]}
 
-                series={[
-                    {
-                        data: trainingScores,
-                        label: "Training",
-                        showMark: true,
-                    },
-                    {
-                        data: recoveryScores,
-                        label: "Recovery",
-                        showMark: true,
-                    },
-                    {
-                        data: fatigueScores,
-                        label: "Fatigue",
-                        showMark: true,
-                    },
-                    {
-                        data: workloadScores,
-                        label: "Workload",
-                        showMark: true,
-                    },
-                ]}
+                series={allSeries.filter((series) => selectedScores.includes(series.id))}
             />
         </div>
     );
