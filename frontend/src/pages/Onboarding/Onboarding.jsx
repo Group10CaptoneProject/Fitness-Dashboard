@@ -21,16 +21,40 @@ const API_URL = (
 
 const REQUEST_TIMEOUT_MS = 20000;
 
+// Onboarding status and answers now live in the backend, per user.
+// These old browser-wide keys were shared by every account on the device,
+// so they are deleted instead of being read.
+function clearLegacyOnboardingStorage() {
+  try {
+    Object.keys(localStorage).forEach((key) => {
+      if (
+        key === "onboarding_data" ||
+        key === "onboarding_completed" ||
+        key.startsWith("onboarding_completed_")
+      ) {
+        localStorage.removeItem(key);
+      }
+    });
+  } catch (err) {
+    console.error("Could not clear old onboarding storage:", err);
+  }
+}
+
+function capitalize(value) {
+  const text = String(value || "");
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function Onboarding() {
   const navigate = useNavigate();
-  const username =
-    localStorage.getItem("username") ||
-    localStorage.getItem("user_name") ||
-    "Username";
+
+  // Shown until the backend tells us who is logged in.
+  const [username, setUsername] = useState("Username");
 
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -48,40 +72,87 @@ function Onboarding() {
     workout_days: [],
   });
 
-  // Restore previously saved onboarding answers.
+  // Ask the backend about the logged-in user: skip onboarding if it is
+  // already complete, and load that user's saved answers.
   useEffect(() => {
-    try {
-      const savedData = localStorage.getItem("onboarding_data");
+    let cancelled = false;
 
-      if (!savedData) return;
+    clearLegacyOnboardingStorage();
 
-      const parsedData = JSON.parse(savedData);
+    async function loadOnboardingState() {
+      const token = localStorage.getItem("access_token");
 
-      setFormData((previous) => ({
-        ...previous,
-        age:
-          parsedData.age == null ? "" : String(parsedData.age),
-        gender: parsedData.gender || "",
-        height:
-          parsedData.height == null ? "" : String(parsedData.height),
-        weight:
-          parsedData.weight == null ? "" : String(parsedData.weight),
-        goal: parsedData.goal || "",
-        experience: parsedData.experience || "",
-        session_duration:
-          parsedData.session_duration == null
-            ? ""
-            : String(parsedData.session_duration),
-        equipment: Array.isArray(parsedData.equipment)
-          ? parsedData.equipment
-          : [],
-        workout_days: Array.isArray(parsedData.workout_days)
-          ? parsedData.workout_days
-          : [],
-      }));
-    } catch (err) {
-      console.error("Failed to load saved onboarding data:", err);
+      if (!token) {
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      const headers = { Authorization: `Bearer ${token}` };
+
+      try {
+        // Who is logged in right now (not whatever the last login left behind).
+        const accountResponse = await fetchWithTimeout(
+          `${API_URL}/profile/account`,
+          { headers }
+        );
+
+        if (accountResponse.status === 401 || accountResponse.status === 403) {
+          handleSessionExpired();
+          return;
+        }
+
+        if (accountResponse.ok) {
+          const account = await accountResponse.json();
+          if (!cancelled && account.username) {
+            setUsername(account.username);
+          }
+        }
+
+        // Onboarding status for this user, from the database.
+        const statusResponse = await fetchWithTimeout(
+          `${API_URL}/profile/onboarding-status`,
+          { headers }
+        );
+
+        if (statusResponse.status === 401 || statusResponse.status === 403) {
+          handleSessionExpired();
+          return;
+        }
+
+        const statusResult = await readResponse(
+          statusResponse,
+          "Could not check your onboarding status."
+        );
+
+        if (cancelled) return;
+
+        if (statusResult.is_onboarded) {
+          navigate("/entry", { replace: true });
+          return;
+        }
+
+        // Not onboarded yet: leave the form empty so the backend's
+        // placeholder defaults are never shown as if the user chose them.
+      } catch (err) {
+        console.error("Failed to load onboarding state:", err);
+        if (!cancelled) {
+          setError(
+            err.message || "Unable to check your onboarding status."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setCheckingStatus(false);
+        }
+      }
     }
+
+    loadOnboardingState();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Close the user dropdown when clicking outside.
@@ -102,14 +173,25 @@ function Onboarding() {
     };
   }, []);
 
-  // Log out without deleting the user's onboarding completion status.
-  function handleLogout() {
+  // Remove every piece of the current user's session from this browser.
+  function clearSession() {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user_id");
     localStorage.removeItem("user_name");
     localStorage.removeItem("username");
     localStorage.removeItem("name");
+    clearLegacyOnboardingStorage();
+  }
+
+  function handleSessionExpired() {
+    clearSession();
+    navigate("/login", { replace: true });
+  }
+
+  // Log out. Onboarding status stays in the backend with the account.
+  function handleLogout() {
+    clearSession();
 
     setDropdownOpen(false);
     navigate("/login", { replace: true });
@@ -268,7 +350,7 @@ function Onboarding() {
     return result;
   }
 
-  // Save fitness information before marking onboarding complete.
+  // Save fitness information, then mark onboarding complete in the backend.
   async function saveOnboarding() {
     const token = localStorage.getItem("access_token");
 
@@ -298,25 +380,45 @@ function Onboarding() {
         day.toLowerCase()
       ),
       session_duration: Number(formData.session_duration),
-      is_onboarded: true, 
     };
 
-    const fitnessResponse = await fetchWithTimeout(`${API_URL}/profile/fitness-profile`, {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify(fitnessProfile),
-    });
-    await readResponse(fitnessResponse, "Could not save your fitness information.");
+    const fitnessResponse = await fetchWithTimeout(
+      `${API_URL}/profile/fitness-profile`,
+      {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(fitnessProfile),
+      }
+    );
+    await readResponse(
+      fitnessResponse,
+      "Could not save your fitness information."
+    );
 
-    const preferencesResponse = await fetchWithTimeout(`${API_URL}/profile/user-profile`, {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify(userProfile),
-    });
-
+    const preferencesResponse = await fetchWithTimeout(
+      `${API_URL}/profile/user-profile`,
+      {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(userProfile),
+      }
+    );
     await readResponse(
       preferencesResponse,
       "Could not save your workout preferences."
+    );
+
+    // Only after both saves succeed, record completion for this user.
+    const completeResponse = await fetchWithTimeout(
+      `${API_URL}/profile/complete-onboarding`,
+      {
+        method: "POST",
+        headers,
+      }
+    );
+    await readResponse(
+      completeResponse,
+      "Could not save your onboarding status."
     );
   }
 
@@ -378,22 +480,6 @@ function Onboarding() {
     try {
       await saveOnboarding();
 
-      const userId = localStorage.getItem("user_id");
-
-      // Set completion only after both saves succeed.
-      if (userId) {
-        localStorage.setItem(
-          `onboarding_completed_${userId}`,
-          "true"
-        );
-      }
-
-      localStorage.setItem(
-        "onboarding_data",
-        JSON.stringify(formData)
-      );
-      localStorage.setItem("onboarding_completed", "true");
-
       navigate("/entry", { replace: true });
     } catch (err) {
       console.error("Onboarding save error:", err);
@@ -423,6 +509,20 @@ function Onboarding() {
     { label: "Sat", value: "Saturday" },
     { label: "Sun", value: "Sunday" },
   ];
+
+  // Wait for the backend before showing the form so an already-onboarded
+  // user never sees it flash up before being redirected.
+  if (checkingStatus) {
+    return (
+      <div className={styles.page}>
+        <main className={styles.main}>
+          <div className={styles.heading}>
+            <p>Loading your profile...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

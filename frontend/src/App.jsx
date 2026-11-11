@@ -22,10 +22,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        {/* Onboarding checks the backend itself and redirects if already done */}
         <Route
           path="/onboarding"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requireOnboarding={false}>
               <Onboarding />
             </ProtectedRoute>
           }
@@ -51,14 +52,13 @@ function App() {
         <Route path="/training-plan" element={<ProtectedRoute><TrainingPlan /></ProtectedRoute>}/>
         <Route path="/analytics" element={<ProtectedRoute><Analytics/></ProtectedRoute>}/>
         <Route path="/research" element={<ProtectedRoute><Research /></ProtectedRoute>}/>
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-reset-code" element={<VerifyResetCode />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
-        <Route path="/profile" element={<Profile />} />
-
       </Routes>
     </BrowserRouter>
   );

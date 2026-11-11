@@ -355,15 +355,15 @@ class UserFitnessProfile(Base):
     height: Mapped[int] = mapped_column(Integer, nullable=False)
     weight: Mapped[int] = mapped_column(Integer, nullable=False)
     
-    #user cans tore their own muscle groups. kept in JSON dict. 
     # Preferred days for workout scheduling.
-    preferred_workout_days: Mapped[list[str]] = mapped_column(
-        JSON,
+    # Stored as a Postgres text[] to match the existing table.
+    preferred_workout_days: Mapped[List[str]] = mapped_column(
+        ARRAY(String),
         nullable=True,
         default=list,
     )
 
-    # Optional weekly workout split.
+    # Optional weekly workout split (user can store their own muscle groups, kept as a JSON dict).
     weekly_split: Mapped[dict] = mapped_column(
         JSON,
         nullable=True,

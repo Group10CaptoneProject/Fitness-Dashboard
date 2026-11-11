@@ -192,6 +192,56 @@ async def get_or_create_user_profile(current_user: User  =Depends(get_current_us
 
     return profile
 
+
+#onboarding status (stored per user in the database, never in the browser)
+class OnboardingStatusResponse(BaseModel):
+    is_onboarded: bool
+
+
+#read-only check used after login and by the route guard.
+#It never creates a row: a user with no profile yet simply has not been onboarded.
+@router.get("/onboarding-status", response_model=OnboardingStatusResponse)
+async def get_onboarding_status(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(UserProfile.is_onboarded).where(UserProfile.user_id == current_user.user_id)
+    )
+    is_onboarded = result.scalar_one_or_none()
+
+    return OnboardingStatusResponse(is_onboarded=bool(is_onboarded))
+
+
+#mark the logged in user as onboarded (called once the onboarding answers are saved)
+@router.post("/complete-onboarding", response_model=OnboardingStatusResponse)
+async def complete_onboarding(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    current_user_id = current_user.user_id
+
+    result = await db.execute(select(UserProfile).where(UserProfile.user_id == current_user_id))
+    user_profile = result.scalar_one_or_none()
+
+    if not user_profile:
+        user_profile = UserProfile(
+            user_id=current_user_id,
+            primary_goal="healthy_lifestyle",
+            experience_level="beginner",
+            equipment_available=["dumbbells", "bodyweight"],
+            preferred_workout_days=["monday"],
+            session_duration=60,
+            is_onboarded=True,
+        )
+        db.add(user_profile)
+    else:
+        user_profile.is_onboarded = True
+
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        logger.exception("Could not complete onboarding for user %s", current_user_id)
+        raise HTTPException(status_code=500, detail="Could not save onboarding status.")
+
+    return OnboardingStatusResponse(is_onboarded=True)
+
+
 #account information (username, email, member since)
 class AccountResponse(BaseModel):
     username: str

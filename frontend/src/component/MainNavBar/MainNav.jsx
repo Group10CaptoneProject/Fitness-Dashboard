@@ -178,15 +178,6 @@ function MainNav({ username }) {
             
             <button
               type="button"
-              className={styles.dropdownItem}
-              onClick={() => handleNavigation("/onboarding")}
-            >
-              <UserRoundPen size={16} />
-              <span>Edit Onboarding Information</span>
-            </button>
-
-            <button
-              type="button"
               className={`${styles.dropdownItem} ${styles.logoutItem}`}
               onClick={handleLogout}
             >

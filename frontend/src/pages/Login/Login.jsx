@@ -62,27 +62,33 @@ function Login() {
         return;
       }
 
-      // Save the authenticated user's information.
+
+
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("user_id", String(data.user_id));
       localStorage.setItem("username", data.username || "");
       localStorage.setItem("user_name", data.username || "");
 
-      // Check onboarding completion for this specific user.
+      // Ask the backend whether THIS user has finished onboarding.
+      // (Read-only endpoint: it does not create a profile row.)
       let isActuallyOnboarded = false;
       try {
-        const profileResponse = await fetch(`${API_URL}/profile/user-profile`, {
-          headers: {
-            "Authorization": `Bearer ${data.access_token}`
+        const statusResponse = await fetch(
+          `${API_URL}/profile/onboarding-status`,
+          {
+            headers: {
+              Authorization: `Bearer ${data.access_token}`,
+            },
           }
-        });
+        );
 
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json();
-          isActuallyOnboarded = profileData.is_onboarded === true;
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          isActuallyOnboarded = statusData.is_onboarded === true;
         }
-      } catch (profileErr) {
-        console.error("Could not fetch profile onboarding status from backend:", profileErr);
+      } catch (statusErr) {
+        // The onboarding page checks the backend again, so an onboarded user is still redirected to /entry if this request failed.
+        console.error("Could not fetch onboarding status from backend:", statusErr);
       }
 
       if (isActuallyOnboarded) {
