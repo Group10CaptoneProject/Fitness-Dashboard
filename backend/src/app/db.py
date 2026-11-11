@@ -1,4 +1,4 @@
-Rejectedimport asyncio
+import asyncio
 import uuid
 import sys
 from pathlib import Path
@@ -168,8 +168,11 @@ class User(Base):
     target_plan: Mapped["TargetPlan"] = relationship("TargetPlan", back_populates="user", uselist=False, cascade="all, delete-orphan")
     daily_entries: Mapped[list["DailyEntry"]] = relationship("DailyEntry", back_populates="user", cascade="all, delete-orphan")
     daily_scores: Mapped[list["DailyScore"]] = relationship("DailyScore", back_populates="user", cascade="all, delete-orphan")
-    rejected_exercise: Mapped[list["RejectedExercise"]] = relationship("RejectedExercise", back_populates="user", cascade="all, delete-orphan"])
-
+    rejected_exercises: Mapped[list["RejectedExercise"]] = relationship(
+        "RejectedExercise",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
     #onbaording page 1
     fitness_profile: Mapped["UserFitnessProfile"] = relationship("UserFitnessProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
@@ -355,7 +358,7 @@ class UserFitnessProfile(Base):
     #user cans tore their own muscle groups. kept in JSON dict. 
     # Preferred days for workout scheduling.
     preferred_workout_days: Mapped[list[str]] = mapped_column(
-        ARRAY(String),
+        JSON,
         nullable=True,
         default=list,
     )

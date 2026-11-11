@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).resolve().parents[3]
 
 class Settings(BaseSettings):
-    database_url: str
+    database_url : str 
     EXERCISEDB_API_KEY: str | None = None
     jwt_secret_key: str = "dev_jwt_secret"
     resend_api_key: Optional[str] = None
