@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { completeWorkout, completedWorkouts } from "../../utils/completedWorkouts";
 import IntensityAdjustment from "./IntensityAdjustment";
+import { adjustExercise, intensityFactor } from "../../utils/trainingIntensity";
 import MainNav from "../../component/MainNavBar/MainNav";
 import styles from "./TrainingPlan.module.css";
 import trainingGym from "../../assets/training-gym.jpg";
@@ -126,6 +127,9 @@ function TrainingPlan(){
         return () => controller.abort();
     }, [reload]);
 
+    const factor = scoreLoading || scoreError ? null : intensityFactor(trainingScore);
+    const adjustedExercises = factor === 0 ? [] : exercises.map(exercise => adjustExercise(exercise, factor));
+    const planLoading = loading || scoreLoading;
     const username = localStorage.getItem("username") || "Username";
     // Formatted current date: Weekday, Month Day, Year
     const today = new Date();
@@ -306,12 +310,12 @@ function TrainingPlan(){
                                 </tr>
                             </thead>
                             <tbody>
-                                {(loading || (!error && exercises.length === 0)) && (
+                                {(planLoading || (!error && adjustedExercises.length === 0)) && (
                                     <tr><td colSpan={6} className={styles["empty-state"]} role="status">
-                                        {loading ? "Loading your training plan…" : message}
+                                        {planLoading ? "Loading your training plan…" : factor === 0 ? "Skip planned workout. Rest or choose gentle activity today." : message}
                                     </td></tr>
                                 )}
-                                {exercises.map((exercise, index) => (
+                                {!planLoading && adjustedExercises.map((exercise, index) => (
                                     <tr key={exercise.id}>
                                         <td>{index + 1}</td>
                                         <td>
