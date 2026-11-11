@@ -9,7 +9,7 @@ from time import monotonic
 from math import floor, isfinite
 from typing import Optional
 from sqlalchemy import select
-from fastapi import Depends, APIRouter, HTTPException
+from fastapi import Depends, APIRouter, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from .db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db, RejectedExercise
 from .analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile, get_rejected_exercises
@@ -191,8 +191,31 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
         return recommended_weight
 
 #next exercise 
+FOCUS_MUSCLES = {
+    "upper_body": {"chest", "back", "biceps", "triceps", "shoulders", "forearms", "upper arms", "lower arms", "lats", "traps", "middle back", "lower back"},
+    "lower_body": {"quads", "quadriceps", "hamstrings", "glutes", "calves", "adductors", "abductors", "upper legs", "lower legs"},
+    "cardio_core": {"abs", "abdominals", "obliques", "waist", "cardio", "cardiovascular system"},
+}
+
+
+def goal_priority(row, goal):
+    """Rank catalog movements using explicit goal heuristics; preserve ties."""
+    equipment = set(row["required_equipment"])
+    name = row["exercise_name"].lower()
+    loaded = bool(equipment & {"dumbbells", "barbell", "kettlebells", "machines", "cable", "resistance_bands"})
+    conditioning = any(word in name for word in ("run", "jog", "jump", "burpee", "cycling", "rowing"))
+    compound = any(word in name for word in ("squat", "deadlift", "press", "pull-up", "push-up", "lunge", "row"))
+    if goal == "hypertrophy":
+        return 2 * loaded + compound - 2 * conditioning
+    if goal == "endurance":
+        return 2 * conditioning + ("bodyweight" in equipment)
+    return compound + ("bodyweight" in equipment)
+
+
 @router.get("/exercise-recommendation")
-async def exercise_recommendation(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None):
+async def exercise_recommendation(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None,
+                                  goal: Optional[GoalEnum] = None, focus: Optional[MuscleCategoryEnum] = None,
+                                  equipment: Optional[list[str]] = Query(default=None)):
     if target_date is None:
         target_date = date.today()
     
@@ -208,10 +231,18 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
 
     #get user equipment
     user_profile = await get_user_profile(current_user_id)
-    if not user_profile or not user_profile.equipment_available:
+    selected_equipment = equipment if equipment is not None else (user_profile.equipment_available if user_profile else [])
+    if not selected_equipment:
         return {"day": target_date.strftime('%A').lower(), "recommendations": [], "equipment_available": []}
     
-    user_equipment = [eq.lower() for eq in user_profile.equipment_available]
+    user_equipment = [eq.strip().lower() for eq in selected_equipment if eq.strip()]
+    selected_goal = goal.value if goal else getattr(user_profile, "primary_goal", "healthy_lifestyle")
+    selected_goal = getattr(selected_goal, "value", selected_goal)
+    sets, reps, rest_seconds = {
+        "hypertrophy": (3, 8, 120),
+        "endurance": (3, 15, 60),
+        "healthy_lifestyle": (2, 10, 90),
+    }.get(selected_goal, (2, 10, 90))
     
     #only filter through exercises user can do based on equipment they have
     available_exercises = exercise_data[
@@ -231,7 +262,11 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
         today_muscle_groups = normalized_values(weekly_split.get(target_day_name, []))
 
     #only recommend exercises that fit w/ today's muscle groups
-    if today_muscle_groups:
+    if focus:
+        focus_muscles = FOCUS_MUSCLES[focus.value]
+        available_exercises = available_exercises[available_exercises.apply(
+            lambda row: bool(focus_muscles.intersection((*row['muscle_group'], *row['targeted_muscles']))), axis=1)]
+    elif today_muscle_groups:
         available_exercises = available_exercises[available_exercises['muscle_group'].apply(lambda groups: any(group in today_muscle_groups for group in groups))]
     
     user_entries = await get_entries_by_id(current_user_id)
@@ -268,7 +303,9 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     max_per_muscle_group = 3  # Prevents spamming the same muscle group
     total_target_exercises = 9  # Total size of the workout
 
-    for _, row in available_exercises.iterrows():
+    ranked_exercises = sorted((row for _, row in available_exercises.iterrows()),
+                              key=lambda row: goal_priority(row, selected_goal), reverse=True)
+    for row in ranked_exercises:
         muscle_group = row['muscle_group']
         target_muscles = row['targeted_muscles']
         exercise_name = row['exercise_name']     
@@ -286,7 +323,10 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
                 "name": exercise_name,
                 "target_muscle": target_muscles,
                 "equipment": row["required_equipment"],
-                "gif_url": row.get("gif_url")
+                "gif_url": row.get("gif_url"),
+                "sets": sets,
+                "reps": reps,
+                "rest_seconds": rest_seconds,
             }
             recommended_exercises.append(recommended_exercise)
 
