@@ -13,7 +13,6 @@ import {
     NotebookText,
     MoreVertical,
     X,
-    Dumbbell,
     Circle,
 } from "lucide-react";
 
@@ -43,7 +42,6 @@ function TrainingPlan(){
     const [reload, setReload] = useState(0);
     const [openMenu, setOpenMenu] = useState(null);
     const [exercises, setExercises] = useState([]);
-    const [scoreDate, setScoreDate] = useState(null);
     const [trainingScore, setTrainingScore] = useState(null);
     const [scoreLoading, setScoreLoading] = useState(true);
     const [scoreError, setScoreError] = useState(false);
@@ -52,10 +50,6 @@ function TrainingPlan(){
         const controller = new AbortController();
         async function fetchRecommendations() {
             setLoading(true);
-            setScoreLoading(true);
-            setScoreError(false);
-            setTrainingScore(null);
-            setScoreDate(null);
             setError("");
             setExercises([]);
             const token = localStorage.getItem("access_token");
@@ -88,25 +82,49 @@ function TrainingPlan(){
                     rest: `${exercise.rest_seconds} sec`,
                     equipment: exercise.equipment.join(", "),
                 })));
-                setTrainingScore(data.final_training_score ?? null);
-                setScoreDate(data.score_date ?? null);
                 setProfileEquipment(Array.isArray(data.equipment_available) ? data.equipment_available : []);
                 setMessage(data.message || "No exercises available for this plan.");
             } catch (error) {
                 if (!controller.signal.aborted) {
                     setError(error.message);
-                    setScoreError(true);
                 }
             } finally {
                 if (!controller.signal.aborted) {
                     setLoading(false);
-                    setScoreLoading(false);
                 }
             }
         }
         fetchRecommendations();
         return () => controller.abort();
     }, [goal, focus, equipment, reload]);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        async function fetchTrainingScore() {
+            setScoreLoading(true);
+            setScoreError(false);
+            setTrainingScore(null);
+            try {
+                const token = localStorage.getItem("access_token");
+                if (!token) throw new Error("Sign in to see your training score.");
+                const apiBase = (process.env.REACT_APP_API_URL || "http://localhost:8888").replace(/\/$/, "");
+                const response = await fetch(`${apiBase}/dashboard/scores`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    signal: controller.signal,
+                });
+                if (!response.ok) throw new Error("Unable to load training score.");
+                const scores = await response.json();
+                const latest = [...scores].sort((a, b) => b.score_date.localeCompare(a.score_date))[0];
+                if (!controller.signal.aborted) setTrainingScore(latest?.final_training_score ?? null);
+            } catch (error) {
+                if (!controller.signal.aborted) setScoreError(true);
+            } finally {
+                if (!controller.signal.aborted) setScoreLoading(false);
+            }
+        }
+        fetchTrainingScore();
+        return () => controller.abort();
+    }, [reload]);
 
     const username = localStorage.getItem("username") || "Username";
     // Formatted current date: Weekday, Month Day, Year
@@ -230,7 +248,7 @@ function TrainingPlan(){
                             </span>
                             Intensity Adjustment
                         </h2>
-                        <IntensityAdjustment scoreDate={scoreDate} score={trainingScore} loading={scoreLoading} error={scoreError} />
+                        <IntensityAdjustment score={trainingScore} loading={scoreLoading} error={scoreError} />
                     </section>
                     <section className = {styles["card"]}>
                         <h2>
