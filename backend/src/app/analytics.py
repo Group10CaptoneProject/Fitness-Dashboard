@@ -101,7 +101,7 @@ async def get_rejected_exercises(current_user_id: uuid.UUID, target_date: date) 
                 "rejection_date": row.rejection_date
             }
             for row in rejected_exercises
-        ])
+        ], columns=["rejection_id", "user_id", "exercise_id", "rejection_date"])
 
 async def show_weight_trends(user_id: uuid.UUID):
     #get user id first

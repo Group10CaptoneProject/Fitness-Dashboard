@@ -76,7 +76,7 @@ def get_exercise_stats() -> pd.DataFrame:
         muscles = item.get("primaryMuscles", [])
         equipment = item.get("equipment")
         exercise_stats.append({
-            "exercise_id": item.get("id"),
+            "exercise_id": item.get("exerciseId") or item.get("id"),
             "exercise_name": item.get("name"),
             "required_equipment": tuple(equipment_names.get(eq, eq) for eq in normalized_values(item.get("equipments", equipment))),
             "muscle_group": normalized_values(item.get("bodyParts", list(dict.fromkeys(body_parts.get(m, m) for m in muscles)))),
@@ -209,7 +209,7 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     #get user equipment
     user_profile = await get_user_profile(current_user_id)
     if not user_profile or not user_profile.equipment_available:
-        return {"day": target_date.strftime('%A').lower(), "recommendations": []}
+        return {"day": target_date.strftime('%A').lower(), "recommendations": [], "equipment_available": []}
     
     user_equipment = [eq.lower() for eq in user_profile.equipment_available]
     
@@ -217,7 +217,7 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     available_exercises = exercise_data[
         exercise_data['required_equipment'].apply(
             lambda eq: any(e in user_equipment for e in eq)
-        ) & ~exercise_data['exericse_id'].isin(rejected_exercise_ids)
+        ) & ~exercise_data['exercise_id'].isin(rejected_exercise_ids)
     ]
 
     #user can choose what they want to work out each day. 
@@ -295,6 +295,7 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
 
     return {
         "day": target_day_name,
+        "equipment_available": user_equipment,
         "recommendations": recommended_exercises
     }
 

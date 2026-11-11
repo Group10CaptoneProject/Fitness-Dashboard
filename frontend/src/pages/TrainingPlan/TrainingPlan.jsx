@@ -90,7 +90,7 @@ function TrainingPlan(){
                 })));
                 setTrainingScore(data.final_training_score ?? null);
                 setScoreDate(data.score_date ?? null);
-                setProfileEquipment(data.equipment_available);
+                setProfileEquipment(Array.isArray(data.equipment_available) ? data.equipment_available : []);
                 setMessage(data.message || "No exercises available for this plan.");
             } catch (error) {
                 if (!controller.signal.aborted) {
@@ -164,7 +164,7 @@ function TrainingPlan(){
             }
 
             // Use the server's response as the saved source of truth.
-            setProfileEquipment(data.equipment_available ?? selectedEquipment);
+            setProfileEquipment(Array.isArray(data.equipment_available) ? data.equipment_available : selectedEquipment);
             setEquipment(null);
             setEditingEquipment(false);
             setReload(value => value + 1);
