@@ -3,10 +3,7 @@ import { User, Pencil, Eye, EyeOff, Dumbbell, ChevronDown } from "lucide-react";
 import styles from "./Profile.module.css";
 import MainNav from "../../component/MainNavBar/MainNav";
 
-// Backend endpoints (same host the Dashboard, Onboarding and Daily Entry pages use)
-const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:8888"
-).replace(/\/+$/, "");
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8888").replace(/\/+$/, "");
 const ACCOUNT_API_URL = `${API_URL}/profile/account`;
 const PASSWORD_API_URL = `${API_URL}/profile/change-password`;
 const FITNESS_API_URL = `${API_URL}/profile/fitness-profile`;
@@ -751,7 +748,6 @@ function Profile() {
 
       <main className={styles.main}>
         <div className={styles.pageHeading}>
-          <span className={styles.eyebrow}>Your account</span>
           <h1>Profile</h1>
           <p>Manage your account details and your fitness information</p>
         </div>
@@ -960,6 +956,7 @@ function Profile() {
                         value={passwordForm.next}
                         onChange={handlePasswordChange}
                         autoComplete="new-password"
+                        minLength={6}
                         maxLength={255}
                       />
                     </div>
@@ -975,6 +972,7 @@ function Profile() {
                         value={passwordForm.confirm}
                         onChange={handlePasswordChange}
                         autoComplete="new-password"
+                        minLength={6}
                         maxLength={255}
                       />
                     </div>

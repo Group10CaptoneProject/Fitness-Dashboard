@@ -1,6 +1,7 @@
 import logging
 import uuid
 import inspect
+import importlib
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -223,28 +224,115 @@ class PasswordChange(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=72)
 
 
-#use the password helpers from security.py. If yours have different names, add them here.
-async def _call_password_helper(names, *args):
-    for name in names:
-        helper = getattr(security, name, None)
-        if helper:
-            result = helper(*args)
-            if inspect.isawaitable(result):
-                result = await result
-            return result
+#find how login/register hash passwords so a changed password still works at login.
+#It looks for helper functions (or a passlib/pwdlib style object) in security.py and auth.py,
+#then falls back to the type of the user's saved hash (bcrypt or argon2).
+#If your project uses different names, add them to the three lists below.
+VERIFY_NAMES = ("verify_password", "verify_password_hash", "check_password", "verify_hash")
+HASH_NAMES = ("hash_password", "get_password_hash", "generate_password_hash", "make_password")
+CONTEXT_NAMES = ("pwd_context", "password_context", "password_hash", "password_hasher", "ph", "hasher")
 
-    raise HTTPException(
+
+async def _maybe_await(value):
+    if inspect.isawaitable(value):
+        return await value
+    return value
+
+
+def _find_password_tools():
+    modules = [security]
+    try:
+        modules.append(importlib.import_module(f"{__package__}.auth"))
+    except Exception:
+        logger.warning("Could not import the auth routes to look for password helpers.")
+
+    verify_function = None
+    hash_function = None
+    context = None
+
+    for module in modules:
+        for name in VERIFY_NAMES:
+            if verify_function is None and callable(getattr(module, name, None)):
+                verify_function = getattr(module, name)
+
+        for name in HASH_NAMES:
+            if hash_function is None and callable(getattr(module, name, None)):
+                hash_function = getattr(module, name)
+
+        for name in CONTEXT_NAMES:
+            candidate = getattr(module, name, None)
+            if (
+                context is None
+                and candidate is not None
+                and callable(getattr(candidate, "hash", None))
+                and callable(getattr(candidate, "verify", None))
+            ):
+                context = candidate
+
+    return verify_function, hash_function, context
+
+
+def _password_tools_missing():
+    return HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail="Password helpers were not found in security.py.",
+        detail="Could not find how passwords are hashed. Add your helper names to the lists above _find_password_tools in profile.py.",
     )
 
 
 async def _verify_password(plain_password: str, hashed_password: str) -> bool:
-    return await _call_password_helper(("verify_password",), plain_password, hashed_password)
+    verify_function, _, context = _find_password_tools()
+
+    if verify_function:
+        return bool(await _maybe_await(verify_function(plain_password, hashed_password)))
+
+    if context:
+        #argon2's PasswordHasher takes the hash first and raises when the password is wrong
+        if type(context).__module__.startswith("argon2"):
+            try:
+                return bool(context.verify(hashed_password, plain_password))
+            except Exception:
+                return False
+
+        return bool(await _maybe_await(context.verify(plain_password, hashed_password)))
+
+    #no helper found: use the type of the saved hash
+    if hashed_password.startswith(("$2a$", "$2b$", "$2y$")):
+        import bcrypt
+
+        return bcrypt.checkpw(plain_password.encode("utf-8")[:72], hashed_password.encode("utf-8"))
+
+    if hashed_password.startswith("$argon2"):
+        from argon2 import PasswordHasher
+
+        try:
+            return PasswordHasher().verify(hashed_password, plain_password)
+        except Exception:
+            return False
+
+    raise _password_tools_missing()
 
 
-async def _hash_password(password: str) -> str:
-    return await _call_password_helper(("hash_password", "get_password_hash"), password)
+async def _hash_password(password: str, current_hash: str) -> str:
+    _, hash_function, context = _find_password_tools()
+
+    if hash_function:
+        return await _maybe_await(hash_function(password))
+
+    if context:
+        return await _maybe_await(context.hash(password))
+
+    #no helper found: hash the same way as the user's saved hash
+    if current_hash.startswith(("$2a$", "$2b$", "$2y$")):
+        import bcrypt
+
+        return bcrypt.hashpw(password.encode("utf-8")[:72], bcrypt.gensalt()).decode("utf-8")
+
+    if current_hash.startswith("$argon2"):
+        from argon2 import PasswordHasher
+
+        return PasswordHasher().hash(password)
+
+    raise _password_tools_missing()
 
 
 #get the logged in user's account information
@@ -302,7 +390,7 @@ async def change_password(password_data: PasswordChange, current_user: User = De
     if password_data.new_password == password_data.current_password:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New password must be different from your current password.")
 
-    user.password_hash = await _hash_password(password_data.new_password)
+    user.password_hash = await _hash_password(password_data.new_password, user.password_hash)
 
     try:
         await db.commit()
