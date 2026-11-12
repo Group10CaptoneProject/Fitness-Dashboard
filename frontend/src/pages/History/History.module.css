@@ -1,0 +1,82 @@
+.wrapper{
+    width: 100%;
+    max-width: 1320px;
+    min-height: calc(100vh - 56px);
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 28px 36px 32px;
+    display: flex;
+    flex-direction: column;
+}
+
+.header{
+    padding: 0;
+}
+
+.header h1{
+    margin: 0.83em 0;
+    font-size: 1.5em;
+    font-weight: 700;
+}
+
+.description{
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    color: rgb(100, 116, 139)
+}
+
+.description p{
+    margin: 0;
+    font-size: 1rem;
+}
+.log-section{
+    min-width: 0;
+    background: white;
+    border: 1px solid #d6e2ff;
+    border-radius: 12px;
+    margin-top: 20px;
+    padding: 24px;
+}
+.log-section h2{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.83em 0;
+    font-size: 1.5em;
+    font-weight: 700;
+}
+.icon{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #1d4fc5;
+    color: white;
+}
+
+.table{
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    font-size: 1rem;
+}
+
+.table th{
+    height: 56px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: left;
+}
+
+.table td{
+    height: 82px;
+}
+
+.table th, .table td{
+    padding: 0 16px;
+    border-bottom: 1px solid #eef0f3;
+}
