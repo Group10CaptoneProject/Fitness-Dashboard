@@ -73,7 +73,9 @@ function History() {
                             {!loading && !error && historyData.length === 0 && (
                                 <tr><td colSpan={6}>No saved workouts yet.</td></tr>
                             )}
-                            {historyData.map((entry) => (
+                            {[...historyData].
+                            sort((a, b) => b.entry_date.localeCompare(a.entry_date)).
+                            map((entry) => (
                                 <tr key={entry.entry_id}>
                                     <td>{entry.entry_date}</td>
                                     <td>{entry.exercise_name}</td>
