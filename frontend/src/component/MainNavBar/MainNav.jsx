@@ -59,7 +59,7 @@ function MainNav({ username }) {
     { label: "Daily Entry", path: "/entry", Icon: NotebookPen },
     { label: "Dashboard", path: "/dashboard", Icon: LayoutDashboard },
     { label: "Training Plan", path: "/training-plan", Icon: CalendarDays },
-    { label: "Planner", path: "/planner", Icon: CalendarPlus },
+    // { label: "Planner", path: "/planner", Icon: CalendarPlus },
     { label: "History", path: "/history", Icon: History },
     { label: "Analytics", path: "/analytics", Icon: LineChart },
   ];
