@@ -100,12 +100,40 @@ async def create_daily_entry(entry_data: DailyEntryCreate, current_user: User = 
     }
 
 #get the saved entry for one date (used to refill the daily entry page)
-@router.get("/")
+@router.get("/by-date/{entry_date}")
 async def get_daily_entry(entry_date: date, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(DailyEntry).where(
             DailyEntry.user_id == current_user.user_id,
             DailyEntry.entry_date == entry_date,
+        )
+    )
+    entry = result.scalar_one_or_none()
+
+    if entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No entry for this date")
+
+    return {
+        "entry_id": entry.entry_id,
+        "user_id": str(entry.user_id),
+        "entry_date": entry.entry_date.isoformat(),
+        "sleep": entry.sleep,
+        "energy_level": entry.energy_level,
+        "soreness": entry.soreness,
+        "stress": entry.stress,
+        "heart_rate": entry.heart_rate,
+        "duration": entry.duration,
+        "difficulty": entry.difficulty,
+        "muscle_category": entry.muscle_category.value if hasattr(entry.muscle_category, "value") else entry.muscle_category,
+        "muscle_group": entry.muscle_group.value if hasattr(entry.muscle_group, "value") else entry.muscle_group,
+        "exercise_name": entry.exercise_name,
+    }
+
+@router.get("/")
+async def get_daily_entry( current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(DailyEntry).where(
+            DailyEntry.user_id == current_user.user_id
         )
     )
     entry = result.scalar_one_or_none()
