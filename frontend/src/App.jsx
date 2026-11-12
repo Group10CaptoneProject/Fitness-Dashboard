@@ -13,6 +13,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import Research from "./pages/Research/Research";
 import Profile from "./pages/Profile/Profile";
 import Analytics from "./pages/Analytics/Analytics";
+import History from "./pages/History/History";
+import Planner from "./pages/Planner/Planner";
 
 function App() {
   return (
@@ -50,9 +52,11 @@ function App() {
           }
         />
         <Route path="/training-plan" element={<ProtectedRoute><TrainingPlan /></ProtectedRoute>}/>
+        <Route path="/planner" element={<ProtectedRoute><Planner /></ProtectedRoute>}/>
         <Route path="/analytics" element={<ProtectedRoute><Analytics/></ProtectedRoute>}/>
         <Route path="/research" element={<ProtectedRoute><Research /></ProtectedRoute>}/>
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/history" element={<ProtectedRoute><History/></ProtectedRoute>}/>
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-reset-code" element={<VerifyResetCode />} />

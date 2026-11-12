@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   CalendarDays,
+  CalendarPlus,
+  History,
   ChevronDown,
   Dumbbell,
   LayoutDashboard,
@@ -57,6 +59,8 @@ function MainNav({ username }) {
     { label: "Daily Entry", path: "/entry", Icon: NotebookPen },
     { label: "Dashboard", path: "/dashboard", Icon: LayoutDashboard },
     { label: "Training Plan", path: "/training-plan", Icon: CalendarDays },
+    // { label: "Planner", path: "/planner", Icon: CalendarPlus },
+    { label: "History", path: "/history", Icon: History },
     { label: "Analytics", path: "/analytics", Icon: LineChart },
   ];
 

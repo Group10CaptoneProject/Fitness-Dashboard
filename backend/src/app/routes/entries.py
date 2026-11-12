@@ -136,23 +136,30 @@ async def get_daily_entry( current_user: User = Depends(get_current_user), db: A
             DailyEntry.user_id == current_user.user_id
         )
     )
-    entry = result.scalar_one_or_none()
-
-    if entry is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No entry for this date")
-
-    return {
-        "entry_id": entry.entry_id,
-        "user_id": str(entry.user_id),
-        "entry_date": entry.entry_date.isoformat(),
-        "sleep": entry.sleep,
-        "energy_level": entry.energy_level,
-        "soreness": entry.soreness,
-        "stress": entry.stress,
-        "heart_rate": entry.heart_rate,
-        "duration": entry.duration,
-        "difficulty": entry.difficulty,
-        "muscle_category": entry.muscle_category.value if hasattr(entry.muscle_category, "value") else entry.muscle_category,
-        "muscle_group": entry.muscle_group.value if hasattr(entry.muscle_group, "value") else entry.muscle_group,
-        "exercise_name": entry.exercise_name,
-    }
+    entries = result.scalars().all()
+    return [
+        {
+            "entry_id": entry.entry_id,
+            "user_id": str(entry.user_id),
+            "entry_date": entry.entry_date.isoformat(),
+            "sleep": entry.sleep,
+            "energy_level": entry.energy_level,
+            "soreness": entry.soreness,
+            "stress": entry.stress,
+            "heart_rate": entry.heart_rate,
+            "duration": entry.duration,
+            "difficulty": entry.difficulty,
+            "muscle_category": (
+                entry.muscle_category.value
+                if hasattr(entry.muscle_category, "value")
+                else entry.muscle_category
+            ),
+            "muscle_group": (
+                entry.muscle_group.value
+                if hasattr(entry.muscle_group, "value")
+                else entry.muscle_group
+            ),
+            "exercise_name": entry.exercise_name,
+        }
+        for entry in entries
+    ]
