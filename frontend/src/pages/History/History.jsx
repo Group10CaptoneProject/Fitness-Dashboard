@@ -8,12 +8,13 @@ function History() {
     const [historyData, setHistoryData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const rowsPerPage = 10;
 
     useEffect(() =>{
         async function fetchHistory() {
             try {
-                const apiBase = (process.env.REACT_APP_API_URL || "http://localhost:8888").replace(/\/$/, "");
-                const response = await fetch(`${apiBase}/entries/`, {
+                const response = await fetch("http://localhost:8888/entries/", {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -28,6 +29,7 @@ function History() {
                 const data = await response.json();
                 if (!Array.isArray(data)) throw new Error("Unexpected history response: expected a list of entries.");
                 setHistoryData(data);
+                setCurrentPage(1);
             } catch (error) {
                 setError(error.message);
             } finally {
@@ -37,6 +39,13 @@ function History() {
 
         fetchHistory();
     }, []);
+
+    const sortedHistory = [...historyData].sort((a, b) =>
+        b.entry_date.localeCompare(a.entry_date)
+    );
+    const totalPages = Math.max(1, Math.ceil(sortedHistory.length / rowsPerPage));
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const currentRows = sortedHistory.slice(startIndex, startIndex + rowsPerPage);
 
     return (
         <>
@@ -54,7 +63,7 @@ function History() {
                         <span className = {styles["icon"]}>
                             <Logs size={22} />
                         </span>
-                        Workout log
+                        Exercise log
                     </h2>
                     <table className = {styles["table"]}>
                         <thead>
@@ -73,9 +82,7 @@ function History() {
                             {!loading && !error && historyData.length === 0 && (
                                 <tr><td colSpan={6}>No saved workouts yet.</td></tr>
                             )}
-                            {[...historyData].
-                            sort((a, b) => b.entry_date.localeCompare(a.entry_date)).
-                            map((entry) => (
+                            {currentRows.map((entry) => (
                                 <tr key={entry.entry_id}>
                                     <td>{entry.entry_date}</td>
                                     <td>{entry.exercise_name}</td>
@@ -87,6 +94,27 @@ function History() {
                             ))}
                         </tbody>
                     </table>
+                    {!loading && !error && historyData.length > 0 && (
+                        <nav className={styles.pagination}>
+                            <button
+                                type="button"
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                            >
+                                Previous
+                            </button>
+                            <span aria-live="polite">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                            <button
+                                type="button"
+                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                            >
+                                Next
+                            </button>
+                        </nav>
+                    )}
                 </section>
             </main>
 
