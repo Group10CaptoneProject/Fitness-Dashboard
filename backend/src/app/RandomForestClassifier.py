@@ -296,12 +296,11 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
             for _, row in recent_matches.iterrows():
                 targeted_muscles_worked_out.update(row['targeted_muscles'])
 
-
     #loop through exericses and get up to 3 
     recommended_exercises = []
     muscle_group_counts = {}  # Tracks how many exercises we've picked per muscle group
     max_per_muscle_group = 3  # Prevents spamming the same muscle group
-    total_target_exercises = 9  # Total size of the workout
+    total_target_exercises = 5  # Total size of the workout
 
     ranked_exercises = sorted((row for _, row in available_exercises.iterrows()),
                               key=lambda row: goal_priority(row, selected_goal), reverse=True)
