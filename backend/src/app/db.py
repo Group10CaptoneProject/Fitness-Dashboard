@@ -27,6 +27,7 @@ database_url = database_url.difference_update_query(
 engine = create_async_engine(
     database_url,
     connect_args={"ssl": "require"},
+    pool_pre_ping=True,
 )
 
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

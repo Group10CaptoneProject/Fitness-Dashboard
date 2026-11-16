@@ -547,6 +547,153 @@
   outline-offset: 3px;
 }
 
+/* Delete account */
+.deleteSection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid #e7ecf4;
+}
+
+.deleteSection h3 {
+  margin: 0 0 4px;
+  color: #172033;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.deleteSection p {
+  max-width: 520px;
+  margin: 0;
+  color: #718096;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.dangerOutlineButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 18px;
+  border: 1px solid #f1b4b4;
+  border-radius: 8px;
+  background: #fff;
+  color: #c62828;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.dangerOutlineButton:hover {
+  border-color: #e57373;
+  background: #fff7f7;
+}
+
+.dangerOutlineButton:focus-visible {
+  outline: 2px solid #c62828;
+  outline-offset: 3px;
+}
+
+/* Delete account popup */
+.confirmModal {
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100vh - 40px);
+  padding: 24px;
+  overflow-y: auto;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 20px 50px rgb(15 23 42 / 25%);
+}
+
+.confirmHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.dangerBadge {
+  display: flex;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #fdecec;
+  color: #c62828;
+}
+
+.confirmHeader h2 {
+  margin: 2px 0 6px;
+  color: #172033;
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.3px;
+}
+
+.confirmHeader p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.confirmList {
+  margin: 16px 0 0;
+  padding: 12px 14px 12px 32px;
+  border-radius: 10px;
+  background: #fafcff;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.confirmActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.dangerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 20px;
+  border: 1px solid #c62828;
+  border-radius: 8px;
+  background: #c62828;
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.dangerButton:hover:not(:disabled) {
+  border-color: #a81f1f;
+  background: #a81f1f;
+}
+
+.dangerButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.dangerButton:focus-visible {
+  outline: 2px solid #c62828;
+  outline-offset: 3px;
+}
+
 /* Buttons */
 .buttonRow {
   display: flex;
@@ -666,6 +813,15 @@
   }
 
   .footerActions button {
+    flex: 1;
+  }
+
+  .deleteSection {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .confirmActions button {
     flex: 1;
   }
 }

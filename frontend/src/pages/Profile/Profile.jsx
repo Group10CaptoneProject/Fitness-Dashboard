@@ -1,9 +1,21 @@
 import { useEffect, useState } from "react";
-import { User, Pencil, Eye, EyeOff, Dumbbell, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router";
+import {
+  User,
+  Pencil,
+  Eye,
+  EyeOff,
+  Dumbbell,
+  ChevronDown,
+  Trash2,
+} from "lucide-react";
 import styles from "./Profile.module.css";
 import MainNav from "../../component/MainNavBar/MainNav";
 
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8888").replace(/\/+$/, "");
+// Backend endpoints (same host the Dashboard, Onboarding and Daily Entry pages use)
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:8888"
+).replace(/\/+$/, "");
 const ACCOUNT_API_URL = `${API_URL}/profile/account`;
 const PASSWORD_API_URL = `${API_URL}/profile/change-password`;
 const FITNESS_API_URL = `${API_URL}/profile/fitness-profile`;
@@ -104,6 +116,29 @@ function storeUsername(newUsername) {
   if (localStorage.getItem("user_name") !== null) {
     localStorage.setItem("user_name", newUsername);
   }
+}
+
+// Remove the deleted account's saved information from this browser
+function clearStoredAccountData() {
+  const userId = localStorage.getItem("user_id");
+
+  [
+    "access_token",
+    "user_id",
+    "username",
+    "user_name",
+    "name",
+    "onboarding_data",
+  ].forEach((key) => localStorage.removeItem(key));
+
+  // Daily entry copies are saved per user and per date
+  if (userId) {
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith(`daily_entry_${userId}_`))
+      .forEach((key) => localStorage.removeItem(key));
+  }
+
+  sessionStorage.removeItem("daily_entry_draft");
 }
 
 // Options match the Onboarding page
@@ -262,6 +297,8 @@ function ChipGroup({ name, options, selected, onChange }) {
 }
 
 function Profile() {
+  const navigate = useNavigate();
+
   const [username, setUsername] = useState(
     localStorage.getItem("username") ||
       localStorage.getItem("user_name") ||
@@ -311,6 +348,11 @@ function Profile() {
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
+
+  // Delete account
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const profileChanged =
     serializeProfile(profileForm) !== serializeProfile(savedProfile);
@@ -415,6 +457,26 @@ function Profile() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [equipmentOpen]);
+
+  // Close the delete popup with the Escape key (unless the account is being deleted)
+  useEffect(() => {
+    if (!deleteOpen) return undefined;
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape" && !deletingAccount) {
+        setDeleteOpen(false);
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [deleteOpen, deletingAccount]);
 
   // Username
   function startEditingUsername() {
@@ -575,6 +637,58 @@ function Profile() {
       });
     } finally {
       setSavingPassword(false);
+    }
+  }
+
+  // Delete account
+  function openDeleteDialog() {
+    setDeleteError("");
+    setDeleteOpen(true);
+  }
+
+  function closeDeleteDialog() {
+    if (deletingAccount) return;
+
+    setDeleteOpen(false);
+    setDeleteError("");
+  }
+
+  async function handleDeleteAccount() {
+    if (deletingAccount) return;
+
+    setDeletingAccount(true);
+    setDeleteError("");
+
+    try {
+      const response = await fetchWithTimeout(ACCOUNT_API_URL, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+
+      await readResponse(response, "Could not delete your account.");
+
+      // Make sure the account is really gone: the server should now reject this login
+      const accountCheck = await fetchWithTimeout(ACCOUNT_API_URL, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+
+      if (accountCheck.ok) {
+        throw new Error(
+          "The server said your account was deleted, but it still exists. Please try again."
+        );
+      }
+
+      // The account no longer exists, so log out and go back to the home page
+      clearStoredAccountData();
+      navigate("/", { replace: true });
+    } catch (deleteErr) {
+      console.error("Account delete error:", deleteErr);
+
+      setDeleteError(
+        deleteErr.message || "Could not delete your account."
+      );
+      setDeletingAccount(false);
     }
   }
 
@@ -748,6 +862,7 @@ function Profile() {
 
       <main className={styles.main}>
         <div className={styles.pageHeading}>
+          <span className={styles.eyebrow}>Your account</span>
           <h1>Profile</h1>
           <p>Manage your account details and your fitness information</p>
         </div>
@@ -956,7 +1071,6 @@ function Profile() {
                         value={passwordForm.next}
                         onChange={handlePasswordChange}
                         autoComplete="new-password"
-                        minLength={6}
                         maxLength={255}
                       />
                     </div>
@@ -972,7 +1086,6 @@ function Profile() {
                         value={passwordForm.confirm}
                         onChange={handlePasswordChange}
                         autoComplete="new-password"
-                        minLength={6}
                         maxLength={255}
                       />
                     </div>
@@ -1015,6 +1128,96 @@ function Profile() {
                     </button>
                   </div>
                 </form>
+              )}
+
+              {/* Delete account */}
+              <div className={styles.deleteSection}>
+                <div>
+                  <h3>Delete account</h3>
+                  <p>
+                    Permanently delete your account and all of your data.
+                    This cannot be undone.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className={styles.dangerOutlineButton}
+                  onClick={openDeleteDialog}
+                  aria-haspopup="dialog"
+                >
+                  <Trash2 size={16} />
+                  Delete account
+                </button>
+              </div>
+
+              {deleteOpen && (
+                <div
+                  className={styles.modalOverlay}
+                  onClick={(event) => {
+                    if (event.target === event.currentTarget) {
+                      closeDeleteDialog();
+                    }
+                  }}
+                >
+                  <section
+                    className={styles.confirmModal}
+                    role="alertdialog"
+                    aria-modal="true"
+                    aria-labelledby="delete-modal-title"
+                    aria-describedby="delete-modal-description"
+                  >
+                    <div className={styles.confirmHeader}>
+                      <span className={styles.dangerBadge}>
+                        <Trash2 size={22} />
+                      </span>
+
+                      <div>
+                        <h2 id="delete-modal-title">
+                          Delete your account?
+                        </h2>
+                        <p id="delete-modal-description">
+                          This will permanently delete your account and
+                          everything saved under it. This cannot be undone.
+                        </p>
+                      </div>
+                    </div>
+
+                    <ul className={styles.confirmList}>
+                      <li>Your username, email, and password</li>
+                      <li>Your profile information and training preferences</li>
+                      <li>Your daily entries and training scores</li>
+                    </ul>
+
+                    {deleteError && (
+                      <p className={styles.messageError} role="alert">
+                        {deleteError}
+                      </p>
+                    )}
+
+                    <div className={styles.confirmActions}>
+                      <button
+                        type="button"
+                        className={styles.secondaryButton}
+                        onClick={closeDeleteDialog}
+                        disabled={deletingAccount}
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="button"
+                        className={styles.dangerButton}
+                        onClick={handleDeleteAccount}
+                        disabled={deletingAccount}
+                      >
+                        {deletingAccount
+                          ? "Deleting..."
+                          : "Yes, delete my account"}
+                      </button>
+                    </div>
+                  </section>
+                </div>
               )}
             </>
           )}
