@@ -498,6 +498,8 @@ function Onboarding() {
     { label: "Kettlebells", value: "kettlebells" },
     { label: "Resistance Bands", value: "resistance_bands" },
     { label: "Barbell", value: "barbell" },
+    { label: "Machines", value: "machines" },
+    { label: "Cable", value: "cable" },
   ];
 
   const workoutDayOptions = [

@@ -167,6 +167,8 @@ const equipmentOptions = [
   { value: "kettlebells", label: "Kettlebells" },
   { value: "resistance_bands", label: "Resistance Bands" },
   { value: "barbell", label: "Barbell" },
+  { value: "machines", label: "Machines" },
+  { value: "cable", label: "Cable" },
 ];
 
 const workoutDayOptions = [
