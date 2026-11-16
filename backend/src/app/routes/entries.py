@@ -11,6 +11,12 @@ from ..analytics import calculate_readiness_data, update_user_dashboard  # or yo
 from ..security import get_current_user
 router = APIRouter(prefix="/entries", tags=["Daily Entries"])
 
+#NaN and infinity cannot be sent as JSON (the response crashes with a 500), so replace them with null
+def json_safe_records(dataframe):
+    cleaned = dataframe.replace([float("inf"), float("-inf")], float("nan"))
+    cleaned = cleaned.astype(object).where(cleaned.notna(), None)
+    return cleaned.to_dict(orient="records")
+
 #new daily entry
 @router.post("/")
 async def create_daily_entry(entry_data: DailyEntryCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)): 
@@ -96,7 +102,7 @@ async def create_daily_entry(entry_data: DailyEntryCreate, current_user: User = 
     return {
         "message": "Daily entry saved",
         "entry": new_entry,
-        "readiness": readiness_results.to_dict(orient="records")    #convert df -> dict
+        "readiness": json_safe_records(readiness_results)    #convert df -> dict
     }
 
 #get the saved entry for one date (used to refill the daily entry page)

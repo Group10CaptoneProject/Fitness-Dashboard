@@ -271,7 +271,7 @@ class AccountPatch(BaseModel):
 #change password request (max 72 because bcrypt ignores anything longer)
 class PasswordChange(BaseModel):
     current_password: str = Field(..., min_length=1, max_length=72)
-    new_password: str = Field(..., min_length=8, max_length=72)
+    new_password: str = Field(..., min_length=6, max_length=72)
 
 
 #find how login/register hash passwords so a changed password still works at login.
