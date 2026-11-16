@@ -1,0 +1,12 @@
+# Keep these dependencies in sync with pyproject.toml.
+aiosmtplib>=5.1.3
+asyncpg>=0.31.0
+fastapi[standard]>=0.141.1
+greenlet>=3.5.6
+pandas>=3.0.6
+pwdlib[argon2]>=0.3.1
+pyjwt>=2.14.0
+resend[async]>=2.48.0
+scikit-learn>=1.9.1
+seaborn>=0.13.2
+sqlalchemy>=2.0.54
