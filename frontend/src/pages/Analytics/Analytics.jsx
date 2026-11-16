@@ -49,7 +49,7 @@ function Analytics() {
         async function fetchTrainingData(){
             const token = localStorage.getItem("access_token")
             try{
-                const reponse = await fetch("http://localhost:8888/dashboard/scores",
+                const reponse = await fetch(`${(process.env.REACT_APP_API_URL || "http://localhost:8888").replace(/\/+$/, "")}/dashboard/scores`,
                 {
                     method: "GET",
                     headers: {

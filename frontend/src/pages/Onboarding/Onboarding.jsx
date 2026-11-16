@@ -16,7 +16,7 @@ import {
 import styles from "./Onboarding.module.css";
 
 const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:8888"
+  process.env.REACT_APP_API_URL || "http://localhost:8888"
 ).replace(/\/+$/, "");
 
 const REQUEST_TIMEOUT_MS = 20000;

@@ -4,7 +4,7 @@ import styles from "./Register.module.css";
 import { Dumbbell } from "lucide-react";
 
 // Local backend URL for development (port 8888)
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8888";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8888";
 
 function Register() {
   const navigate = useNavigate();

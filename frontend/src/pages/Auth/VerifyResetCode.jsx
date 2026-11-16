@@ -17,7 +17,7 @@ function VerifyResetCode() {
     setLoading(true);
     const email = sessionStorage.getItem("resetEmail");
     try {
-      const response = await fetch("http://localhost:8888/auth/verify-reset-code",{
+      const response = await fetch(`${(process.env.REACT_APP_API_URL || "http://localhost:8888").replace(/\/+$/, "")}/auth/verify-reset-code`,{
           method: "POST",
           headers: {"Content-Type": "application/json",},
           body: JSON.stringify({ email, code, }),

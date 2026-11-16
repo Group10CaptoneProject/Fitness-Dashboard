@@ -3,7 +3,7 @@ import { Navigate } from "react-router";
 import { isAuthenticated } from "../auth/auth";
 
 const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:8888"
+  process.env.REACT_APP_API_URL || "http://localhost:8888"
 ).replace(/\/+$/, "");
 
 // status: "checking" | "ok" | "needs_onboarding" | "expired"

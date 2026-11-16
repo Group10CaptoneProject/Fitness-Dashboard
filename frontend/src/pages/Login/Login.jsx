@@ -7,7 +7,7 @@ import { useSearchParams } from "react-router";
 
 // Local backend URL for development (port 8888)
 const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:8888"
+  process.env.REACT_APP_API_URL || "http://localhost:8888"
 ).replace(/\/+$/, "");
 
 function Login() {

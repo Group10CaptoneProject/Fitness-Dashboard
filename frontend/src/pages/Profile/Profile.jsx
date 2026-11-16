@@ -14,7 +14,7 @@ import MainNav from "../../component/MainNavBar/MainNav";
 
 // Backend endpoints (same host the Dashboard, Onboarding and Daily Entry pages use)
 const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:8888"
+  process.env.REACT_APP_API_URL || "http://localhost:8888"
 ).replace(/\/+$/, "");
 const ACCOUNT_API_URL = `${API_URL}/profile/account`;
 const PASSWORD_API_URL = `${API_URL}/profile/change-password`;

@@ -14,7 +14,7 @@ function History() {
     useEffect(() =>{
         async function fetchHistory() {
             try {
-                const response = await fetch("http://localhost:8888/entries/", {
+                const response = await fetch(`${(process.env.REACT_APP_API_URL || "http://localhost:8888").replace(/\/+$/, "")}/entries/`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
