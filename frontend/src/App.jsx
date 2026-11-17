@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
@@ -17,6 +18,16 @@ import History from "./pages/History/History";
 import Planner from "./pages/Planner/Planner";
 
 function App() {
+  useEffect(() => {
+    const apiUrl = process.env.REACT_APP_API_URL?.trim().replace(/\/+$/, "");
+    if (!apiUrl) return;
+
+    // Start waking the backend as soon as someone opens the site.
+    void fetch(`${apiUrl}/`, { cache: "no-store" }).catch(() => {
+      // API calls still handle their own errors if the backend is unavailable.
+    });
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
