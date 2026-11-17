@@ -3,6 +3,7 @@ import resend
 from app.config.config import settings 
 
 resend.api_key = settings.resend_api_key
+print("Resend API key loaded:", bool(settings.resend_api_key))
 
 async def send_mail(user_email: str, code: str):
     params: resend.Emails.SendParams = {
@@ -16,5 +17,8 @@ async def send_mail(user_email: str, code: str):
             <p>This code will expire in 10 minutes.</p>
         """,
     }
-    email = await resend.Emails.send_async(params)
-    return email
+    try:
+        email = await resend.Emails.send_async(params)
+        return email 
+    except Exception as e:
+        print(f"Reseend email error: {e}")

@@ -1,5 +1,5 @@
 # Backend
-backend/.env
+.env
 backend/.venv/
 
 # Python

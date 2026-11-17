@@ -16,6 +16,7 @@ from .analytics import get_entries_by_id, get_daily_score, get_target_plan, get_
 from .security import get_current_user
 from .routes.profile import get_fitness_profile
 from .schema import RejectedExerciseCreate 
+from .config.config import settings 
 
 router = APIRouter(prefix="/analytics", tags=["Analytics & Recommendations"])
 
@@ -31,10 +32,15 @@ async def fetch_and_cache_exercises():
     if os.path.exists("exercises_cache.json"):
         return
 
-    url = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json"
+    url = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json/"
+    headers = {
+        "X-RapidAPI-Key": settings.EXERCISEDB_API_KEY,
+        "X-RapidAPI-Host": "edb-with-videos-and-images-by-ascendapi.p.rapidapi.com"
+    }
+
     async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
         try:
-            response = await client.get(url)
+            response = await client.get(url, headers=headers)
             response.raise_for_status()
             exercise_data = response.json()
             if not isinstance(exercise_data, list) or not exercise_data:
