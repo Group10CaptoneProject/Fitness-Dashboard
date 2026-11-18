@@ -11,7 +11,7 @@ from sqlalchemy import String, Integer, ForeignKey, Numeric, Date, DateTime, Uni
 from decimal import Decimal
 from typing import List
 
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, selectinload
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
@@ -38,6 +38,9 @@ AsyncSessionLocal = async_sessionmaker(
     autocommit=False,
     autoflush=False
 )
+
+print("DATABASE CONNECTED TO:", database_url.host)
+print("DATABASE NAME:", database_url.database)
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]: 
     async with async_session_maker() as session: 

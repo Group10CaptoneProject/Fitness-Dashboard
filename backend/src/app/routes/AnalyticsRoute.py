@@ -26,12 +26,12 @@ async def predict_workout(current_user: User = Depends(get_current_user), db: As
 
     prediction_record = {}
     for exercise in exercise_list:
-        name = exercise.get("name")
+        name = exercise["name"]
         prediction_record[name] = {
-            "tagret_muscle": name["targeted_muscle"],
-            "equipment": name["required_equipment"],
+            "tagret_muscle": exercise.get("target_muscle"),
+            "equipment": exercise.get("equipment"),
             "recommended_weight": recommended_weight,
-            "gif_url": name["gif_url"]
+            "gif_url": exercise.get("gif_url")
         }
 
     return {

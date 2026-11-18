@@ -68,7 +68,7 @@ async def seed_database():
             )
 
             new_user.profile = UserProfile(
-                primary_goal=GoalEnum.HYPERTROPY,
+                primary_goal=GoalEnum.HYPERTROPHY,
                 experience_level=ExperienceLevelEnum.INTERMEDIATE,
                 equipment_available=["barbell", "dumbbell", "cables"],
             )

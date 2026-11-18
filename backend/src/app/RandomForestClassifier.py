@@ -4,14 +4,17 @@ import os
 import httpx 
 import json
 import asyncio
+import uuid
 from datetime import date
 from time import monotonic
 from math import floor, isfinite
 from typing import Optional
-from sqlalchemy import select
+from sqlalchemy import select, text 
 from fastapi import Depends, APIRouter, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from .db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db, RejectedExercise
+from sqlalchemy.orm import selectinload 
+
+from .db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db, RejectedExercise, async_session_maker
 from .analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile, get_rejected_exercises
 from .security import get_current_user
 from .routes.profile import get_fitness_profile
@@ -26,6 +29,24 @@ def normalized_values(value):
         return ()
     values = value if isinstance(value, (list, tuple)) else str(value).split(",")
     return tuple(str(item).strip().lower() for item in values if str(item).strip())
+
+def normalize_equipment(equipment):
+    equipment_aliases = {
+        "cable": "cable",
+        "cables": "cable",
+        "dumbbell": "dumbbell",
+        "dumbbells": "dumbbell",
+        "barbell": "barbell",
+        "barbells": "barbell",
+        "resistance band": "resistance band",
+        "resistance bands": "resistance band",
+    }
+
+    return [
+        equipment_aliases.get(eq.strip().lower(), eq.strip().lower())
+        for eq in equipment
+        if eq.strip()
+    ]
 
 #save api data locally
 async def fetch_and_cache_exercises():
@@ -126,7 +147,7 @@ async def calculate_weight_adjustment(current_user: User = Depends(get_current_u
         experience_level = str(user_profile_data.experience_level).lower()
         goal = str(user_profile_data.primary_goal).lower()
         equipment_available = user_profile_data.equipment_available
-        primary_goal = user_profile_data.goal
+        primary_goal = user_profile_data.primary_goal
 
     else:
         experience_level = "beginnger"
@@ -234,6 +255,9 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     #rejected exercises
     rejected_exercises = await get_rejected_exercises(current_user_id, target_date)
     rejected_exercise_ids = set(rejected_exercises["exercise_id"])
+    print(rejected_exercise_ids)
+    print(exercise_data["exercise_id"].head())
+    print(exercise_data["exercise_id"].dtype)
 
     #get user equipment
     user_profile = await get_user_profile(current_user_id)
@@ -241,7 +265,8 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     if not selected_equipment:
         return {"day": target_date.strftime('%A').lower(), "recommendations": [], "equipment_available": []}
     
-    user_equipment = [eq.strip().lower() for eq in selected_equipment if eq.strip()]
+    
+    user_equipment = normalize_equipment(selected_equipment)    
     selected_goal = goal.value if goal else getattr(user_profile, "primary_goal", "healthy_lifestyle")
     selected_goal = getattr(selected_goal, "value", selected_goal)
     sets, reps, rest_seconds = {
@@ -250,12 +275,19 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
         "healthy_lifestyle": (2, 10, 90),
     }.get(selected_goal, (2, 10, 90))
     
-    #only filter through exercises user can do based on equipment they have
+    #only filter through exercises user can do based on equipment they have. use these to compare 
+    exercise_data["normalized_equipment"] = exercise_data["required_equipment"].apply(normalize_equipment)
+
     available_exercises = exercise_data[
-        exercise_data['required_equipment'].apply(
-            lambda eq: any(e in user_equipment for e in eq)
-        ) & ~exercise_data['exercise_id'].isin(rejected_exercise_ids)
+        exercise_data["normalized_equipment"].apply(
+            lambda required: all(eq in user_equipment for eq in required)
+        ) & ~exercise_data["exercise_id"].isin(rejected_exercise_ids)
     ]
+    print("Profile equipment:", selected_equipment)
+    print("Normalized user equipment:", user_equipment)
+
+    print("Catalog equipment:")
+    print(exercise_data["required_equipment"].head(10).tolist())
 
     #user can choose what they want to work out each day. 
     fitness_profile = await get_fitness_profile(current_user, db)
@@ -344,6 +376,60 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
         "recommendations": recommended_exercises
     }
 
+async def test_exercise_recommendation():
+    test_user_id = uuid.UUID("df83bdb6-8b5d-4a19-9eda-d3a579acd7a9")
+
+    async with async_session_maker() as db:
+        # 1. Correct the misspelled goal in this user's existing database profile
+        await db.execute(
+            text("""
+                UPDATE user_profiles
+                SET primary_goal = 'HYPERTROPHY'
+                WHERE user_id = :user_id
+            """),
+            {"user_id": test_user_id}
+        )
+        await db.commit()
+        
+        result = await db.execute(
+        text("""
+            SELECT user_id, primary_goal
+            FROM user_profiles
+            WHERE user_id = :user_id
+        """),
+        {"user_id": test_user_id}
+    )
+        print("USERS FROM PYTHON:", result.mappings().all())
+        
+        #get the profile
+        result = await db.execute(select(User).options(selectinload(User.profile)).where(User.user_id == test_user_id))
+        current_user = result.scalar_one_or_none()
+
+        if current_user is None:
+            print("No users found.")
+            return 
+
+        # Get the user's saved profile
+        user_profile = current_user.profile
+
+        if user_profile is None:
+            print("No user profile found.")
+            return 
+
+        print("Profile equipment:", user_profile.equipment_available)
+
+        # Run the actual recommendation function
+        recommendations = await exercise_recommendation(
+            current_user=current_user,
+            db=db,
+            equipment = None
+        )
+
+        print("Normalized equipment:", recommendations["equipment_available"])
+        print("Recommendations:")
+        for exercise in recommendations["recommendations"]:
+            print(exercise["name"], "|", exercise["equipment"])
+
 @router.post("/removed-exercise")
 async def save_removed_exercise(request: RejectedExerciseCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None):
     current_user_id = current_user.user_id
@@ -375,4 +461,10 @@ async def save_removed_exercise(request: RejectedExerciseCreate, current_user: U
     else:
         db.add(rejected_exercise)
         await db.commit()  
-        return {"message": "Exercises succesffuly rejected"}      
+        return {"message": "Exercises succesffuly rejected"} 
+
+def main():
+    asyncio.run(test_exercise_recommendation())
+
+if __name__ == "__main__":
+    main()
