@@ -67,6 +67,10 @@
 
     color: white;
   }
+
+  .hero-content p {
+    color: #d8e7ff;
+  }
   
   .hero-content .progress{
     display: flex;
