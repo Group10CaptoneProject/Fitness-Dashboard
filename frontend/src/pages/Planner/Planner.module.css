@@ -1,0 +1,38 @@
+.wrapper{
+    width: 100%;
+    max-width: 1320px;
+    min-height: calc(100vh - 56px);
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 28px 36px 32px;
+    display: flex;
+    flex-direction: column;
+}
+
+.header{
+    padding: 0;
+}
+
+.header h1{
+    margin: 0.83em 0;
+    font-size: 1.5em;
+    font-weight: 700;
+}
+
+.description{
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    color: rgb(100, 116, 139)
+}
+
+.description p{
+    margin: 0;
+    font-size: 1rem;
+}
+.button-wrapper{
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 1.5rem 0;
+    gap: 1rem;
+}
