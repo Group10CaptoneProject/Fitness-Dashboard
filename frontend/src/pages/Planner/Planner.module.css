@@ -36,3 +36,19 @@
     padding: 1.5rem 0;
     gap: 1rem;
 }
+.button-wrapper button{
+    padding: 0.5rem 1rem;
+    border: 1px solid #d6e2ff;
+    border-radius: 8px;
+    background: white;
+    color: rgb(100, 116, 139);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #9fa6b7;
+}
+.button-wrapper button:hover{
+    background: #eef3ff;
+    color: #1d4fc5;
+    border: 1px solid #1d4fc5;
+}
