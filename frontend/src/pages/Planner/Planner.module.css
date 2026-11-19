@@ -93,4 +93,19 @@
     color: #64748b;
     pointer-events: none;
 }
+@media (max-width: 768px) {
+    .wrapper{
+        padding: 20px 16px 28px;
+    }
 
+    .header{
+        padding: 0;
+    }
+
+    .header h1{
+        font-size: 1.5rem;
+    }
+    .button-wrapper{
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
