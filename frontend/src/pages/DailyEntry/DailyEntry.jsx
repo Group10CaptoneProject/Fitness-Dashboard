@@ -144,19 +144,32 @@ const goalOptions = [
 const muscleAreaOptions = workoutMuscleAreas;
 
 const ratingItems = [
-  { key: "sleep", label: "Sleep Quality", Icon: BedDouble },
-  { key: "energy", label: "Energy Level", Icon: Zap },
+  { key: "sleep", label: "Sleep Quality", Icon: BedDouble, higherIsBetter: true },
+  { key: "energy", label: "Energy Level", Icon: Zap, higherIsBetter: true },
   { key: "soreness", label: "Soreness", Icon: BicepsFlexed },
   { key: "stress", label: "Stress", Icon: Brain },
 ];
 
-const getRatingLabel = (value) => {
-  if (value <= 3) return "Easy";
-  if (value <= 7) return "Medium";
-  return "Hard";
+// higherIsBetter: 0 is the worst and 10 is the best (sleep, energy)
+const getRatingLabel = (value, higherIsBetter = false) => {
+  if (higherIsBetter) {
+    if (value <= 3) return "Poor";
+    if (value <= 7) return "Okay";
+    return "Great";
+  }
+
+  if (value <= 3) return "Great";
+  if (value <= 7) return "Okay";
+  return "Poor";
 };
 
-const getRatingClass = (value) => {
+const getRatingClass = (value, higherIsBetter = false) => {
+  if (higherIsBetter) {
+    if (value <= 3) return styles.hard;
+    if (value <= 7) return styles.medium;
+    return styles.easy;
+  }
+
   if (value <= 3) return styles.easy;
   if (value <= 7) return styles.medium;
   return styles.hard;
@@ -197,7 +210,7 @@ function SelectField({
   );
 }
 
-function RatingControl({ label, value, onChange, Icon }) {
+function RatingControl({ label, value, onChange, Icon, higherIsBetter = false }) {
   // Keep the slider centered while leaving the number field empty initially
   const sliderValue = value === "" ? 5 : Number(value);
   const percentage = `${(sliderValue / 10) * 100}%`;
@@ -210,7 +223,8 @@ function RatingControl({ label, value, onChange, Icon }) {
 
       <div className={styles.ratingMain}>
         <label className={styles.ratingLabel}>
-          {label} <span>(0-10)</span>
+          {label}{" "}
+          <span>{higherIsBetter ? "(0 = Worst, 10 = Best)" : "(0 = Best, 10 = Worst)"}</span>
         </label>
 
         <input
@@ -253,10 +267,11 @@ function RatingControl({ label, value, onChange, Icon }) {
 
       <span
         className={`${styles.ratingBadge} ${getRatingClass(
-          sliderValue
+          sliderValue,
+          higherIsBetter
         )}`}
       >
-        {getRatingLabel(sliderValue)}
+        {getRatingLabel(sliderValue, higherIsBetter)}
       </span>
     </div>
   );
@@ -1157,29 +1172,15 @@ function DailyEntry() {
                 </div>
               </div>
 
-              <div className={styles.ratingLegend}>
-                <div className={styles.legendEasy}>
-                  <strong>Easy/Good</strong>
-                  <span>0 - 3</span>
-                </div>
-                <div className={styles.legendMedium}>
-                  <strong>Medium/Okay</strong>
-                  <span>4 - 7</span>
-                </div>
-                <div className={styles.legendHard}>
-                  <strong>Hard/Bad</strong>
-                  <span>8 - 10</span>
-                </div>
-              </div>
-
               <div className={styles.ratingList}>
-                {ratingItems.map(({ key, label, Icon }) => (
+                {ratingItems.map(({ key, label, Icon, higherIsBetter }) => (
                   <RatingControl
                     key={key}
                     label={label}
                     value={ratings[key]}
                     onChange={(value) => updateRating(key, value)}
                     Icon={Icon}
+                    higherIsBetter={higherIsBetter}
                   />
                 ))}
               </div>

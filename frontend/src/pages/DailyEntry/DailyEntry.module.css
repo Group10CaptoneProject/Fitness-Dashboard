@@ -166,7 +166,12 @@
 }
 
 .recoveryCard {
-  --rating-gap: clamp(12px, 1.7vh, 19px);
+  --rating-gap: clamp(14px, 1.7vh, 19px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--rating-gap);
+  /* Spread the heading, the four rating lines and the heart rate evenly so box 2 fills neatly */
+  justify-content: space-between;
   flex: 1 1 0;
   min-height: 0;
 }
@@ -364,9 +369,8 @@
 
 /* Recovery slider rows */
 .ratingList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--rating-gap);
+  /* The rating lines act as direct children of the card, so the space between every line is equal */
+  display: contents;
 }
 
 .ratingRow {
@@ -517,7 +521,7 @@
   grid-template-columns: 38px minmax(0, 1fr) auto;
   align-items: end;
   gap: 9px;
-  margin-top: var(--rating-gap);
+  margin-top: 0;
   /* border-top: 1px solid #e7ecf4; */
 }
 
@@ -1327,6 +1331,8 @@
 
   .ratingLabel {
     font-size: 11px;
+    /* The longer "0 = worst, 10 = best" label may wrap on small screens */
+    white-space: normal;
   }
 
   .ratingValue {
