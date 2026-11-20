@@ -283,6 +283,17 @@ class RejectedExercise(Base):
         ),
     ) 
 
+class PlannedExercise(Base):
+    __tablename__ = "planned_exercises"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True
+    )
+    day: Mapped[str] = mapped_column(String(9), primary_key=True)
+    exercise_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    exercise_name: Mapped[str] = mapped_column(String, nullable=False)
+
+
 class TargetPlan(Base):
     __tablename__ = "target_plans"
 
