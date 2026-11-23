@@ -16,6 +16,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
 from .config.config import settings
+
 #import SessionLocal 
 
 database_url = make_url(settings.database_url)
@@ -136,13 +137,6 @@ class UserProfile(Base):
         default=list,
     )
 
-    # Multiple preferred workout days
-    preferred_workout_days: Mapped[List[str]] = mapped_column(
-        ARRAY(String),
-        nullable=False,
-        default=list,
-    )
-
     #keep track of whether onboarding is done.
     is_onboarded: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
@@ -169,13 +163,25 @@ class User(Base):
 
     #map user's data to the user profile 
     profile: Mapped["UserProfile"] = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    target_plan: Mapped["TargetPlan"] = relationship("TargetPlan", back_populates="user", uselist=False, cascade="all, delete-orphan")
     daily_entries: Mapped[list["DailyEntry"]] = relationship("DailyEntry", back_populates="user", cascade="all, delete-orphan")
     daily_scores: Mapped[list["DailyScore"]] = relationship("DailyScore", back_populates="user", cascade="all, delete-orphan")
     rejected_exercises: Mapped[list["RejectedExercise"]] = relationship(
         "RejectedExercise",
         back_populates="user",
         cascade="all, delete-orphan"
+    )
+
+    #target plans
+    exercise_target_plans: Mapped[list["TargetPlan"]] = relationship(
+        "TargetPlan",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    #reject user w/o creation timestamp
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now()
     )
     #onbaording page 1
     fitness_profile: Mapped["UserFitnessProfile"] = relationship("UserFitnessProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -188,19 +194,19 @@ class DailyEntry(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     entry_date: Mapped[date] = mapped_column(Date, nullable=False)
 
-    sleep: Mapped[int] = mapped_column(Integer)
-    energy_level: Mapped[int] = mapped_column(Integer)
-    soreness: Mapped[int] = mapped_column(Integer) 
-    stress: Mapped[int] = mapped_column(Integer) 
-    heart_rate: Mapped[int] = mapped_column(Integer)
-    duration: Mapped[int] = mapped_column(Integer, nullable=False)
+    sleep: Mapped[int] = mapped_column(Integer, nullable=False)
+    energy_level: Mapped[int] = mapped_column(Integer, nullable=False)
+    soreness: Mapped[int] = mapped_column(Integer, nullable=False)
+    stress: Mapped[int] = mapped_column(Integer, nullable=False)
+    heart_rate: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    #Added sets, reps, weight (for next week)?
+    duration: Mapped[int] = mapped_column(Integer, nullable=False)
     sets: Mapped[int] = mapped_column(Integer, nullable=False)
     reps: Mapped[int] = mapped_column(Integer, nullable=False)
-    weight: Mapped[float] = mapped_column(Integer, nullable=True)
-    
-    difficulty: Mapped[int] = mapped_column(Integer)
+
+    weight: Mapped[float | None] = mapped_column(Integer, nullable=True)
+
+    difficulty: Mapped[int] = mapped_column(Integer, nullable=False)
 
     # Workout / Exercise Fields
    # Mandatory Exercise Fields
@@ -215,9 +221,6 @@ class DailyEntry(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())  
 
     user: Mapped["User"] = relationship("User", back_populates="daily_entries")
-    __table_args__ = (
-        UniqueConstraint("user_id", "entry_date", name="unique_user_daily_entry"),
-    )
 
 #score table (output)
 class DailyScore(Base):
@@ -288,18 +291,20 @@ class TargetPlan(Base):
 
     plan_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    exercise_id: Mapped[str] = mapped_column(
+        String(100), nullable=False
+    )
+    sets_goal: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    reps_goal: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    weights_goal: Mapped[Decimal | None] = mapped_column(Numeric(6, 2), nullable=True)
+    rest_time_goal: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    sets_goal: Mapped[int] = mapped_column(Integer, nullable=True)
-    reps_goal: Mapped[int] = mapped_column(Integer, nullable=True)
-    weights_goal: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=True)
-    rest_time_goal: Mapped[int] = mapped_column(Integer, nullable=True)
-
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable = False, server_default=func.now())
 
     #map target plan to user
-    user: Mapped["User"] = relationship("User", back_populates="target_plan")
+    user: Mapped["User"] = relationship("User", back_populates="exercise_target_plans")
     __table_args__ = (
-        UniqueConstraint("user_id", name="unique_user_target_plan"),
+        UniqueConstraint("user_id", "exercise_id", name="unique_user_target_plan"),
     )
 
 #For forgot/reset password 
@@ -329,12 +334,15 @@ class PasswordResetCode(Base):
     )
 
     used: Mapped[bool] = mapped_column(
+        Boolean,
         default=False,
-        nullable=False
+        nullable=False,
+        server_default="false"
     )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
+        nullable = False,
         server_default=func.now()
     )
 

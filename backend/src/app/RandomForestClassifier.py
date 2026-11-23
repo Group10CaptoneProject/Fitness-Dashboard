@@ -18,7 +18,7 @@ from .db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, M
 from .analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile, get_rejected_exercises
 from .security import get_current_user
 from .routes.profile import get_fitness_profile
-from .schema import RejectedExerciseCreate 
+from .schema import RejectedExerciseCreate, TargetPlanCreate, TargetPlanResponse
 from .config.config import settings 
 
 router = APIRouter(prefix="/analytics", tags=["Analytics & Recommendations"])
@@ -53,9 +53,9 @@ async def fetch_and_cache_exercises():
     if os.path.exists("exercises_cache.json"):
         return
 
-    url = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json/"
+    url = "https://edb-with-videos-and-images-by-ascendapi.p.rapidapi.com/api/v1/exercises"
     headers = {
-        "X-RapidAPI-Key": settings.EXERCISEDB_API_KEY,
+        "X-RapidAPI-Key": settings.EXERCISE_API_KEY,
         "X-RapidAPI-Host": "edb-with-videos-and-images-by-ascendapi.p.rapidapi.com"
     }
 
@@ -112,110 +112,128 @@ def get_exercise_stats() -> pd.DataFrame:
         })
 
     #convert key properties to df
-    return pd.DataFrame(exercise_stats, columns=["exercise_id", "exercise_name", "required_equipment", "muscle_group", "targeted_muscles", "gif_url"])
+    return pd.DataFrame(exercise_stats, columns=["exercise_id", "exercise_name", "required_equipment", "muscle_group", "targeted_muscles", "gif_url"]) 
 
 #for exercise w/ weights
 @router.post("/weight-adjustment")
-async def calculate_weight_adjustment(current_user: User = Depends(get_current_user), db:AsyncSession = Depends(get_db)):
+async def calculate_weight_adjustment(exercise_name: str, current_user: User = Depends(get_current_user), db:AsyncSession = Depends(get_db)):
     #get the daily entry for user
     current_user_id = current_user.user_id
     user_entries = await get_entries_by_id(current_user_id)
 
-    #user data metrics 
-    if user_entries.empty:
-        return None # Or handle the case where there is no history yet
+    exercise_entries = user_entries[
+        user_entries["exercise_name"].str.lower() == exercise_name.lower()
+    ]
 
-    #grab the most recent row using .iloc[-1]
-    latest_entry = user_entries.iloc[-1]
-    
-    #extract the values from that latest row
-    current_weight = latest_entry['weight']
-    current_reps = latest_entry['reps']
-    current_sets = latest_entry['sets']
-    current_stress = latest_entry['stress']
-    current_difficulty = latest_entry['difficulty']
+    if exercise_entries.empty:
+        return None  # No history for this exercise yet
+
+    latest_entry = exercise_entries.sort_values("entry_date").iloc[-1]
+
+    # Extract metrics from this specific exercise's latest entry
+    current_weight = latest_entry["weight"]
+    current_reps = latest_entry["reps"]
+    current_sets = latest_entry["sets"]
+    current_stress = latest_entry["stress"]
+    current_difficulty = latest_entry["difficulty"]
 
     #get target plan for user 
-    current_plan = await get_target_plan(current_user_id)
-    goal_weight = current_plan['weights_goal'].iloc[-1] if not current_plan.empty else 0
-    goal_reps = current_plan['reps_goal'].iloc[-1] if not current_plan.empty else 0
-    goal_sets = current_plan['sets_goal'].iloc[-1] if not current_plan.empty else 0
+    # Get the exercise ID from the exercise catalog
+    exercise_data = get_exercise_stats()
+
+    matches = exercise_data[
+        exercise_data["exercise_name"].str.strip().str.lower()
+        == exercise_name.strip().lower()
+    ]
+
+    if matches.empty:
+        raise HTTPException(status_code=404, detail="Exercise not found")
+
+    exercise_id = matches.iloc[0]["exercise_id"]
+
+    # Get the target plan for this user and exercise
+    stmt = select(TargetPlan).where(
+        TargetPlan.user_id == current_user_id,
+        TargetPlan.exercise_id == exercise_id
+    )
+
+    result = await db.execute(stmt)
+    current_plan = result.scalar_one_or_none()
+
+    goal_reps = current_plan.reps_goal if current_plan else 0
+    goal_sets = current_plan.sets_goal if current_plan else 0
+
 
     #get user profile info (experience, primary goal, equipment avaliable)
     user_profile_data = await get_user_profile(current_user_id)
     if user_profile_data:
         experience_level = str(user_profile_data.experience_level).lower()
-        goal = str(user_profile_data.primary_goal).lower()
+        primary_goal = str(user_profile_data.primary_goal).lower()
         equipment_available = user_profile_data.equipment_available
         primary_goal = user_profile_data.primary_goal
 
     else:
-        experience_level = "beginnger"
-        goal = "healthy_lifestyle"
+        experience_level = "beginner"
+        primary_goal = "healthy_lifestyle"
         equipment_available = ["bodyweight", "dumbbells", "kettlebells", "Resistance Bands", "Barbell"]
 
     #tree logic here: stress -> experience -> reps -> difficulty 
     recommended_weight = current_weight
+    if primary_goal in ["endurance", "healthy_lifestyle"]:
+        min_reps = 8
+        max_reps = 11
+        min_sets = 3
+        max_sets = 4 
+    elif primary_goal == "hypertrophy":
+        min_reps = 6
+        max_reps = 8
+        min_sets = 3
+        max_sets = 4
+
+    effective_goal_reps = max(min_reps, min(goal_reps, max_reps))
+    effective_goal_sets = max(min_sets, min(goal_sets, max_sets))
+    
     if equipment_available:
-        #3-4 sets. 8-12 reps. 2 min rest time for hypertropy
-        if primary_goal == "endurance" or primary_goal == "healthy_lifestyle":    
-            if current_stress > 7:
-                if experience_level == "beginner":
-                    recommended_weight = current_weight * 0.9
-                elif experience_level == "intermediate" or experience_level == "advanced":
-                    recommended_weight = current_weight * 0.95
-                else:
-                    print("Enter 'beginner', 'intermediate' or 'advanced'")
-            
-            if current_reps < 8:
-                recommended_weight = current_weight - 5
-            elif 8 <= current_reps < 11:
-                if current_difficulty < 7:
-                    if experience_level == "beginner":
-                        recommended_weight = current_weight + 2
-                    else:
-                        recommended_weight = current_weight + 5
-                elif 7 <= current_difficulty < 9:
-                    recommended_weight = current_weight 
+        #stress
+        if current_stress > 7:
+            if experience_level == "beginner":
+                recommended_weight = current_weight * 0.9
+            elif experience_level == "intermediate" or experience_level == "advanced":
+                recommended_weight = current_weight * 0.95
             else:
-                    if experience_level == "beginner":
-                        recommended_weight = current_weight -10
-                    elif experience_level == "intermediate":
-                        recommended_weight = current_weight -5
-                    else:
-                        recommended_weight = current_weight - 2  
+                print("Enter 'beginner', 'intermediate' or 'advanced'")
 
-        #strength: 6-8 reps. 2-3 reps. 3-5 min rest. 
-        if primary_goal == "hypertrophy":
-            if current_stress > 7:
-                if experience_level == "beginner":
-                    recommended_weight = current_weight * 0.9
-                elif experience_level == "intermediate" or experience_level == "advanced":
-                    recommended_weight = current_weight * 0.95
-                else:
-                    print("Enter 'beginner', 'intermediate' or 'advanced'")
-                        
-            if current_reps < 6:
+        #less reps 
+        elif current_reps < effective_goal_reps:
+            if experience_level == "beginner":
+                recommended_weight = current_weight - 10
+            elif experience_level == "intermediate" or experience_level == "advanced":
                 recommended_weight = current_weight - 5
-            elif 6 <= current_reps < 8:
-                if current_difficulty < 7:
-                    if experience_level == "beginner":
-                        recommended_weight = current_weight + 2
-                    else:
-                        recommended_weight = current_weight + 5
-                else:
-                    recommended_weight = current_weight 
             else:
+                print("Enter 'beginner', 'intermediate' or 'advanced'")
+
+        #sets 
+        elif current_sets < effective_goal_sets:
+            recommended_weight = current_weight 
+
+        #more reps
+        elif current_reps >= effective_goal_reps and current_sets >= effective_goal_sets:
+            if current_difficulty > 8:
                 if experience_level == "beginner":
-                    recommended_weight = current_weight -10
-                elif experience_level == "intermediate":
-                    recommended_weight = current_weight -5
-                else:
+                    recommended_weight = current_weight - 5
+                elif experience_level == "intermediate" or experience_level == "advanced":
                     recommended_weight = current_weight - 2
+                else:
+                    print("Enter 'beginner', 'intermediate' or 'advanced'")
+            else:
+               if experience_level == "beginner":
+                    recommended_weight = current_weight + 2
+               elif experience_level == "intermediate" or experience_level == "advanced":
+                    recommended_weight = current_weight + 5
+               else:
+                    print("Enter 'beginner', 'intermediate' or 'advanced'") 
 
-        return recommended_weight
-    else:
-        return recommended_weight
+    return recommended_weight
 
 #next exercise 
 FOCUS_MUSCLES = {
@@ -240,7 +258,7 @@ def goal_priority(row, goal):
 
 
 @router.get("/exercise-recommendation")
-async def exercise_recommendation(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None,
+async def exercise_recommendation(muscle_groups: Optional[list[str]] = Query(default = None), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db), target_date: Optional[date] = None,
                                   goal: Optional[GoalEnum] = None, focus: Optional[MuscleCategoryEnum] = None,
                                   equipment: Optional[list[str]] = Query(default=None)):
     if target_date is None:
@@ -259,11 +277,17 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     print(exercise_data["exercise_id"].head())
     print(exercise_data["exercise_id"].dtype)
 
+    today_muscle_groups = []
+
     #get user equipment
     user_profile = await get_user_profile(current_user_id)
     selected_equipment = equipment if equipment is not None else (user_profile.equipment_available if user_profile else [])
     if not selected_equipment:
-        return {"day": target_date.strftime('%A').lower(), "recommendations": [], "equipment_available": []}
+        return {"day": target_date.strftime('%A').lower(), 
+            "muscle_groups": today_muscle_groups,
+            "recommendations": [], 
+            "equipment_available": []
+        }
     
     
     user_equipment = normalize_equipment(selected_equipment)    
@@ -293,11 +317,14 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
     fitness_profile = await get_fitness_profile(current_user, db)
     target_day_name = target_date.strftime('%A').lower()
 
-    today_muscle_groups = []
-    if fitness_profile and fitness_profile.weekly_split:
+    if muscle_groups is not None:
+        today_muscle_groups = normalized_values(muscle_groups)
+    elif fitness_profile and fitness_profile.weekly_split:
         #get the muscle groups for user
         weekly_split = {day.lower(): groups for day, groups in fitness_profile.weekly_split.items()}
         today_muscle_groups = normalized_values(weekly_split.get(target_day_name, []))
+    else:
+        today_muscle_groups = []
 
     #only recommend exercises that fit w/ today's muscle groups
     if focus:
@@ -372,6 +399,7 @@ async def exercise_recommendation(current_user: User = Depends(get_current_user)
 
     return {
         "day": target_day_name,
+        "muscle_groups": today_muscle_groups,
         "equipment_available": user_equipment,
         "recommendations": recommended_exercises
     }
@@ -420,6 +448,7 @@ async def test_exercise_recommendation():
 
         # Run the actual recommendation function
         recommendations = await exercise_recommendation(
+            today_muscle_groups = ["chest", "triceps", "shoulders"],
             current_user=current_user,
             db=db,
             equipment = None

@@ -3,6 +3,7 @@ import uuid
 from typing import List, Optional 
 from datetime import date, datetime
 from enum import Enum as PyEnum
+from decimal import Decimal 
 
 from .db import GoalEnum, ExperienceLevelEnum, EquipmentEnum, DayOfWeekEnum, MuscleCategoryEnum, MuscleGroupEnum, GenderEnum
 from sqlalchemy import String, Integer, ARRAY, Enum
@@ -44,6 +45,8 @@ class UserFitnessProfileCreate(BaseModel):
     height: int = Field(..., ge=50, le=250, description="Height in cm")
     weight:int = Field(..., ge=20, le=300, description="Weight in lbs")
 
+    preferred_workout_days: Optional[list[str]] = None
+    weekly_split: Optional[dict[str, list[str]]] = None
 
 # Allow updating only the fields sent by the frontend.
 class UserFitnessProfilePatch(BaseModel):
@@ -52,11 +55,17 @@ class UserFitnessProfilePatch(BaseModel):
     height: Optional[int] = Field(default=None, ge=50, le=250, description="Height in cm")
     weight: Optional[int] = Field(default=None, ge=20, le=300, description="Weight in lbs")
 
+    preferred_workout_days: Optional[list[str]] = None
+    weekly_split: Optional[dict[str, list[str]]] = None
+
 
 class UserFitnessProfileResponse(UserFitnessProfileCreate):
     #ids saved in response
     user_id: uuid.UUID
     created_at: datetime
+
+    preferred_workout_days: Optional[list[str]] = None
+    weekly_split: Optional[dict[str, list[str]]] = None 
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -139,6 +148,23 @@ class DailyScoreResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TargetPlanCreate(BaseModel):
+    exercise_name: str
+    weights_goal: Decimal | None = None
+    reps_goal: int | None = None
+    sets_goal: int | None = None
+    rest_time_goal: int | None = None 
+
+class TargetPlanResponse(BaseModel):
+    exercise_name: str
+    sets_goal: int | None = None
+    reps_goal: int | None = None
+    weights_goal: Decimal | None = None
+    rest_time_goal: int | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 def main():
     pass

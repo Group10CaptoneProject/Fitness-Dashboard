@@ -12,6 +12,7 @@ from ..db import (
     User,
     UserFitnessProfile,
     UserProfile,
+    GenderEnum
 )
 from ..schema import (
     UserProfileCreate,
@@ -48,12 +49,12 @@ async def get_fitness_profile(current_user: User = Depends(get_current_user), db
     if not fitness_profile:
         fitness_profile = UserFitnessProfile(
             user_id=current_user_id,
-            gender="male",
+            gender= GenderEnum.MALE,
             age=22,
             height=170,
             weight=140,
-            preferred_workout_days=[],
-            weekly_split={"Monday": "Back, Triceps, Shoulders", "Tuesday": "Chest, Biceps, Glutes"}
+            preferred_workout_days=["Monday", "Tuesday", "Thursday", "Friday"],
+            weekly_split={"Monday": ["Back, Triceps, Shoulders"], "Tuesday": ["Chest, Biceps, Glutes"]}
         )
 
         db.add(fitness_profile)
@@ -79,7 +80,7 @@ async def update_fitess_profile(fitness_profile: UserFitnessProfilePatch, curren
     if not db_fitness_profile:
         # Supply defaults when creating a profile from a partial PATCH request.
         profile_defaults = {
-            "gender": "prefer_not_to_say",
+            "gender": GenderEnum.PREFER_NOT_TO_SAY,
             "age": 22,
             "height": 170,
             "weight": 140,
@@ -135,7 +136,6 @@ async def patch_user_profile(profile_data: UserProfilePatch, current_user: User 
             "primary_goal": "healthy_lifestyle",
             "experience_level": "beginner",
             "equipment_available": ["dumbbells", "bodyweight"],
-            "preferred_workout_days": ["monday"],
             "session_duration": 60,
             "is_onboarded": False,
         }
@@ -177,7 +177,6 @@ async def get_or_create_user_profile(current_user: User  =Depends(get_current_us
             primary_goal="healthy_lifestyle",
             experience_level="beginner",
             equipment_available=["dumbbells", "bodyweight"],
-            preferred_workout_days=["monday"],
             session_duration=60,
             is_onboarded=False,
         )
@@ -224,7 +223,6 @@ async def complete_onboarding(current_user: User = Depends(get_current_user), db
             primary_goal="healthy_lifestyle",
             experience_level="beginner",
             equipment_available=["dumbbells", "bodyweight"],
-            preferred_workout_days=["monday"],
             session_duration=60,
             is_onboarded=True,
         )

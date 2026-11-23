@@ -304,6 +304,7 @@ async def get_target_plan(user_id: uuid.UUID) -> pd.DataFrame:
 
         return pd.DataFrame([
             {
+                "exercise_id": plan.exercise_id,
                 "sets_goal": plan.sets_goal,
                 "reps_goal": plan.reps_goal,
                 "weights_goal": plan.weights_goal,
@@ -314,7 +315,8 @@ async def get_target_plan(user_id: uuid.UUID) -> pd.DataFrame:
 
 #update target plan
 async def update_target_plan(
-    user_id: uuid.UUID, 
+    user_id: uuid.UUID,
+    exercise_id: int, 
     sets_goal: int, 
     reps_goal: int, 
     weights_goal: float, 
@@ -324,6 +326,7 @@ async def update_target_plan(
         # PostgreSQL automatically assigns plan_id (autoincrement int)
         new_plan = TargetPlan(
             user_id=user_id,
+            exercise_id = exercise_id,
             sets_goal=sets_goal,
             reps_goal=reps_goal,
             weights_goal=weights_goal,

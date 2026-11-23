@@ -4,8 +4,10 @@ import random
 from passlib.context import CryptContext
 from sqlalchemy import select
 import uuid 
+
 from sqlalchemy.orm import Session
-from app.config.config import settings
+from .config.config import settings
+from .RandomForestClassifier import get_exercise_stats, fetch_and_cache_exercises
 
 from app.db import (
     Base, 
@@ -32,7 +34,15 @@ from app.analytics import (
 #password hash
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
+
+
 async def seed_database():
+    await fetch_and_cache_exercises()
+    exercise_df = get_exercise_stats()
+    print(exercise_df[
+        ["exercise_name", "muscle_group", "targeted_muscles"]
+    ].head(15).to_string(index=False))
+    
     print(f"CONNECTING TO DATABASE: {settings.database_url}")
     #recreate tables in Neon 
     async with engine.begin() as conn:
@@ -79,16 +89,27 @@ async def seed_database():
                 height=170,
                 weight=145,
                 preferred_workout_days = ["Monday", "Tuesday", "Thursday", "Friday"],
-                weekly_split = {"Monday": "Back, Triceps, Shoulders", "Tuesday": "Chest, Biceps, Glutes", "Thursday": "Back, Triceps, Shoulders", "Friday": "Chest, Biceps, Glutes"}
+                weekly_split = {"Monday": ["Back, Triceps, Shoulders"], "Tuesday": ["Chest, Biceps, Glutes"], "Thursday": ["Back, Triceps, Shoulders"], "Friday": ["Chest, Biceps, Glutes"]}
             )
             
+            #set deault exercise 
+            exercise = exercise_df[exercise_df["exercise_name"].str.lower() == "incline bench press"]
+            print(exercise_df[["exercise_id", "exercise_name"]].head())
+            
+            if exercise.empty:
+                raise ValueError("Default exercise not found in exercise db cache")
+            
+            test_exercise_id = exercise.iloc[0]["exercise_id"]
+            
             #target plan
-            new_user.target_plan = TargetPlan(
+            new_user.exercise_target_plans.append(
+                TargetPlan(
+                exercise_id = test_exercise_id,
                 sets_goal=16,           # 16 total sets
                 reps_goal=4,           # 10 reps per set
                 weights_goal=185.50,    # 185.5 lbs
                 rest_time_goal=90       # 90 seconds rest
-            )
+            ))
 
             session.add(new_user)
             await session.commit()
