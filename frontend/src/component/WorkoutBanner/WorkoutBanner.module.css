@@ -1,0 +1,80 @@
+.banner{
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    margin: 28px 0 12px;
+    min-height: 280px;
+    border: 1px solid #d8e5fa;
+    border-radius: 28px;
+    background: linear-gradient(120deg, #f3f7ff 0%, #e5efff 100%);
+    color: #0f172a;
+}
+
+.banner-image{
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: -1;
+    width: 60%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center var(--workout-banner-position-y, 55%);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%);
+    mask-image: linear-gradient(90deg, transparent, #000 30%);
+}
+
+.banner-content{
+    box-sizing: border-box;
+    width: 48%;
+    padding: 34px 40px;
+}
+
+.banner-label{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid #d6e2ff;
+    border-radius: 30px;
+    background: #1d4fc5;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.banner-label svg{
+    flex-shrink: 0;
+}
+
+.banner-content h2{
+    margin: 20px 0 12px;
+    font-size: clamp(28px, 3.2vw, 42px);
+    line-height: 1.12;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+}
+
+.banner-content p{
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+@media (max-width: 600px){
+    .banner{
+        margin-top: 24px;
+        border-radius: 22px;
+    }
+
+    .banner-content{
+        width: 75%;
+        padding: 28px 24px;
+    }
+
+    .banner-image{
+        width: 48%;
+        object-position: 65% var(--workout-banner-position-y, 55%);
+        opacity: 0.65;
+    }
+}

@@ -1,5 +1,7 @@
 import MainNav from "../../component/MainNavBar/MainNav";
+import WorkoutBanner from "../../component/WorkoutBanner/WorkoutBanner";
 import styles from "./Planner.module.css";
+import plannerBanner from "../../assets/planner.jpg";
 import {useEffect, useState} from "react";
 import {Search} from "lucide-react";
 
@@ -132,6 +134,14 @@ function Planner() {
                 <p>Build your custom workout plans. Search and add exercises to your routines.</p>
             </div>
           </header>
+          <WorkoutBanner
+            image={plannerBanner}
+            imagePositionY="27%"
+            label="WEEKLY PLANNER"
+            title="Plan your training week"
+          >
+            Choose a day below to add exercises to your schedule.
+          </WorkoutBanner>
           <section>
             <div className = {styles["button-wrapper"]}>
               <button className = {styles["button"]} onClick={() => setSelectedDay("Monday")}>

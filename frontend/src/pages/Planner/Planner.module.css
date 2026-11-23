@@ -30,6 +30,7 @@
     margin: 0;
     font-size: 1rem;
 }
+
 .button-wrapper{
     display: grid;
     grid-template-columns: repeat(7, 1fr);

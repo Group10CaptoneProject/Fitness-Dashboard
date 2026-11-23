@@ -1,4 +1,6 @@
 import MainNav from "../../component/MainNavBar/MainNav";
+import WorkoutBanner from "../../component/WorkoutBanner/WorkoutBanner";
+import historyBanner from "../../assets/history.jpg";
 import styles from "./History.module.css";
 import { Logs } from "lucide-react";
 import {useState , useEffect} from "react";
@@ -57,6 +59,15 @@ function History() {
                         <p>View your past workouts and progress</p>
                     </div>
                 </header>
+
+                <WorkoutBanner
+                    image={historyBanner}
+                    imageFilter="grayscale(1) sepia(0.3) hue-rotate(175deg) saturate(1.5)"
+                    label="WORKOUT HISTORY"
+                    title="Review your training"
+                >
+                    Look back at your sets, reps, and weights in the exercise log.
+                </WorkoutBanner>
 
                 <section className = {styles["log-section"]}>
                     <h2>
