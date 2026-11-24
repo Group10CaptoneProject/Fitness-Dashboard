@@ -1,7 +1,7 @@
 """Regression coverage for the Training Plan preview query parameters."""
 import unittest
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pandas as pd
 from fastapi import FastAPI
@@ -18,8 +18,14 @@ class TrainingFilterTests(unittest.TestCase):
         app.include_router(recommendations.router)
         app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(user_id="test")
 
+        self.saved_exercises = []
+        self.database = AsyncMock()
+        self.database.execute.side_effect = lambda query: Mock(
+            all=Mock(return_value=self.saved_exercises)
+        )
+
         async def database():
-            yield AsyncMock()
+            yield self.database
 
         app.dependency_overrides[get_db] = database
         self.client = TestClient(app)
@@ -29,7 +35,7 @@ class TrainingFilterTests(unittest.TestCase):
             dict(exercise_id="pull", exercise_name="Bodyweight pull-up", required_equipment=("bodyweight",),
                  muscle_group=("back",), targeted_muscles=("lats",), gif_url=None),
             dict(exercise_id="squat", exercise_name="Squat", required_equipment=("bodyweight",),
-                 muscle_group=("quads",), targeted_muscles=("quadriceps",), gif_url=None),
+                 muscle_group=("quads",), targeted_muscles=("quadriceps",), gif_url="https://example.com/squat.gif"),
             dict(exercise_id="crunch", exercise_name="Crunch", required_equipment=("bodyweight",),
                  muscle_group=("abs",), targeted_muscles=("abdominals",), gif_url=None),
         ])
@@ -73,3 +79,21 @@ class TrainingFilterTests(unittest.TestCase):
         self.assertEqual(self.request(equipment="").json()["recommendations"], [])
         self.assertEqual(self.request(goal="invalid").status_code, 422)
         self.assertEqual(self.request(focus="invalid").status_code, 422)
+
+    def test_saved_day_replaces_recommendations_with_training_details(self):
+        self.saved_exercises = [("squat", "Squat")]
+        response = self.request(focus="upper_body", equipment="")
+        self.assertEqual(response.status_code, 200, response.text)
+        data = response.json()
+        self.assertEqual(data["source"], "planner")
+        self.assertEqual(data["recommendations"], [{
+            "id": "squat",
+            "name": "Squat",
+            "target_muscle": ["quadriceps"],
+            "equipment": ["bodyweight"],
+            "gif_url": "https://example.com/squat.gif",
+            "sets": 3,
+            "reps": 8,
+            "rest_seconds": 120,
+        }])
+        self.assertIn("monday", self.database.execute.call_args.args[0].compile().params.values())

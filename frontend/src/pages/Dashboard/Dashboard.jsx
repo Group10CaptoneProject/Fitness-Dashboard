@@ -145,7 +145,7 @@ function Dashboard(){
             <div className = {styles["dashboard-wrapper"]}>
                 <div className = {styles["dashboard-header"]}>
                     <div className = {styles["welcome-message"]}>
-                        <h2>Hello, {username} <span className={styles.wave}> 👋</span></h2>
+                        <h2><span className={styles.wave} aria-hidden="true">👋</span> Welcome back, <span className={styles.welcomeName}>{username}</span></h2>
                     </div>
                     <div className = {styles["welcome-description"]}>
                         Here is your training status for today!

@@ -46,6 +46,7 @@ function TrainingPlan(){
     const [trainingScore, setTrainingScore] = useState(null);
     const [scoreLoading, setScoreLoading] = useState(true);
     const [scoreError, setScoreError] = useState(false);
+    const [usingSavedPlan, setUsingSavedPlan] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -53,6 +54,7 @@ function TrainingPlan(){
             setLoading(true);
             setError("");
             setExercises([]);
+            setUsingSavedPlan(false);
             const token = localStorage.getItem("access_token");
             try {
                 if (!token) throw new Error("Sign in to see your training plan.");
@@ -77,6 +79,7 @@ function TrainingPlan(){
                         (typeof data.detail === "string" ? data.detail : "Unable to load your training plan."));
                 }
                 if (controller.signal.aborted) return;
+                setUsingSavedPlan(data.source === "planner");
                 const done = completedWorkouts();
                 setExercises(data.recommendations.filter(exercise => !done.some(item => item.id === exercise.id || item.name.toLowerCase() === exercise.name.toLowerCase())).map(exercise => ({
                     ...exercise,
@@ -84,7 +87,9 @@ function TrainingPlan(){
                     equipment: exercise.equipment.join(", "),
                 })));
                 setProfileEquipment(Array.isArray(data.equipment_available) ? data.equipment_available : []);
-                setMessage(data.message || "No exercises available for this plan.");
+                setMessage(data.message || (data.source === "planner"
+                    ? "No planned exercises remaining today."
+                    : "No exercises available for this plan."));
             } catch (error) {
                 if (!controller.signal.aborted) {
                     setError(error.message);
@@ -128,7 +133,9 @@ function TrainingPlan(){
     }, [reload]);
 
     const factor = scoreLoading || scoreError ? null : intensityFactor(trainingScore);
-    const adjustedExercises = factor === 0 ? [] : exercises.map(exercise => adjustExercise(exercise, factor));
+    const restDay = factor === 0 && !usingSavedPlan;
+    const adjustedExercises = restDay ? [] : exercises.map(exercise =>
+        adjustExercise(exercise, factor === 0 ? null : factor));
     const planLoading = loading || scoreLoading;
     const username = localStorage.getItem("username") || "Username";
     // Formatted current date: Weekday, Month Day, Year
@@ -293,7 +300,7 @@ function TrainingPlan(){
                         <span className = {styles["icon"]}>
                             <NotebookText size={22} aria-hidden="true" />
                         </span>
-                        Recommended Exercises
+                        {usingSavedPlan ? "Today’s Planned Exercises" : "Recommended Exercises"}
                     </h2>
                     <div className = {styles["table-scroll"]}>
                         <table className = {styles["table"]}>
@@ -312,7 +319,7 @@ function TrainingPlan(){
                             <tbody>
                                 {(planLoading || (!error && adjustedExercises.length === 0)) && (
                                     <tr><td colSpan={6} className={styles["empty-state"]} role="status">
-                                        {planLoading ? "Loading your training plan…" : factor === 0 ? "Skip planned workout. Rest or choose gentle activity today." : message}
+                                        {planLoading ? "Loading your training plan…" : restDay ? "Skip planned workout. Rest or choose gentle activity today." : message}
                                     </td></tr>
                                 )}
                                 {!planLoading && adjustedExercises.map((exercise, index) => (

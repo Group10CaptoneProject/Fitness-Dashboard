@@ -1,6 +1,6 @@
 """Exercise catalog integration and personalized training recommendations."""
 import pandas as pd 
-import os
+from pathlib import Path
 import httpx 
 import json
 import asyncio
@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload 
 
 from .db import User, UserFitnessProfile, UserProfile, DailyEntry, TargetPlan, MuscleCategoryEnum, MuscleGroupEnum, ExperienceLevelEnum, EquipmentEnum, GoalEnum, get_db, RejectedExercise, async_session_maker
+from .db import PlannedExercise
 from .analytics import get_entries_by_id, get_daily_score, get_target_plan, get_user_profile, get_rejected_exercises
 from .security import get_current_user
 from .routes.profile import get_fitness_profile
@@ -48,39 +49,59 @@ def normalize_equipment(equipment):
         if eq.strip()
     ]
 
+EXERCISES_CACHE = Path(__file__).resolve().parents[2] / "exercises_cache.json"
+
 #save api data locally
 async def fetch_and_cache_exercises():
-    if os.path.exists("exercises_cache.json"):
-        return
-
     url = "https://edb-with-videos-and-images-by-ascendapi.p.rapidapi.com/api/v1/exercises"
     headers = {
         "X-RapidAPI-Key": settings.EXERCISE_API_KEY,
         "X-RapidAPI-Host": "edb-with-videos-and-images-by-ascendapi.p.rapidapi.com"
     }
 
+    all_exercises = []
+    cursor = None 
+    has_next_page = True 
+
     async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
         try:
-            response = await client.get(url, headers=headers)
-            response.raise_for_status()
-            exercise_data = response.json()
-            if not isinstance(exercise_data, list) or not exercise_data:
-                raise ValueError("Exercise service returned no exercise data")
+            while has_next_page:
+                params = {"after": cursor} if cursor else {}
+
+                response = await client.get(url, headers=headers, params= params)
+                response.raise_for_status()
+
+                response_data = response.json()
+                exercise_data = response_data.get("data", [])
+                metadata = response_data.get("meta", [])
+
+                if not isinstance(exercise_data, list) or not exercise_data:
+                    raise ValueError("Exercise service returned no exercise data")
+
+                all_exercises.extend(exercise_data)
+
+                #check if theres a new page in api
+                has_next_page = metadata.get("hasNextPage", False)
+                cursor = metadata.get("nextCursor")
+
+                if has_next_page and not cursor:
+                    raise ValueError("Next page indicated but no cursor was provided")
+
         except (httpx.HTTPError, ValueError) as exc:
             raise HTTPException(status_code=502, detail="Exercise service is unavailable. Please try again later.") from exc
 
-    with open("exercises_cache.json", "w") as f:
-        json.dump(exercise_data, f)
-    print("Successfully cached exercises locally!")
+    with EXERCISES_CACHE.open("w", encoding="utf-8") as f:
+        json.dump(all_exercises, f, indent = 2)
+    print(f"Successfully cached {len(all_exercises)} exercises locally!")
 
 #get exercise info from exercise API
 def get_exercise_stats() -> pd.DataFrame:
     #get key info from exercise db api
-    if not os.path.exists("exercises_cache.json"):
+    if not EXERCISES_CACHE.exists():
         print("Cache not found. Please run fetch_and_cache_exercises() first.")
         return pd.DataFrame(columns=["exercise_id", "exercise_name", "required_equipment", "muscle_group", "targeted_muscles"])
 
-    with open("exercises_cache.json", "r") as f:
+    with EXERCISES_CACHE.open(encoding="utf-8") as f:
         data = json.load(f)
 
     if isinstance(data, dict):
@@ -91,7 +112,7 @@ def get_exercise_stats() -> pd.DataFrame:
     #loop through JSON file 
     exercise_stats = []
     equipment_names = {
-        "body only": "bodyweight", "body weight": "bodyweight", "dumbbell": "dumbbells",
+        "body only": "bodyweight", "body weight": "bodyweight", "dumbbell": "dumbbell", "dunbells": "dumbbell",
         "kettlebells": "kettlebells", "bands": "resistance_bands",
         "machine": "machines", "exercise ball": "exercise_ball",
     }
@@ -108,7 +129,7 @@ def get_exercise_stats() -> pd.DataFrame:
             "required_equipment": tuple(equipment_names.get(eq, eq) for eq in normalized_values(item.get("equipments", equipment))),
             "muscle_group": normalized_values(item.get("bodyParts", list(dict.fromkeys(body_parts.get(m, m) for m in muscles)))),
             "targeted_muscles": normalized_values(item.get("targetMuscles", muscles)),
-            "gif_url": item.get("gifUrl")
+            "gif_url": item.get("imageUrl")
         })
 
     #convert key properties to df
@@ -277,6 +298,8 @@ async def exercise_recommendation(muscle_groups: Optional[list[str]] = Query(def
     print(exercise_data["exercise_id"].head())
     print(exercise_data["exercise_id"].dtype)
 
+    print("Total exercises:", len(exercise_data))
+
     today_muscle_groups = []
 
     #get user equipment
@@ -287,8 +310,7 @@ async def exercise_recommendation(muscle_groups: Optional[list[str]] = Query(def
             "muscle_groups": today_muscle_groups,
             "recommendations": [], 
             "equipment_available": []
-        }
-    
+        }    
     
     user_equipment = normalize_equipment(selected_equipment)    
     selected_goal = goal.value if goal else getattr(user_profile, "primary_goal", "healthy_lifestyle")
@@ -298,13 +320,52 @@ async def exercise_recommendation(muscle_groups: Optional[list[str]] = Query(def
         "endurance": (3, 15, 60),
         "healthy_lifestyle": (2, 10, 90),
     }.get(selected_goal, (2, 10, 90))
+
+    def training_exercise(exercise_id, name, details):
+        gif_url = details.get("gif_url")
+        return {
+            "id": exercise_id,
+            "name": name,
+            "target_muscle": details.get("targeted_muscles", ()),
+            "equipment": details.get("required_equipment", ()),
+            "gif_url": gif_url if pd.notna(gif_url) else None,
+            "sets": sets,
+            "reps": reps,
+            "rest_seconds": rest_seconds,
+        }
+
+    target_day_name = target_date.strftime("%A").lower()
+    saved_result = await db.execute(
+        select(PlannedExercise.exercise_id, PlannedExercise.exercise_name)
+        .where(PlannedExercise.user_id == current_user_id, PlannedExercise.day == target_day_name)
+        .order_by(PlannedExercise.exercise_name, PlannedExercise.exercise_id)
+    )
+    saved_exercises = saved_result.all()
+    if saved_exercises:
+        catalog = exercise_data.drop_duplicates("exercise_id").set_index("exercise_id")
+        details_by_id = catalog.to_dict(orient="index")
+        return {
+            "day": target_day_name,
+            "source": "planner",
+            "equipment_available": user_equipment,
+            "recommendations": [
+                training_exercise(exercise_id, name, details_by_id.get(exercise_id, {}))
+                for exercise_id, name in saved_exercises
+            ],
+        }
+
+    if not selected_equipment:
+        return {"day": target_day_name, "recommendations": [], "equipment_available": []}
+
+    rejected_exercises = await get_rejected_exercises(current_user_id, target_date)
+    rejected_exercise_ids = set(rejected_exercises["exercise_id"])
     
     #only filter through exercises user can do based on equipment they have. use these to compare 
     exercise_data["normalized_equipment"] = exercise_data["required_equipment"].apply(normalize_equipment)
 
     available_exercises = exercise_data[
         exercise_data["normalized_equipment"].apply(
-            lambda required: all(eq in user_equipment for eq in required)
+            lambda required: all(eq == "bodyweight" or eq in user_equipment for eq in required)
         ) & ~exercise_data["exercise_id"].isin(rejected_exercise_ids)
     ]
     print("Profile equipment:", selected_equipment)
@@ -312,10 +373,10 @@ async def exercise_recommendation(muscle_groups: Optional[list[str]] = Query(def
 
     print("Catalog equipment:")
     print(exercise_data["required_equipment"].head(10).tolist())
+    print("After equipment/rejected filter:", len(available_exercises))
 
     #user can choose what they want to work out each day. 
     fitness_profile = await get_fitness_profile(current_user, db)
-    target_day_name = target_date.strftime('%A').lower()
 
     if muscle_groups is not None:
         today_muscle_groups = normalized_values(muscle_groups)
@@ -369,6 +430,9 @@ async def exercise_recommendation(muscle_groups: Optional[list[str]] = Query(def
 
     ranked_exercises = sorted((row for _, row in available_exercises.iterrows()),
                               key=lambda row: goal_priority(row, selected_goal), reverse=True)
+    print("Exercises available for ranking:", len(ranked_exercises))
+    print("Muscles already worked out:", targeted_muscles_worked_out)
+    
     for row in ranked_exercises:
         muscle_group = row['muscle_group']
         target_muscles = row['targeted_muscles']
@@ -378,24 +442,31 @@ async def exercise_recommendation(muscle_groups: Optional[list[str]] = Query(def
         if muscle_group not in muscle_group_counts:
             muscle_group_counts[muscle_group] = 0
         
-        #hard cap at 2 exercises per muscle
-        if targeted_muscles_worked_out.isdisjoint(target_muscles) and muscle_group_counts[muscle_group] < max_per_muscle_group:
-            targeted_muscles_worked_out.update(target_muscles)
-            muscle_group_counts[muscle_group] += 1 
-            recommended_exercise = {
-                "id": exercise_id,
-                "name": exercise_name,
-                "target_muscle": target_muscles,
-                "equipment": row["required_equipment"],
-                "gif_url": row.get("gif_url"),
-                "sets": sets,
-                "reps": reps,
-                "rest_seconds": rest_seconds,
-            }
-            recommended_exercises.append(recommended_exercise)
+        if not targeted_muscles_worked_out.isdisjoint(target_muscles):
+            print(f"SKIPPED {exercise_name}: target muscle already selected")
+            continue 
 
-            if len(recommended_exercises) >= total_target_exercises:
-                break 
+        if muscle_group_counts[muscle_group] >= max_per_muscle_group:
+            print(f"SKIPPED {exercise_name}: muscle group limit reached")
+            continue
+
+        targeted_muscles_worked_out.update(target_muscles)
+        muscle_group_counts[muscle_group] += 1
+        recommended_exercises.append(training_exercise(exercise_id, exercise_name, row))
+
+        print(f"RECOMMENDED: {exercise_name}")
+
+        if len(recommended_exercises) >= total_target_exercises:
+            break
+        
+        #hard cap at 2 exercises per muscle
+        #if targeted_muscles_worked_out.isdisjoint(target_muscles) and muscle_group_counts[muscle_group] < max_per_muscle_group:
+        #    targeted_muscles_worked_out.update(target_muscles)
+        #    muscle_group_counts[muscle_group] += 1 
+        #    recommended_exercises.append(training_exercise(exercise_id, exercise_name, row))
+
+        #    if len(recommended_exercises) >= total_target_exercises:
+        #        break 
 
     return {
         "day": target_day_name,
@@ -446,9 +517,11 @@ async def test_exercise_recommendation():
 
         print("Profile equipment:", user_profile.equipment_available)
 
+        today_muscle_groups = []
+
         # Run the actual recommendation function
         recommendations = await exercise_recommendation(
-            today_muscle_groups = ["chest", "triceps", "shoulders"],
+            muscle_groups = today_muscle_groups,
             current_user=current_user,
             db=db,
             equipment = None

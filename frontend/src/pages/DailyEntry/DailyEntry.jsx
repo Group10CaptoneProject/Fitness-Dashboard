@@ -144,19 +144,32 @@ const goalOptions = [
 const muscleAreaOptions = workoutMuscleAreas;
 
 const ratingItems = [
-  { key: "sleep", label: "Sleep Quality", Icon: BedDouble },
-  { key: "energy", label: "Energy Level", Icon: Zap },
+  { key: "sleep", label: "Sleep Quality", Icon: BedDouble, higherIsBetter: true },
+  { key: "energy", label: "Energy Level", Icon: Zap, higherIsBetter: true },
   { key: "soreness", label: "Soreness", Icon: BicepsFlexed },
   { key: "stress", label: "Stress", Icon: Brain },
 ];
 
-const getRatingLabel = (value) => {
-  if (value <= 3) return "Easy";
-  if (value <= 7) return "Medium";
-  return "Hard";
+// higherIsBetter: 0 is the worst and 10 is the best (sleep, energy)
+const getRatingLabel = (value, higherIsBetter = false) => {
+  if (higherIsBetter) {
+    if (value <= 3) return "Poor";
+    if (value <= 7) return "Okay";
+    return "Great";
+  }
+
+  if (value <= 3) return "Great";
+  if (value <= 7) return "Okay";
+  return "Poor";
 };
 
-const getRatingClass = (value) => {
+const getRatingClass = (value, higherIsBetter = false) => {
+  if (higherIsBetter) {
+    if (value <= 3) return styles.hard;
+    if (value <= 7) return styles.medium;
+    return styles.easy;
+  }
+
   if (value <= 3) return styles.easy;
   if (value <= 7) return styles.medium;
   return styles.hard;
@@ -197,7 +210,7 @@ function SelectField({
   );
 }
 
-function RatingControl({ label, value, onChange, Icon }) {
+function RatingControl({ label, value, onChange, Icon, higherIsBetter = false }) {
   // Keep the slider centered while leaving the number field empty initially
   const sliderValue = value === "" ? 5 : Number(value);
   const percentage = `${(sliderValue / 10) * 100}%`;
@@ -210,7 +223,8 @@ function RatingControl({ label, value, onChange, Icon }) {
 
       <div className={styles.ratingMain}>
         <label className={styles.ratingLabel}>
-          {label} <span>(0-10)</span>
+          {label}{" "}
+          <span>{higherIsBetter ? "(0 = Worst, 10 = Best)" : "(0 = Best, 10 = Worst)"}</span>
         </label>
 
         <input
@@ -253,10 +267,11 @@ function RatingControl({ label, value, onChange, Icon }) {
 
       <span
         className={`${styles.ratingBadge} ${getRatingClass(
-          sliderValue
+          sliderValue,
+          higherIsBetter
         )}`}
       >
-        {getRatingLabel(sliderValue)}
+        {getRatingLabel(sliderValue, higherIsBetter)}
       </span>
     </div>
   );
@@ -646,6 +661,10 @@ function buildBackendPayload(entry, token) {
 function DailyEntry() {
   const navigate = useNavigate();
   const dateInputRef = useRef(null);
+  // The dates that already have a score (loaded once, then reused for every date)
+  const scoreDatesRef = useRef(null);
+  // True once the user has touched the form, so late backend answers never overwrite their typing
+  const formTouchedRef = useRef(false);
 
   const username =
     localStorage.getItem("username") ||
@@ -670,10 +689,14 @@ function DailyEntry() {
   // True when the selected date already has a calculated score
   const [hasSavedEntry, setHasSavedEntry] = useState(false);
 
-  // When the date changes, check the backend for scores on that date.
-  // If the user already calculated that day, show their saved input.
+  // When the date changes, show that date's saved input.
+  // The browser copy is shown right away, and the backend is checked at the same
+  // time (not one request after the other) only for what is still missing.
   useEffect(() => {
     let cancelled = false;
+
+    // A new date starts untouched, so a late answer may fill the form
+    formTouchedRef.current = false;
 
     function resetForm() {
       setGoal("");
@@ -682,87 +705,146 @@ function DailyEntry() {
       setExercises(mergeCompletedWorkouts([createExercise()], entryDate));
     }
 
-    async function loadSavedEntry() {
-      const token = localStorage.getItem("access_token");
+    function showSavedEntry(savedEntry) {
+      setGoal(savedEntry.goal);
+      setRatings(savedEntry.ratings);
+      setHeartRate(savedEntry.heartRate);
+      setExercises(mergeCompletedWorkouts(savedEntry.exercises, entryDate));
+      setError("");
+    }
 
+    // The browser copy has everything the user typed (goal and every
+    // exercise), since the backend only stores one exercise per day
+    function readBrowserCopy(token) {
       try {
-        const scoresResponse = await fetchWithTimeout(SCORES_API_URL, {
+        const localCopy = localStorage.getItem(
+          getLocalEntryKey(token, entryDate)
+        );
+        if (localCopy) {
+          return mapSavedEntry(JSON.parse(localCopy), entryDate);
+        }
+      } catch (localError) {
+        console.error("Local entry read error:", localError);
+      }
+
+      return null;
+    }
+
+    // The dates that already have a score. Fetched once, then reused for every date
+    async function getScoreDates(token) {
+      if (scoreDatesRef.current) return scoreDatesRef.current;
+
+      const scoresResponse = await fetchWithTimeout(SCORES_API_URL, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!scoresResponse.ok) {
+        throw new Error("Failed to fetch scores");
+      }
+
+      const scores = await scoresResponse.json();
+
+      scoreDatesRef.current = new Set(
+        scores.map((score) => String(score.score_date).slice(0, 10))
+      );
+
+      return scoreDatesRef.current;
+    }
+
+    // Load only this date's entry from the backend
+    async function fetchBackendEntry(token) {
+      const entryResponse = await fetchWithTimeout(
+        `${ENTRY_API_URL}by-date/${entryDate}`,
+        {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        });
-
-        if (!scoresResponse.ok) {
-          throw new Error("Failed to fetch scores");
         }
+      );
 
-        const scores = await scoresResponse.json();
-
-        const hasScore = scores.some(
-          (score) => String(score.score_date).slice(0, 10) === entryDate
+      if (!entryResponse.ok) {
+        throw new Error(
+          `Failed to fetch saved entry (${entryResponse.status})`
         );
+      }
 
-        if (cancelled) return;
+      return mapSavedEntry(await entryResponse.json(), entryDate);
+    }
 
-        setHasSavedEntry(hasScore);
+    async function loadSavedEntry() {
+      const token = localStorage.getItem("access_token");
+      const browserCopy = readBrowserCopy(token);
 
-        // No scores for this date yet, so show a blank form
-        if (!hasScore) {
-          resetForm();
+      // Show the browser copy immediately instead of waiting for the network
+      if (browserCopy) {
+        showSavedEntry(browserCopy);
+        setHasSavedEntry(true);
+      }
+
+      try {
+        const knownScoreDates = scoreDatesRef.current;
+
+        // A date already known to have no score needs no request at all
+        if (knownScoreDates && !knownScoreDates.has(entryDate)) {
+          setHasSavedEntry(false);
+
+          if (browserCopy && !formTouchedRef.current) {
+            resetForm();
+          }
+
           return;
         }
 
-        let savedEntry = null;
+        // Ask the backend at the same time. This date's entry is only
+        // requested when the browser has no copy of it
+        const [scoreDatesResult, backendEntryResult] =
+          await Promise.allSettled([
+            getScoreDates(token),
+            browserCopy ? Promise.resolve(null) : fetchBackendEntry(token),
+          ]);
 
-        // The browser copy has everything the user typed (goal and every
-        // exercise), since the backend only stores one exercise per day
-        try {
-          const localCopy = localStorage.getItem(
-            getLocalEntryKey(token, entryDate)
-          );
-          if (localCopy) {
-            savedEntry = mapSavedEntry(JSON.parse(localCopy), entryDate);
-          }
-        } catch (localError) {
-          console.error("Local entry read error:", localError);
+        if (cancelled) return;
+
+        let hasScore = null;
+
+        if (scoreDatesResult.status === "fulfilled") {
+          hasScore = scoreDatesResult.value.has(entryDate);
+        } else {
+          console.error("Daily entry load error:", scoreDatesResult.reason);
         }
 
-        // Otherwise load the saved entry from the backend
-        if (!savedEntry) {
-          try {
-            const entryResponse = await fetchWithTimeout(
-              `${ENTRY_API_URL}?entry_date=${entryDate}`,
-              {
-                method: "GET",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
+        // No score for this date yet, so show a blank form
+        if (hasScore === false) {
+          setHasSavedEntry(false);
 
-            if (!entryResponse.ok) {
-              throw new Error(
-                `Failed to fetch saved entry (${entryResponse.status})`
-              );
-            }
-
-            savedEntry = mapSavedEntry(
-              await entryResponse.json(),
-              entryDate
-            );
-          } catch (entryError) {
-            console.error("Daily entry fetch error:", entryError);
+          if (!formTouchedRef.current) {
+            resetForm();
           }
+
+          return;
         }
 
-        if (cancelled || !savedEntry) return;
+        // The browser copy is already on screen
+        if (browserCopy) {
+          setHasSavedEntry(true);
+          return;
+        }
 
-        setGoal(savedEntry.goal);
-        setRatings(savedEntry.ratings);
-        setHeartRate(savedEntry.heartRate);
-        setExercises(mergeCompletedWorkouts(savedEntry.exercises, entryDate));
-        setError("");
+        if (backendEntryResult.status === "rejected") {
+          console.error("Daily entry fetch error:", backendEntryResult.reason);
+          return;
+        }
+
+        const savedEntry = backendEntryResult.value;
+
+        if (!savedEntry || formTouchedRef.current) return;
+
+        showSavedEntry(savedEntry);
+        setHasSavedEntry(true);
       } catch (loadError) {
         console.error("Daily entry load error:", loadError);
       }
@@ -1049,6 +1131,12 @@ function DailyEntry() {
         <form
           className={styles.entryGrid}
           onSubmit={handleCalculateScore}
+          onChange={() => {
+            formTouchedRef.current = true;
+          }}
+          onClick={() => {
+            formTouchedRef.current = true;
+          }}
         >
           <div className={styles.leftColumn}>
             <section className={`${styles.card} ${styles.goalCard}`}>
@@ -1084,29 +1172,15 @@ function DailyEntry() {
                 </div>
               </div>
 
-              <div className={styles.ratingLegend}>
-                <div className={styles.legendEasy}>
-                  <strong>Easy/Good</strong>
-                  <span>0 - 3</span>
-                </div>
-                <div className={styles.legendMedium}>
-                  <strong>Medium/Okay</strong>
-                  <span>4 - 7</span>
-                </div>
-                <div className={styles.legendHard}>
-                  <strong>Hard/Bad</strong>
-                  <span>8 - 10</span>
-                </div>
-              </div>
-
               <div className={styles.ratingList}>
-                {ratingItems.map(({ key, label, Icon }) => (
+                {ratingItems.map(({ key, label, Icon, higherIsBetter }) => (
                   <RatingControl
                     key={key}
                     label={label}
                     value={ratings[key]}
                     onChange={(value) => updateRating(key, value)}
                     Icon={Icon}
+                    higherIsBetter={higherIsBetter}
                   />
                 ))}
               </div>
